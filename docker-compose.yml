@@ -1,0 +1,48 @@
+services:
+
+  pipeline:
+    profiles: ["pipeline"]
+    build: ./pipeline
+    container_name: rt-pipeline
+    restart: "no"
+    volumes:
+      - ${RT_ROOT}:/data/rt:ro
+      - db_data:/data/db
+    environment:
+      - RT_ROOT=/data/rt
+      - DB_PATH=/data/db/roguetech.db
+    command: ["python", "-m", "pipeline.ingest", "--full-rebuild"]
+
+  api:
+    build: ./api
+    container_name: rt-api
+    restart: unless-stopped
+    volumes:
+      - db_data:/data/db
+    environment:
+      - DB_PATH=/data/db/roguetech.db
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+    container_name: rt-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_data:
+    driver: local

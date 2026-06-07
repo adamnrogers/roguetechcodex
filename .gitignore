@@ -1,0 +1,44 @@
+# Environment
+.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.python-version
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# Dev tooling
+tmp/
+.dev-pids.json
+.dev-pids.txt
+.dev-logs/
+refs/
+dev.sh
+
+# Claude
+.claude/
+CLAUDE.md
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

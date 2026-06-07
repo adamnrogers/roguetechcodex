@@ -1,0 +1,35 @@
+# Development overrides — mounts source code for hot reload
+# Usage: docker compose up  (override is applied automatically)
+services:
+
+  pipeline:
+    volumes:
+      - ${RT_ROOT}:/data/rt:ro
+      - db_data:/data/db
+      - ./pipeline:/app:cached
+    environment:
+      - RT_ROOT=/data/rt
+      - DB_PATH=/data/db/roguetech.db
+      - PYTHONDONTWRITEBYTECODE=1
+
+  api:
+    volumes:
+      - db_data:/data/db:ro
+      - ./api:/app:cached
+    environment:
+      - DB_PATH=/data/db/roguetech.db
+      - RELOAD=true
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app:cached
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
