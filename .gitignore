@@ -20,6 +20,9 @@ node_modules/
 dist/
 .vite/
 
+# PyInstaller
+build/
+
 # Dev tooling
 tmp/
 .dev-pids.json
