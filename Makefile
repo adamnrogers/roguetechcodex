@@ -1,5 +1,6 @@
 .PHONY: build up down pipeline logs logs-api shell-api shell-pipeline fresh ps help \
-        dev dev-down dev-build dev-pipeline dev-logs
+        dev dev-down dev-build dev-pipeline dev-logs \
+        standalone-run standalone-build
 
 # Load .env if present
 ifneq (,$(wildcard .env))
@@ -62,3 +63,15 @@ dev-pipeline: ## Run pipeline in dev mode (source-mounted)
 
 dev-logs: ## Tail dev logs
 	$(COMPOSE_DEV) logs -f
+
+# ── Standalone ────────────────────────────────────────────────────────────────
+
+standalone-run: ## Run standalone mode locally — no exe, builds frontend then serves API + SPA
+	cd frontend/src && npm run build
+	PYTHONPATH=. python3 -m standalone
+
+standalone-build: ## Build standalone exe with PyInstaller (requires roguetech.db at repo root)
+	pip3 install pyinstaller
+	pip3 install -r api/requirements.txt
+	cd frontend/src && npm run build
+	pyinstaller standalone/roguetech.spec
