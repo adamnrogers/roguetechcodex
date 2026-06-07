@@ -4,7 +4,7 @@
     <div class="variant-header" @click="open = !open">
       <span class="variant-name">{{ variant.variant_name || variant.id }}</span>
       <div class="variant-tags">
-        <span v-for="tag in variant.era_tags" :key="'era-' + tag" class="tag tag-era">{{ formatTag(tag) }}</span>
+        <span v-for="tag in variant.era_tags" :key="'era-' + tag" class="tag tag-era">{{ humanizeTag(tag) }}</span>
         <span v-for="tag in canonicalFactionTags" :key="'fac-' + tag" class="tag tag-faction">{{ tag }}</span>
       </div>
       <span class="chevron" :class="{ open }">&#x25BE;</span>
