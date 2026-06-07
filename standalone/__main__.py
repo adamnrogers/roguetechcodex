@@ -26,7 +26,12 @@ import uvicorn  # noqa: E402
 from standalone.server import build_app  # noqa: E402
 
 PORT = 8765
-DIST_DIR = os.path.join(BASE_DIR, "dist")
+# PyInstaller copies frontend/src/dist → dist/ at the root of the bundle.
+# In development the built assets live at their actual location in the repo.
+if getattr(sys, "frozen", False):
+    DIST_DIR = os.path.join(BASE_DIR, "dist")
+else:
+    DIST_DIR = os.path.join(BASE_DIR, "frontend", "src", "dist")
 
 
 def _open_browser() -> None:
