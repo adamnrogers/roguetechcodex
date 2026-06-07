@@ -1,7 +1,8 @@
-export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+export const API_BASE = import.meta.env.VITE_API_BASE ?? ''
 
 export async function apiFetch<T>(path: string, params?: Record<string, any>): Promise<T> {
-  const url = new URL(API_BASE + path)
+  const base = API_BASE || window.location.origin
+  const url = new URL(base + path)
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v === null || v === undefined || v === '') return

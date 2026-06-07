@@ -25,7 +25,7 @@ import uvicorn  # noqa: E402
 
 from standalone.server import build_app  # noqa: E402
 
-PORT = 8000
+PORT = 8765
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 
 
