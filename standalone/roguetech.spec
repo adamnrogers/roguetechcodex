@@ -1,24 +1,28 @@
 # roguetech.spec — PyInstaller build spec for standalone distribution
-# Run from repo root: pyinstaller standalone/roguetech.spec
+# Run from anywhere: pyinstaller standalone/roguetech.spec
 
+import os
 from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
-# uvicorn ships data files (logging config, etc.) that must be bundled
+# SPECPATH is the directory containing this spec file (i.e. standalone/).
+# ROOT is the repo root (one level up).
+ROOT = os.path.dirname(SPECPATH)
+
 uvicorn_datas = collect_data_files("uvicorn")
 
 a = Analysis(
-    ["standalone/__main__.py"],
-    pathex=[".", "api"],          # "." for standalone pkg; "api" for flat imports
+    [os.path.join(SPECPATH, "__main__.py")],
+    pathex=[ROOT, os.path.join(ROOT, "api")],
     binaries=[],
     datas=[
-        ("frontend/src/dist", "dist"),   # pre-built Vue SPA
-        ("roguetech.db", "."),           # pre-built SQLite database
+        (os.path.join(ROOT, "frontend", "src", "dist"), "dist"),
+        (os.path.join(ROOT, "roguetech.db"), "."),
         *uvicorn_datas,
     ],
     hiddenimports=[
-        # uvicorn — dynamic imports that PyInstaller cannot trace statically
+        # uvicorn — dynamic imports PyInstaller cannot trace statically
         "uvicorn.loops",
         "uvicorn.loops.auto",
         "uvicorn.loops.asyncio",
@@ -53,7 +57,7 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=True,
-    console=True,   # keep console so users can see the startup URL and errors
+    console=True,
 )
 
 coll = COLLECT(
