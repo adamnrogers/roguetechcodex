@@ -3,13 +3,13 @@
 // Colours not present in this map are stripped (tag removed, text preserved).
 const COLOUR_MAP: Record<string, string | 'inherit'> = {
   // Reds
-  'FF0000': '#f85149',
-  'FF4040': '#f85149',
-  'D0021B': '#f85149',
-  'CC1C12': '#f85149',
-  'E11919': '#f85149',
-  'E62E00': '#f85149',
-  'FF0066': '#f85149',
+  'FF0000': '#c47a7a',
+  'FF4040': '#c47a7a',
+  'D0021B': '#c47a7a',
+  'CC1C12': '#c47a7a',
+  'E11919': '#c47a7a',
+  'E62E00': '#c47a7a',
+  'FF0066': '#c47a7a',
   // Blues
   '0000FF': '#58a6ff',
   '4040FF': '#58a6ff',
