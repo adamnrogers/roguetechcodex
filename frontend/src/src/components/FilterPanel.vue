@@ -32,7 +32,7 @@
             :value="minTonnage ?? 0"
             @input="onMinChange"
             class="range-slider" />
-          <span class="tonnage-val">{{ minTonnage ?? 0 }}t</span>
+          <span class="tonnage-val">{{ minTonnage != null ? minTonnage + 't' : '0t' }}</span>
         </label>
         <label class="tonnage-row">
           <span class="tonnage-label">Max</span>
@@ -40,7 +40,7 @@
             :value="maxTonnage ?? 420"
             @input="onMaxChange"
             class="range-slider" />
-          <span class="tonnage-val">{{ maxTonnage ?? '—' }}</span>
+          <span class="tonnage-val">{{ maxTonnage != null ? maxTonnage + 't' : '∞' }}</span>
         </label>
       </div>
     </div>
@@ -159,7 +159,7 @@ function clearAll() {
 .dot-medium  { background: var(--badge-medium-fg); }
 .dot-heavy   { background: var(--badge-heavy-fg); }
 .dot-assault { background: var(--badge-assault-fg); }
-.tonnage-range { display: flex; flex-direction: column; gap: 8px; }
+.tonnage-range { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
 .tonnage-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
 .tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; flex-shrink: 0; }
