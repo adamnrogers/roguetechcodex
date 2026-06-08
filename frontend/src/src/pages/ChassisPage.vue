@@ -25,6 +25,13 @@
 
           <!-- Page header -->
           <header class="page-header">
+            <img
+              v-if="data.icon"
+              :src="portraitUrl(data.icon)!"
+              class="chassis-portrait"
+              alt=""
+              @error="($event.target as HTMLImageElement).style.display = 'none'"
+            />
             <div class="header-meta">
               <nav class="breadcrumb">
                 <button class="back-btn" @click="router.go(-1)">← Back</button>
@@ -181,6 +188,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useChassisDetail } from '../composables/useChassisDetail'
 import { renderRichText } from '../utils/richText'
 import { humanizeMod, canonicalizeFaction } from '../utils/humanize'
+import { portraitUrl } from '../utils/portrait'
 import ComponentLayoutTable from '../components/ComponentLayoutTable.vue'
 import AffinityTable from '../components/AffinityTable.vue'
 
@@ -272,7 +280,18 @@ const parsedHardpoints = computed(() => {
 
 /* ── Page header ───────────────────────────────────────────── */
 .page-header {
-  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.chassis-portrait {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
 }
 
 .breadcrumb {
