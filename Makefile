@@ -1,6 +1,7 @@
 .PHONY: build up down pipeline logs logs-api shell-api shell-pipeline fresh ps help \
         dev dev-down dev-build dev-pipeline dev-logs \
-        standalone-run standalone-build portraits portraits-zip
+        standalone-run standalone-build portraits portraits-zip \
+        copy-db
 
 # Load .env if present
 ifneq (,$(wildcard .env))
@@ -75,6 +76,11 @@ standalone-build: ## Build standalone exe with PyInstaller (requires roguetech.d
 	pip3 install -r api/requirements.txt
 	cd frontend/src && npm run build
 	pyinstaller standalone/roguetech.spec
+
+copy-db: ## Copy rebuilt DB from the db_data volume to ./roguetech.db (run after make pipeline or make dev-pipeline)
+	$(COMPOSE) --profile pipeline run --rm --no-deps \
+		-v "$(CURDIR)":/out \
+		--entrypoint cp pipeline /data/db/roguetech.db /out/roguetech.db
 
 portraits: ## Convert DDS portraits for dev/Docker → frontend/src/public/portraits/
 	pip3 install -r pipeline/requirements.txt -q
