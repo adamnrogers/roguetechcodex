@@ -195,15 +195,16 @@ import AffinityTable from '../components/AffinityTable.vue'
 const route = useRoute()
 const router = useRouter()
 const prefabBase = route.params.prefabBase as string
-const isVehicle = route.path.startsWith('/vehicles/')
-const isVtol = route.path.startsWith('/vtols/')
+const isVehicle     = route.path.startsWith('/vehicles/')
+const isVtol        = route.path.startsWith('/vtols/')
+const isBattleArmor = route.path.startsWith('/battle-armor/')
 
-const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle || isVtol)
+const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle || isVtol, isBattleArmor)
 
-const browsePath = isVtol ? '/vtols' : isVehicle ? '/vehicles' : '/mechs'
-const browseLabel = isVtol ? 'VTOLs' : isVehicle ? 'Vehicles' : 'Mechs'
+const browsePath  = isVtol ? '/vtols' : isVehicle ? '/vehicles' : isBattleArmor ? '/battle-armor' : '/mechs'
+const browseLabel = isVtol ? 'VTOLs' : isVehicle ? 'Vehicles' : isBattleArmor ? 'Battle Armor' : 'Mechs'
 const bayLabel = computed(() =>
-  isVtol ? 'VTOL Bay' : isVehicle ? 'Vehicle Bay' : 'Mech Bay'
+  isVtol ? 'VTOL Bay' : isVehicle ? 'Vehicle Bay' : isBattleArmor ? 'Battle Armor Bay' : 'Mech Bay'
 )
 
 const portraitImgError = ref(false)

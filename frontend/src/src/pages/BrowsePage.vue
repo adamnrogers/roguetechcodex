@@ -77,6 +77,7 @@ const modeLabel = computed(() => {
     mech: 'Mechs',
     vehicle: 'Vehicles',
     vtol: 'VTOLs',
+    battle_armor: 'Battle Armor',
     weapon: 'Weapons',
     equipment: 'Equipment',
   }
@@ -88,6 +89,7 @@ const searchPlaceholder = computed(() => {
     mech: 'Search mechs...',
     vehicle: 'Search vehicles...',
     vtol: 'Search VTOLs...',
+    battle_armor: 'Search battle armor...',
     weapon: 'Search weapons...',
     equipment: 'Search equipment...',
   }
