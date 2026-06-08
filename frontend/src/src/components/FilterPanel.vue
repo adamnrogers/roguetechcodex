@@ -162,7 +162,7 @@ function clearAll() {
 .tonnage-range { display: flex; flex-direction: column; gap: 8px; }
 .tonnage-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
-.tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; flex-shrink: 0; margin-right: 8px; }
+.tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: left; flex-shrink: 0; margin-left: 4px; }
 .range-slider { flex: 1; accent-color: var(--accent-blue); cursor: pointer; }
 .clear-all {
   display: block;
