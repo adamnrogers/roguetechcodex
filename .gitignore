@@ -41,6 +41,11 @@ CLAUDE.md
 *.suo
 *.user
 
+# Portraits
+frontend/src/public/portraits/
+portraits-staging/
+portraits.zip
+
 # OS
 .DS_Store
 Thumbs.db
