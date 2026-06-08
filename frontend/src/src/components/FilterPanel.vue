@@ -26,18 +26,22 @@
     <div v-if="['mech','vehicle','vtol','battle_armor'].includes(mode)" class="filter-section">
       <h3 class="filter-title">Tonnage</h3>
       <div class="tonnage-range">
-        <div class="tonnage-labels">
-          <span>{{ minTonnage ?? 0 }}t</span>
-          <span>{{ maxTonnage ?? 100 }}t</span>
-        </div>
-        <input type="range" min="0" max="100" step="5"
-          :value="minTonnage ?? 0"
-          @input="onMinChange"
-          class="range-slider" />
-        <input type="range" min="0" max="100" step="5"
-          :value="maxTonnage ?? 100"
-          @input="onMaxChange"
-          class="range-slider" />
+        <label class="tonnage-row">
+          <span class="tonnage-label">Min</span>
+          <input type="range" min="0" max="420" step="5"
+            :value="minTonnage ?? 0"
+            @input="onMinChange"
+            class="range-slider" />
+          <span class="tonnage-val">{{ minTonnage ?? 0 }}t</span>
+        </label>
+        <label class="tonnage-row">
+          <span class="tonnage-label">Max</span>
+          <input type="range" min="0" max="420" step="5"
+            :value="maxTonnage ?? 420"
+            @input="onMaxChange"
+            class="range-slider" />
+          <span class="tonnage-val">{{ maxTonnage ?? '—' }}</span>
+        </label>
       </div>
     </div>
     <div v-if="mode === 'mech'" class="filter-section">
@@ -119,14 +123,14 @@ function toggleEra(value: string) {
 
 function onMinChange(e: Event) {
   const val = parseInt((e.target as HTMLInputElement).value)
-  const max = props.maxTonnage ?? 100
+  const max = props.maxTonnage ?? 420
   emit('update:minTonnage', val <= 0 ? null : Math.min(val, max))
 }
 
 function onMaxChange(e: Event) {
   const val = parseInt((e.target as HTMLInputElement).value)
   const min = props.minTonnage ?? 0
-  emit('update:maxTonnage', val >= 100 ? null : Math.max(val, min))
+  emit('update:maxTonnage', val >= 420 ? null : Math.max(val, min))
 }
 
 function getActuatorValue(key: string): boolean | null {
@@ -182,9 +186,11 @@ function clearAll() {
 .dot-medium  { background: var(--badge-medium-fg); }
 .dot-heavy   { background: var(--badge-heavy-fg); }
 .dot-assault { background: var(--badge-assault-fg); }
-.tonnage-range { display: flex; flex-direction: column; gap: 6px; }
-.tonnage-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
-.range-slider { width: 100%; accent-color: var(--accent-blue); cursor: pointer; }
+.tonnage-range { display: flex; flex-direction: column; gap: 8px; }
+.tonnage-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
+.tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; flex-shrink: 0; }
+.range-slider { flex: 1; accent-color: var(--accent-blue); cursor: pointer; }
 .actuator-row {
   display: flex;
   align-items: center;
