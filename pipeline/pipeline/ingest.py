@@ -182,6 +182,124 @@ def filter_chassis_tags(items: list) -> list:
     return [t for t in items if isinstance(t, str) and not t.startswith("mr-resize")]
 
 
+# ── Structural defaults (Cockpit, actuators, etc.) ────────────────────────────
+
+# CenterTorso category defaults collide with chassisdef FixedEquipment overrides
+# (e.g. EndoSteel overrides Default_Structure_Standard). Skipped to avoid double-display.
+_CT_CATEGORIES = frozenset([
+    "Armor", "Structure", "Cooling", "Gyro",
+    "EngineShield", "EngineHeatBlock", "EngineCore",
+])
+
+
+def load_mech_global_defaults(
+    rt_root: Path,
+) -> tuple[list[dict], dict[str, dict[str, set[str]]]]:
+    """Parse Defaults_MechEngineer.json and Categories_Actuators.json.
+
+    Returns:
+        structural_categories: head + actuator default entries (CT categories excluded)
+        actuator_exclusions: {category_name: {unit_type_tag: set_of_excluded_locs}}
+          where 'All' in the set means all locations are excluded.
+    """
+    me_files = list(rt_root.rglob("Defaults_MechEngineer.json"))
+    cat_files = list(rt_root.rglob("Categories_Actuators.json"))
+    if not me_files or not cat_files:
+        return [], {}
+
+    try:
+        me_data = json.loads(me_files[0].read_text(encoding="utf-8", errors="replace"))
+        cat_data = json.loads(cat_files[0].read_text(encoding="utf-8", errors="replace"))
+    except (json.JSONDecodeError, OSError):
+        return [], {}
+
+    structural_categories: list[dict] = []
+    for entry in me_data.get("Settings", []):
+        cid = entry.get("CategoryID", "")
+        if cid in _CT_CATEGORIES:
+            continue
+        defaults = [
+            (d["Location"], d["DefID"], d.get("Type", "Upgrade"))
+            for d in entry.get("Defaults", [])
+            if "Location" in d and "DefID" in d
+        ]
+        unit_type_overrides: dict[str, list] = {}
+        for ut in entry.get("UnitTypes", []):
+            utype = ut.get("UnitType", "")
+            overrides = [
+                (d["Location"], d["DefID"], d.get("Type", "Upgrade"))
+                for d in ut.get("Defaults", [])
+                if "Location" in d and "DefID" in d
+            ]
+            if utype and overrides:
+                unit_type_overrides[utype] = overrides
+        if defaults:
+            structural_categories.append({
+                "CategoryID": cid,
+                "Defaults": defaults,
+                "UnitTypeOverrides": unit_type_overrides,
+            })
+
+    actuator_exclusions: dict[str, dict[str, set[str]]] = {}
+    for entry in cat_data.get("Settings", []):
+        name = entry.get("Name", "")
+        excl: dict[str, set[str]] = {}
+        for ul in entry.get("UnitLimits", []):
+            utype = ul.get("UnitType", "")
+            for limit in ul.get("Limits", []):
+                if limit.get("Max", 1) == 0:
+                    loc = limit.get("Location", "")
+                    excl.setdefault(utype, set()).add(loc)  # 'All' or specific loc
+        if excl:
+            actuator_exclusions[name] = excl
+
+    return structural_categories, actuator_exclusions
+
+
+def build_structural_defaults(
+    chassis_tags: list[str],
+    unit_type: str,
+    structural_categories: list[dict],
+    actuator_exclusions: dict[str, dict[str, set[str]]],
+) -> list[dict]:
+    """Return structural default items to prepend to a mech's fixed_equipment_json.
+
+    Only applies to mechs (not vehicles, VTOLs, or battle armor).
+    Applies unit-type overrides and actuator exclusions from the two config files.
+    """
+    if unit_type != "mech":
+        return []
+
+    tag_set = set(chassis_tags)
+    result: list[dict] = []
+
+    for category in structural_categories:
+        cid = category["CategoryID"]
+        effective = list(category["Defaults"])
+
+        # Apply last matching unit-type override
+        for utype, overrides in category["UnitTypeOverrides"].items():
+            if utype in tag_set:
+                effective = overrides
+
+        # Compute excluded locations for this category
+        excluded: set[str] = set()
+        for utype, locs in actuator_exclusions.get(cid, {}).items():
+            if utype in tag_set:
+                excluded.update(locs)
+
+        for loc, def_id, comp_type in effective:
+            if "All" not in excluded and loc not in excluded:
+                result.append({
+                    "MountedLocation": loc,
+                    "ComponentDefID": def_id,
+                    "ComponentDefType": comp_type,
+                    "HardpointSlot": 0,
+                })
+
+    return result
+
+
 # ── SQLite schema ─────────────────────────────────────────────────────────────
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
@@ -294,6 +412,7 @@ def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) 
     Returns {variant_id: prefab_base} map for loadout linkage.
     """
     known_chassis = {r[0] for r in con.execute("SELECT prefab_base FROM chassis")}
+    structural_categories, actuator_exclusions = load_mech_global_defaults(rt_root)
     rows = []
     variant_to_chassis: dict[str, str] = {}
 
@@ -320,6 +439,15 @@ def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) 
         chassis_defaults = custom.get("ChassisDefaults") or []
         multi_defaults = custom.get("MultiDefaults") or []
         raw_tags = data.get("ChassisTags", {}).get("items", [])
+        unit_type = detect_unit_type(data)
+
+        # Structural defaults (cockpit, life support, actuators) are defined globally
+        # in Defaults_MechEngineer.json, not per-chassisdef. Prepend them so they appear
+        # at the start of the fixed equipment list, before the mech-specific items.
+        structural = build_structural_defaults(
+            raw_tags, unit_type, structural_categories, actuator_exclusions
+        )
+        fixed_equipment = structural + data.get("FixedEquipment", [])
 
         variant_to_chassis[entity_id] = prefab_base
         rows.append((
@@ -328,7 +456,7 @@ def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) 
             ui_name,
             variant_name,
             desc.get("Details"),
-            detect_unit_type(data),
+            unit_type,
             data.get("weightClass"),
             data.get("Tonnage"),
             data.get("MovementCapDefID"),
@@ -337,7 +465,7 @@ def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) 
             drop_cost,
             json.dumps(filter_chassis_tags(raw_tags)),
             json.dumps(data.get("Locations", [])),
-            json.dumps(data.get("FixedEquipment", [])),
+            json.dumps(fixed_equipment),
             json.dumps(chassis_defaults),
             json.dumps(multi_defaults),
             1 if lootable_block else 0,

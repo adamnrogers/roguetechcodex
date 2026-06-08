@@ -89,14 +89,19 @@ def main() -> None:
     print(f"  found {len(portrait_map):,} portrait files")
 
     con = sqlite3.connect(db_path)
-    icons = [
-        row[0]
-        for row in con.execute(
-            "SELECT DISTINCT icon FROM chassis WHERE icon IS NOT NULL AND icon != ''"
-        )
-    ]
+    try:
+        icons = [
+            row[0]
+            for row in con.execute(
+                "SELECT DISTINCT icon FROM chassis WHERE icon IS NOT NULL AND icon != ''"
+            )
+        ]
+        print(f"  {len(icons):,} distinct icon values in DB")
+    except sqlite3.OperationalError:
+        # icon column not yet in schema (DB predates this feature) — convert everything found
+        icons = list(portrait_map.keys())
+        print(f"  icon column not in DB yet — converting all {len(icons):,} discovered portrait files")
     con.close()
-    print(f"  {len(icons):,} distinct icon values in DB")
 
     converted = skipped = missing = errors = 0
     for icon in icons:

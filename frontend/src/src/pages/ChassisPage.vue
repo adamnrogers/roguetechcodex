@@ -25,23 +25,14 @@
 
           <!-- Page header -->
           <header class="page-header">
-            <img
-              v-if="data.icon"
-              :src="portraitUrl(data.icon)!"
-              class="chassis-portrait"
-              alt=""
-              @error="($event.target as HTMLImageElement).style.display = 'none'"
-            />
-            <div class="header-meta">
-              <nav class="breadcrumb">
-                <button class="back-btn" @click="router.go(-1)">← Back</button>
-                <span class="bc-sep">·</span>
-                in:&nbsp;<RouterLink :to="browsePath" class="bc-link">{{ browseLabel }}</RouterLink>
-                <span class="bc-sep"> / </span>
-                <span class="bc-id">{{ data.ui_name }}</span>
-              </nav>
-              <h1 class="chassis-title">{{ data.ui_name }}</h1>
-            </div>
+            <nav class="breadcrumb">
+              <button class="back-btn" @click="router.go(-1)">← Back</button>
+              <span class="bc-sep">·</span>
+              in:&nbsp;<RouterLink :to="browsePath" class="bc-link">{{ browseLabel }}</RouterLink>
+              <span class="bc-sep"> / </span>
+              <span class="bc-id">{{ data.ui_name }}</span>
+            </nav>
+            <h1 class="chassis-title">{{ data.ui_name }}</h1>
           </header>
 
           <!-- ── Description section ────────────────────── -->
@@ -101,7 +92,14 @@
           <div class="identity-card">
             <div class="identity-header">{{ data.ui_name }}</div>
             <div class="identity-image">
-              <div class="mech-image-placeholder">
+              <img
+                v-if="data.icon && !portraitImgError"
+                :src="portraitUrl(data.icon)!"
+                class="chassis-portrait"
+                alt=""
+                @error="portraitImgError = true"
+              />
+              <div v-else class="mech-image-placeholder">
                 <span class="mech-silhouette">⬡</span>
               </div>
             </div>
@@ -205,6 +203,8 @@ const bayLabel = computed(() =>
   isVehicle ? 'Vehicle Bay' : 'Mech Bay'
 )
 
+const portraitImgError = ref(false)
+
 // Which variant's data is shown
 const selectedVariantId = ref<string | null>(null)
 
@@ -280,18 +280,15 @@ const parsedHardpoints = computed(() => {
 
 /* ── Page header ───────────────────────────────────────────── */
 .page-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
   margin-bottom: 20px;
 }
+
 .chassis-portrait {
-  width: 120px;
-  height: 120px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
-  flex-shrink: 0;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.04);
+  display: block;
+  margin: 0 auto;
 }
 
 .breadcrumb {

@@ -154,10 +154,25 @@ const loadoutLocMap = computed(() => {
   return m
 })
 
+// For vehicles all equipment lives in inventory; split by ComponentDefType:
+//   Upgrade / HeatSink → structurally fixed (engine, structure, crew, traits, etc.)
+//   Weapon / AmmunitionBox → dynamic loadout
+const VEHICLE_FIXED_TYPES = new Set(['Upgrade', 'HeatSink'])
+
+const effectiveFixed = computed<EquipmentItem[]>(() => {
+  if (!isVehicle.value) return props.fixedEquipment
+  return props.inventory.filter(i => VEHICLE_FIXED_TYPES.has(i.component_def_type))
+})
+
+const effectiveInventory = computed<InventoryItem[]>(() => {
+  if (!isVehicle.value) return props.inventory
+  return props.inventory.filter(i => !VEHICLE_FIXED_TYPES.has(i.component_def_type))
+})
+
 // Index fixed equipment by location
 const fixedByLoc = computed(() => {
   const m: Record<string, EquipmentItem[]> = {}
-  for (const item of props.fixedEquipment) {
+  for (const item of effectiveFixed.value) {
     ;(m[item.mounted_location] ??= []).push(item)
   }
   return m
@@ -166,7 +181,7 @@ const fixedByLoc = computed(() => {
 // Index inventory by location
 const invByLoc = computed(() => {
   const m: Record<string, InventoryItem[]> = {}
-  for (const item of props.inventory) {
+  for (const item of effectiveInventory.value) {
     ;(m[item.mounted_location] ??= []).push(item)
   }
   return m
@@ -202,9 +217,13 @@ function aggregateItems(rawItems: { component_def_id: string }[]): CellItem[] {
   }))
 }
 
+const _PREFIX_RE = /^(Weapon|Ammo|Gear|Linked|emod|Quirk|Default|VehicleTrait|Unique|BoltOn)_/
+
 function formatName(id: string): string {
-  return id
-    .replace(/^(Weapon|Ammo|Gear|Linked|emod|Quirk|Default|VehicleTrait)_/, '')
+  // Strip up to two chained prefixes (e.g. BoltOn_Weapon_AMS_Flare → AMS_Flare)
+  let s = id.replace(_PREFIX_RE, '')
+  if (_PREFIX_RE.test(s)) s = s.replace(_PREFIX_RE, '')
+  return s
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]{2,})([A-Z][a-z])/g, '$1 $2')
@@ -284,7 +303,7 @@ const knownLocations = computed<Set<string>>(() => {
 
 // Fixed equipment items with unknown or blank mounted_location
 const unlocatedFixed = computed<CellItem[]>(() => {
-  const unknown = props.fixedEquipment.filter(
+  const unknown = effectiveFixed.value.filter(
     item => !item.mounted_location || !knownLocations.value.has(item.mounted_location)
   )
   return aggregateItems(unknown)
@@ -292,7 +311,7 @@ const unlocatedFixed = computed<CellItem[]>(() => {
 
 // Inventory items with unknown or blank mounted_location
 const unlocatedDynamic = computed<CellItem[]>(() => {
-  const unknown = props.inventory.filter(
+  const unknown = effectiveInventory.value.filter(
     item => !item.mounted_location || !knownLocations.value.has(item.mounted_location)
   )
   return aggregateItems(unknown)
