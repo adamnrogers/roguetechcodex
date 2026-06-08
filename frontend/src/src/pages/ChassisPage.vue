@@ -188,13 +188,14 @@ const route = useRoute()
 const router = useRouter()
 const prefabBase = route.params.prefabBase as string
 const isVehicle = route.path.startsWith('/vehicles/')
+const isVtol = route.path.startsWith('/vtols/')
 
-const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle)
+const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle || isVtol)
 
-const browsePath = isVehicle ? '/vehicles' : '/mechs'
-const browseLabel = isVehicle ? 'Vehicles' : 'Mechs'
+const browsePath = isVtol ? '/vtols' : isVehicle ? '/vehicles' : '/mechs'
+const browseLabel = isVtol ? 'VTOLs' : isVehicle ? 'Vehicles' : 'Mechs'
 const bayLabel = computed(() =>
-  isVehicle ? 'Vehicle Bay' : 'Mech Bay'
+  isVtol ? 'VTOL Bay' : isVehicle ? 'Vehicle Bay' : 'Mech Bay'
 )
 
 // Which variant's data is shown

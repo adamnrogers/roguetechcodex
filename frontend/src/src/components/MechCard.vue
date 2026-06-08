@@ -29,8 +29,9 @@ interface MechCardProps {
 const props = defineProps<MechCardProps>()
 
 const cardLink = computed(() => {
-  const isVehicle = props.unit_type === 'vehicle' || props.unit_type === 'vtol'
-  return `${isVehicle ? '/vehicles' : '/mechs'}/${props.prefab_base}`
+  if (props.unit_type === 'vtol') return `/vtols/${props.prefab_base}`
+  if (props.unit_type === 'vehicle') return `/vehicles/${props.prefab_base}`
+  return `/mechs/${props.prefab_base}`
 })
 
 const unitTypeLabel = computed(() => {
