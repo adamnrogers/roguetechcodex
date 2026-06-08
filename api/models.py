@@ -107,6 +107,7 @@ class ChassisSummary(BaseModel):
     weight_class: Optional[str]
     tonnage: Optional[float]
     variant_count: int
+    icon: Optional[str]
 
 
 class ChassisListResponse(BaseModel):
@@ -126,6 +127,7 @@ class ChassisDetail(BaseModel):
     unit_type: str
     weight_class: Optional[str]
     tonnage: Optional[float]
+    icon: Optional[str]
     variants: list[VariantDetail]
 
 

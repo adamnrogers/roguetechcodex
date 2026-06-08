@@ -451,6 +451,7 @@ async def list_mechs(
             c.unit_type,
             c.weight_class,
             c.tonnage,
+            c.icon,
             (SELECT COUNT(*) FROM variant WHERE chassis_id = c.prefab_base) AS variant_count
         FROM chassis c
         WHERE {where_clause}
@@ -468,6 +469,7 @@ async def list_mechs(
             weight_class=row["weight_class"],
             tonnage=row["tonnage"],
             variant_count=row["variant_count"],
+            icon=row["icon"],
         )
         for row in rows
     ]
@@ -485,7 +487,7 @@ async def get_mech(
     db: aiosqlite.Connection = Depends(get_db),
 ) -> ChassisDetail:
     async with db.execute(
-        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage FROM chassis WHERE prefab_base = ?",
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis WHERE prefab_base = ?",
         (prefab_base,),
     ) as cur:
         chassis_row = await cur.fetchone()
@@ -546,6 +548,7 @@ async def get_mech(
         unit_type=chassis_row["unit_type"],
         weight_class=chassis_row["weight_class"],
         tonnage=chassis_row["tonnage"],
+        icon=chassis_row["icon"],
         variants=variants,
     )
 
@@ -593,7 +596,7 @@ async def list_vehicles(
     offset = (page - 1) * page_size
     data_sql = f"""
         SELECT
-            c.prefab_base, c.ui_name, c.unit_type, c.weight_class, c.tonnage,
+            c.prefab_base, c.ui_name, c.unit_type, c.weight_class, c.tonnage, c.icon,
             (SELECT COUNT(*) FROM variant WHERE chassis_id = c.prefab_base) AS variant_count
         FROM chassis c
         WHERE {where_clause}
@@ -611,6 +614,7 @@ async def list_vehicles(
             weight_class=row["weight_class"],
             tonnage=row["tonnage"],
             variant_count=row["variant_count"],
+            icon=row["icon"],
         )
         for row in rows
     ]
@@ -628,7 +632,7 @@ async def get_vehicle(
     db: aiosqlite.Connection = Depends(get_db),
 ) -> ChassisDetail:
     async with db.execute(
-        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage FROM chassis WHERE prefab_base = ? AND unit_type IN ('vehicle', 'vtol')",
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis WHERE prefab_base = ? AND unit_type IN ('vehicle', 'vtol')",
         (prefab_base,),
     ) as cur:
         chassis_row = await cur.fetchone()
@@ -683,5 +687,6 @@ async def get_vehicle(
         unit_type=chassis_row["unit_type"],
         weight_class=chassis_row["weight_class"],
         tonnage=chassis_row["tonnage"],
+        icon=chassis_row["icon"],
         variants=variants,
     )
