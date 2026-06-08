@@ -404,7 +404,12 @@ async def list_mechs(
     params: list = []
 
     if q:
-        conditions.append("c.ui_name LIKE ?")
+        conditions.append(
+            "(c.ui_name LIKE ? OR c.prefab_base IN ("
+            "SELECT DISTINCT chassis_id FROM variant WHERE variant_name LIKE ?"
+            "))"
+        )
+        params.append(f"%{q}%")
         params.append(f"%{q}%")
 
     if weight_class:
@@ -578,7 +583,12 @@ async def list_vehicles(
     params: list = []
 
     if q:
-        conditions.append("c.ui_name LIKE ?")
+        conditions.append(
+            "(c.ui_name LIKE ? OR c.prefab_base IN ("
+            "SELECT DISTINCT chassis_id FROM variant WHERE variant_name LIKE ?"
+            "))"
+        )
+        params.append(f"%{q}%")
         params.append(f"%{q}%")
 
     if weight_class:
