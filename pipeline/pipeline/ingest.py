@@ -282,7 +282,7 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
         for c in chassis.values()
     ]
     con.executemany(
-        "INSERT OR REPLACE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage, icon) VALUES (?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage, icon) VALUES (?,?,?,?,?,?)",
         rows,
     )
     con.commit()

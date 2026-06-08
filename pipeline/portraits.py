@@ -100,7 +100,7 @@ def main() -> None:
 
     converted = skipped = missing = errors = 0
     for icon in icons:
-        dst = out_dir / f"{icon}.png"
+        dst = out_dir / f"{icon.lower()}.png"
         src = portrait_map.get(icon.lower())
         if src is None:
             print(f"  MISSING: {icon}")
