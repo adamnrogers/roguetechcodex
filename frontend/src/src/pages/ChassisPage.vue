@@ -63,14 +63,6 @@
             <!-- Component layout table -->
             <div class="subsection">
               <h3 class="subsection-title">Component Layout</h3>
-              <div v-if="data.variants.length > 1" class="variant-selector">
-                <label class="vs-label">Variant</label>
-                <select v-model="selectedVariantId" class="vs-select">
-                  <option v-for="v in data.variants" :key="v.id" :value="v.id">
-                    {{ v.variant_name || v.id }}
-                  </option>
-                </select>
-              </div>
               <ComponentLayoutTable
                 :variant-locations="selectedVariant?.locations ?? []"
                 :loadout-locations="selectedVariant?.loadout_locations ?? []"
