@@ -83,6 +83,7 @@ export interface ChassisDetail {
   unit_type: string
   weight_class: string | null
   tonnage: number | null
+  icon: string | null
   variants: VariantDetail[]
 }
 

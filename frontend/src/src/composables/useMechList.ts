@@ -9,6 +9,7 @@ export interface ChassisSummary {
   weight_class: string | null
   tonnage: number | null
   variant_count: number
+  icon: string | null
 }
 
 export interface ChassisListResponse {
