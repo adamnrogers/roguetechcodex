@@ -19,6 +19,16 @@ export function humanizeTag(raw: string): string {
 }
 
 /**
+ * Convert a NoBiome_* chassis tag into a human-readable biome name.
+ *   "NoBiome_lunarVacuum"   → "Lunar Vacuum"
+ *   "NoBiome_martianVacuum" → "Martian Vacuum"
+ */
+export function humanizeBiomeTag(tag: string): string {
+  const body = tag.startsWith('NoBiome_') ? tag.slice('NoBiome_'.length) : tag
+  return humanizeTag(body)
+}
+
+/**
  * Maps raw faction tags to canonical display names.
  * All keys are lowercase — canonicalizeFaction uses case-insensitive lookup,
  * so both "clanwolf" and "ClanWolf" resolve correctly.

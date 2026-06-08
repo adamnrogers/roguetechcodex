@@ -169,6 +169,16 @@
             </ul>
           </div>
 
+          <!-- Biome Restrictions -->
+          <div v-if="biomeRestrictions.length" class="sidebar-section">
+            <div class="sidebar-section-header">Biome Restrictions</div>
+            <ul class="sidebar-list">
+              <li v-for="biome in biomeRestrictions" :key="biome" class="sidebar-plain">
+                {{ biome }}
+              </li>
+            </ul>
+          </div>
+
         </aside>
       </div>
     </template>
@@ -180,7 +190,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChassisDetail } from '../composables/useChassisDetail'
 import { renderRichText } from '../utils/richText'
-import { humanizeMod, canonicalizeFaction } from '../utils/humanize'
+import { humanizeMod, canonicalizeFaction, humanizeBiomeTag } from '../utils/humanize'
 import ComponentLayoutTable from '../components/ComponentLayoutTable.vue'
 import AffinityTable from '../components/AffinityTable.vue'
 
@@ -224,6 +234,21 @@ const allFactions = computed(() => {
     }
   }
   return [...seen.keys()].sort()
+})
+
+const biomeRestrictions = computed(() => {
+  if (!data.value) return []
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const v of data.value.variants) {
+    for (const tag of v.chassis_tags) {
+      if (typeof tag === 'string' && tag.startsWith('NoBiome_') && !seen.has(tag)) {
+        seen.add(tag)
+        result.push(humanizeBiomeTag(tag))
+      }
+    }
+  }
+  return result.sort()
 })
 
 const HP_BADGE_STYLES: Record<string, { bg: string; color: string }> = {
@@ -522,6 +547,11 @@ const parsedHardpoints = computed(() => {
   list-style: none;
   margin-left: -14px;
   padding: 4px 0;
+}
+
+.sidebar-plain {
+  font-size: 12px;
+  color: var(--text-primary);
 }
 
 /* ── Loading skeleton ──────────────────────────────────────── */

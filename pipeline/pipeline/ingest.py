@@ -50,7 +50,7 @@ EXCLUDED_FRAGMENTS = ("MonsterMashup",)
 
 SYSTEM_TAG_PREFIXES = (
     "unit_", "lance_", "pilot_", "mr-", "ai_", "tag_", "argo_",
-    "NoBiome_", "apply_", "TBAS_",
+    "apply_", "TBAS_",
 )
 
 EXCLUDED_TAGS = frozenset({"BLACKLISTED", "component_type_stock"})
