@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS chassis (
     ui_name         TEXT NOT NULL,      -- "Adder"
     unit_type       TEXT NOT NULL,      -- 'mech'|'vehicle'|'vtol'|'battle_armor'
     weight_class    TEXT,               -- 'LIGHT'|'MEDIUM'|'HEAVY'|'ASSAULT'
-    tonnage         REAL
+    tonnage         REAL,
+    icon            TEXT
 );
 
 -- Variants — one row per chassisdef_*.json file
