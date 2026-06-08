@@ -103,7 +103,7 @@ def main() -> None:
             print(f"  MISSING: {icon}")
             missing += 1
             continue
-        if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
+        if dst.exists() and dst.stat().st_mtime > src.stat().st_mtime:
             skipped += 1
             continue
         _convert(src, dst)

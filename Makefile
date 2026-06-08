@@ -1,6 +1,6 @@
 .PHONY: build up down pipeline logs logs-api shell-api shell-pipeline fresh ps help \
         dev dev-down dev-build dev-pipeline dev-logs \
-        standalone-run standalone-build
+        standalone-run standalone-build portraits portraits-zip
 
 # Load .env if present
 ifneq (,$(wildcard .env))
