@@ -5,6 +5,7 @@
       <RouterLink to="/mechs"     class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
       <RouterLink to="/vehicles"  class="nav-tab" active-class="nav-tab--active">Vehicles</RouterLink>
       <RouterLink to="/vtols"     class="nav-tab" active-class="nav-tab--active">VTOLs</RouterLink>
+      <RouterLink to="/battle-armor" class="nav-tab" active-class="nav-tab--active">Battle Armor</RouterLink>
       <RouterLink to="/equipment" class="nav-tab" active-class="nav-tab--active">Equipment</RouterLink>
       <RouterLink to="/weapons"   class="nav-tab" active-class="nav-tab--active">Weapons</RouterLink>
       <RouterLink to="/quirks"    class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>

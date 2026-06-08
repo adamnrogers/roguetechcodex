@@ -86,10 +86,12 @@ export interface ChassisDetail {
   variants: VariantDetail[]
 }
 
-export function useChassisDetail(prefabBase: string, isVehicle = false) {
+export function useChassisDetail(prefabBase: string, isVehicle = false, isBattleArmor = false) {
   const endpoint = isVehicle
     ? `/api/v1/vehicles/${prefabBase}`
-    : `/api/v1/mechs/${prefabBase}`
+    : isBattleArmor
+      ? `/api/v1/battle-armor/${prefabBase}`
+      : `/api/v1/mechs/${prefabBase}`
   return useQuery({
     queryKey: ['chassis', prefabBase],
     queryFn: () => apiFetch<ChassisDetail>(endpoint),

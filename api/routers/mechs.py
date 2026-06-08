@@ -383,6 +383,9 @@ async def get_stats(db: aiosqlite.Connection = Depends(get_db)) -> StatsResponse
 # GET /api/v1/mechs  — browse (one row per true chassis)
 # ---------------------------------------------------------------------------
 
+_MECH_ENDPOINT_UNIT_TYPES = {"mech", "battle_armor"}
+
+
 @router.get("/mechs", response_model=ChassisListResponse)
 async def list_mechs(
     q: Optional[str] = Query(default=None),
@@ -391,6 +394,7 @@ async def list_mechs(
     faction: Optional[str] = Query(default=None),
     mod: Optional[str] = Query(default=None),
     tag: Optional[str] = Query(default=None),
+    unit_type: Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -400,7 +404,8 @@ async def list_mechs(
     order_col = _SORT_COLUMN_MAP.get(sort, "c.ui_name")
     order_dir = "DESC" if sort_dir.lower() == "desc" else "ASC"
 
-    conditions: list[str] = ["c.unit_type = 'mech'"]
+    resolved_unit_type = unit_type if unit_type in _MECH_ENDPOINT_UNIT_TYPES else "mech"
+    conditions: list[str] = [f"c.unit_type = '{resolved_unit_type}'"]
     params: list = []
 
     if q:
@@ -526,6 +531,78 @@ async def get_mech(
     }
 
     # Fetch all affinities once; resolve Global+Chassis pre-matched + quirk map for per-variant
+    try:
+        async with db.execute(
+            "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
+        ) as cur:
+            affinity_rows = await cur.fetchall()
+        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base)
+    except Exception:
+        chassis_affs, quirk_map = [], {}
+
+    variants = [
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map)
+        for vrow in variant_rows
+    ]
+
+    return ChassisDetail(
+        prefab_base=chassis_row["prefab_base"],
+        ui_name=chassis_row["ui_name"],
+        unit_type=chassis_row["unit_type"],
+        weight_class=chassis_row["weight_class"],
+        tonnage=chassis_row["tonnage"],
+        variants=variants,
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/battle-armor/{prefab_base}  — battle armor detail
+# ---------------------------------------------------------------------------
+
+@router.get("/battle-armor/{prefab_base}", response_model=ChassisDetail)
+async def get_battle_armor(
+    prefab_base: str,
+    db: aiosqlite.Connection = Depends(get_db),
+) -> ChassisDetail:
+    async with db.execute(
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage FROM chassis WHERE prefab_base = ? AND unit_type = 'battle_armor'",
+        (prefab_base,),
+    ) as cur:
+        chassis_row = await cur.fetchone()
+
+    if chassis_row is None:
+        raise HTTPException(status_code=404, detail="Battle armor chassis not found")
+
+    async with db.execute(
+        """
+        SELECT id, variant_name, details, unit_type, weight_class, tonnage,
+               movement_cap_def_id, top_speed, max_jumpjets, drop_cost_modifier,
+               chassis_tags, locations_json, fixed_equipment_json,
+               chassis_defaults_json, multi_defaults_json,
+               lootable_unique_mech, source_mod
+        FROM variant
+        WHERE chassis_id = ?
+        ORDER BY variant_name ASC
+        """,
+        (prefab_base,),
+    ) as cur:
+        variant_rows = await cur.fetchall()
+
+    async with db.execute(
+        """
+        SELECT id, variant_id, unit_tags, era_tags, faction_tags,
+               inventory_json, locations_json, required_to_spawn_tags
+        FROM loadout
+        WHERE chassis_id = ?
+        """,
+        (prefab_base,),
+    ) as cur:
+        loadout_rows = await cur.fetchall()
+
+    loadout_by_variant: dict[str, aiosqlite.Row] = {
+        row["variant_id"]: row for row in loadout_rows
+    }
+
     try:
         async with db.execute(
             "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"

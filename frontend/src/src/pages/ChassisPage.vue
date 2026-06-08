@@ -187,14 +187,15 @@ import AffinityTable from '../components/AffinityTable.vue'
 const route = useRoute()
 const router = useRouter()
 const prefabBase = route.params.prefabBase as string
-const isVehicle = route.path.startsWith('/vehicles/')
+const isVehicle     = route.path.startsWith('/vehicles/')
+const isBattleArmor = route.path.startsWith('/battle-armor/')
 
-const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle)
+const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle, isBattleArmor)
 
-const browsePath = isVehicle ? '/vehicles' : '/mechs'
-const browseLabel = isVehicle ? 'Vehicles' : 'Mechs'
+const browsePath  = isVehicle ? '/vehicles' : isBattleArmor ? '/battle-armor' : '/mechs'
+const browseLabel = isVehicle ? 'Vehicles' : isBattleArmor ? 'Battle Armor' : 'Mechs'
 const bayLabel = computed(() =>
-  isVehicle ? 'Vehicle Bay' : 'Mech Bay'
+  isVehicle ? 'Vehicle Bay' : isBattleArmor ? 'Battle Armor Bay' : 'Mech Bay'
 )
 
 // Which variant's data is shown

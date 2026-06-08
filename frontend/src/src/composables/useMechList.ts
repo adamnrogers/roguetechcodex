@@ -32,20 +32,22 @@ export interface MechFilters {
 export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string> = 'mech') {
   const modeRef = computed(() => (typeof mode === 'string' ? mode : mode.value))
 
-  const isMech    = computed(() => modeRef.value === 'mech')
-  const isVehicle = computed(() => modeRef.value === 'vehicle')
-  const isVtol    = computed(() => modeRef.value === 'vtol')
+  const isMech        = computed(() => modeRef.value === 'mech')
+  const isVehicle     = computed(() => modeRef.value === 'vehicle')
+  const isVtol        = computed(() => modeRef.value === 'vtol')
+  const isBattleArmor = computed(() => modeRef.value === 'battle_armor')
 
   return useQuery({
     queryKey: computed(() => [modeRef.value, filters.value]),
     queryFn: () => {
-      if (isMech.value) {
+      if (isMech.value || isBattleArmor.value) {
         return apiFetch<ChassisListResponse>('/api/v1/mechs', {
           q: filters.value.q || undefined,
           weight_class: filters.value.weightClass.length ? filters.value.weightClass : undefined,
           era: filters.value.era || undefined,
           faction: filters.value.faction || undefined,
           tag: filters.value.tag || undefined,
+          unit_type: isBattleArmor.value ? 'battle_armor' : 'mech',
           page: filters.value.page,
           page_size: 60,
           sort: filters.value.sort,
