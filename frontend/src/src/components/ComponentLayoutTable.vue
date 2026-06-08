@@ -29,8 +29,12 @@
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.right.items" :key="i" class="cell-item" :data-itype="item.type">
-                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
-                  <template v-else>{{ item.text }}</template>
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </RouterLink>
+                  <template v-else>
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </template>
                 </div>
                 <span v-if="!row.right.items?.length" class="cell-empty">—</span>
               </template>
@@ -50,8 +54,12 @@
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.center.items" :key="i" class="cell-item" :data-itype="item.type">
-                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
-                  <template v-else>{{ item.text }}</template>
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </RouterLink>
+                  <template v-else>
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </template>
                 </div>
                 <span v-if="!row.center.items?.length" class="cell-empty">—</span>
               </template>
@@ -68,8 +76,12 @@
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.left.items" :key="i" class="cell-item" :data-itype="item.type">
-                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
-                  <template v-else>{{ item.text }}</template>
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </RouterLink>
+                  <template v-else>
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </template>
                 </div>
                 <span v-if="!row.left.items?.length" class="cell-empty">—</span>
               </template>
@@ -85,8 +97,12 @@
             <td class="data-cell" colspan="3">
               <template v-if="unlocatedFixed.length">
                 <div v-for="(item, i) in unlocatedFixed" :key="i" class="cell-item" :data-itype="item.type">
-                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
-                  <template v-else>{{ item.text }}</template>
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </RouterLink>
+                  <template v-else>
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </template>
                 </div>
               </template>
               <span v-else class="cell-empty">—</span>
@@ -97,8 +113,12 @@
             <td class="data-cell" colspan="3">
               <template v-if="unlocatedDynamic.length">
                 <div v-for="(item, i) in unlocatedDynamic" :key="i" class="cell-item" :data-itype="item.type">
-                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
-                  <template v-else>{{ item.text }}</template>
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </RouterLink>
+                  <template v-else>
+                    <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
+                  </template>
                 </div>
               </template>
               <span v-else class="cell-empty">—</span>
@@ -203,8 +223,16 @@ const invByLoc = computed(() => {
   return m
 })
 
+const WEAPON_CAT_COLOURS: Record<string, string> = {
+  Ballistic: '#58a6ff',
+  Energy:    '#3fb950',
+  Missile:   '#b482ff',
+  Melee:     '#ff5555',
+  Support:   '#f0883e',
+}
+
 interface HpBadge { label: string; style: Record<string, string> }
-interface CellItem { text: string; type: string; route: string | null }
+interface CellItem { text: string; type: string; route: string | null; weaponCategory: string | null }
 interface CellData {
   healthLines?: string[]
   hps?: HpBadge[]
@@ -233,18 +261,21 @@ function gearRoute(id: string, defType: string): string | null {
   return null
 }
 
-function aggregateItems(rawItems: { component_def_id: string; component_def_type: string }[]): CellItem[] {
-  // Track first-seen defType per id so aggregated items carry the right route
+function aggregateItems(rawItems: { component_def_id: string; component_def_type: string; weapon_category?: string | null }[]): CellItem[] {
+  // Track first-seen defType and weapon_category per id so aggregated items carry the right data
   const counts = new Map<string, number>()
   const defTypes = new Map<string, string>()
+  const weaponCategories = new Map<string, string | null>()
   for (const item of rawItems) {
     counts.set(item.component_def_id, (counts.get(item.component_def_id) ?? 0) + 1)
     if (!defTypes.has(item.component_def_id)) defTypes.set(item.component_def_id, item.component_def_type)
+    if (!weaponCategories.has(item.component_def_id)) weaponCategories.set(item.component_def_id, item.weapon_category ?? null)
   }
   return [...counts.entries()].map(([id, count]) => ({
     text: count > 1 ? `${count}x ${formatName(id)}` : formatName(id),
     type: componentType(id),
     route: gearRoute(id, defTypes.get(id) ?? ''),
+    weaponCategory: weaponCategories.get(id) ?? null,
   }))
 }
 

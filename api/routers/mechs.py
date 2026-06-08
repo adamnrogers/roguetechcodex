@@ -176,6 +176,7 @@ def _parse_inventory(raw: Optional[str]) -> list[InventoryItem]:
             component_def_id=item.get("ComponentDefID", ""),
             component_def_type=item.get("ComponentDefType", ""),
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
+            weapon_category=item.get("weapon_category"),
         )
         for item in items
     ]
@@ -194,6 +195,7 @@ def _parse_equipment(raw: Optional[str]) -> list[EquipmentItem]:
             component_def_id=item.get("ComponentDefID", ""),
             component_def_type=item.get("ComponentDefType", ""),
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
+            weapon_category=item.get("weapon_category"),
         )
         for item in items
     ]

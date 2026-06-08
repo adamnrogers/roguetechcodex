@@ -40,6 +40,7 @@ export interface InventoryItem {
   component_def_id: string
   component_def_type: string
   hardpoint_slot: number
+  weapon_category: string | null
 }
 
 export interface EquipmentItem {
@@ -47,6 +48,7 @@ export interface EquipmentItem {
   component_def_id: string
   component_def_type: string
   hardpoint_slot: number
+  weapon_category: string | null
 }
 
 export interface VariantDetail {

@@ -407,12 +407,28 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
     print(f"  chassis rows inserted : {len(rows):,}")
 
 
-def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) -> dict[str, str]:
+def _enrich_category(items: list, cat_map: dict) -> list:
+    """Inject weapon_category into each item dict where the gear_category_map has a match."""
+    result = []
+    for item in items:
+        cid = item.get("ComponentDefID", "")
+        cat = cat_map.get(cid)
+        result.append({**item, "weapon_category": cat} if cat else item)
+    return result
+
+
+def insert_variants(
+    con: sqlite3.Connection,
+    variant_data: dict,
+    rt_root: Path,
+    gear_category_map: dict[str, str] | None = None,
+) -> dict[str, str]:
     """Insert one variant row per chassisdef file.
     Returns {variant_id: prefab_base} map for loadout linkage.
     """
     known_chassis = {r[0] for r in con.execute("SELECT prefab_base FROM chassis")}
     structural_categories, actuator_exclusions = load_mech_global_defaults(rt_root)
+    cat_map = gear_category_map or {}
     rows = []
     variant_to_chassis: dict[str, str] = {}
 
@@ -447,7 +463,9 @@ def insert_variants(con: sqlite3.Connection, variant_data: dict, rt_root: Path) 
         structural = build_structural_defaults(
             raw_tags, unit_type, structural_categories, actuator_exclusions
         )
-        fixed_equipment = structural + data.get("FixedEquipment", [])
+        fixed_equipment = _enrich_category(
+            structural + data.get("FixedEquipment", []), cat_map
+        )
 
         variant_to_chassis[entity_id] = prefab_base
         rows.append((
@@ -493,9 +511,11 @@ def insert_loadouts(
     loadout_data: dict,
     variant_to_chassis: dict[str, str],
     rt_root: Path,
+    gear_category_map: dict[str, str] | None = None,
 ) -> tuple[int, int]:
     """Insert one loadout row per mechdef file. Returns (inserted, skipped)."""
     known_variants = {r[0] for r in con.execute("SELECT id FROM variant")}
+    cat_map = gear_category_map or {}
     rows = []
     skipped = 0
 
@@ -518,7 +538,7 @@ def insert_loadouts(
             json.dumps(tags),
             era_tags,
             faction_tags,
-            json.dumps(data.get("inventory", [])),
+            json.dumps(_enrich_category(data.get("inventory", []), cat_map)),
             json.dumps(data.get("Locations", [])),
             json.dumps(spawn_items),
             str(path.relative_to(rt_root)),
@@ -703,10 +723,18 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     print(f"  files scanned           : {files_scanned:,}")
     print()
 
+    # Build in-memory weapon category lookup from gear_data before any DB writes.
+    # insert_variants runs before insert_gear, so querying the DB won't work here.
+    gear_category_map: dict[str, str] = {
+        eid: data.get("Category")
+        for eid, (data, _) in gear_data.items()
+        if data.get("Category")
+    }
+
     print("Phase 2 — writing to database...")
     insert_chassis(con, variant_data)
-    variant_to_chassis = insert_variants(con, variant_data, rt_root)
-    inserted, skipped = insert_loadouts(con, loadout_data, variant_to_chassis, rt_root)
+    variant_to_chassis = insert_variants(con, variant_data, rt_root, gear_category_map)
+    inserted, skipped = insert_loadouts(con, loadout_data, variant_to_chassis, rt_root, gear_category_map)
     print(f"  loadout rows inserted : {inserted:,}")
     if skipped:
         print(f"  loadouts skipped (no matching variant) : {skipped:,}")

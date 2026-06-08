@@ -54,6 +54,7 @@ class InventoryItem(BaseModel):
     component_def_id: str
     component_def_type: str
     hardpoint_slot: int
+    weapon_category: Optional[str] = None
 
 
 class EquipmentItem(BaseModel):
@@ -61,6 +62,7 @@ class EquipmentItem(BaseModel):
     component_def_id: str
     component_def_type: str
     hardpoint_slot: int
+    weapon_category: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
