@@ -265,23 +265,24 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
         key = _chassis_group_key(entity_id, data)
         if key not in chassis:
             desc = data.get("Description", {})
-            # For vehicles, prefer VAssemblyVariant.PrefabID for the chassis name
             v_prefab = data.get("Custom", {}).get("VAssemblyVariant", {}).get("PrefabID", "")
             ui_name = v_prefab or desc.get("UIName") or desc.get("Name") or key
+            raw_icon = desc.get("Icon", "")
             chassis[key] = {
                 "prefab_base": key,
                 "ui_name": ui_name,
                 "unit_type": detect_unit_type(data),
                 "weight_class": data.get("weightClass"),
                 "tonnage": data.get("Tonnage"),
+                "icon": raw_icon.strip() or None,
             }
 
     rows = [
-        (c["prefab_base"], c["ui_name"], c["unit_type"], c["weight_class"], c["tonnage"])
+        (c["prefab_base"], c["ui_name"], c["unit_type"], c["weight_class"], c["tonnage"], c["icon"])
         for c in chassis.values()
     ]
     con.executemany(
-        "INSERT OR REPLACE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage) VALUES (?,?,?,?,?)",
+        "INSERT OR REPLACE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage, icon) VALUES (?,?,?,?,?,?)",
         rows,
     )
     con.commit()
