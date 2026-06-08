@@ -159,7 +159,7 @@ function clearAll() {
 .dot-medium  { background: var(--badge-medium-fg); }
 .dot-heavy   { background: var(--badge-heavy-fg); }
 .dot-assault { background: var(--badge-assault-fg); }
-.tonnage-range { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+.tonnage-range { display: flex; flex-direction: column; gap: 8px; padding: 0 10px; }
 .tonnage-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
 .tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; flex-shrink: 0; }
