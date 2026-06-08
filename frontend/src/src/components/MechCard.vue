@@ -1,12 +1,23 @@
 <template>
   <RouterLink :to="cardLink" class="mech-card-link">
     <div class="mech-card">
-      <div class="mech-name">{{ ui_name }}</div>
-      <div class="mech-meta">
-        <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
-        <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
+      <div class="card-body">
+        <img
+          v-if="portraitSrc"
+          :src="portraitSrc"
+          class="mech-portrait"
+          alt=""
+          @error="portraitSrc = null"
+        />
+        <div class="card-text">
+          <div class="mech-name">{{ ui_name }}</div>
+          <div class="mech-meta">
+            <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
+            <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
+          </div>
+          <div class="mech-type">{{ unitTypeLabel }}</div>
+        </div>
       </div>
-      <div class="mech-type">{{ unitTypeLabel }}</div>
       <div class="mech-footer">
         <span class="mech-vars">{{ variant_count }} variants</span>
       </div>
@@ -15,7 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { portraitUrl } from '../utils/portrait'
 
 interface MechCardProps {
   prefab_base: string
@@ -24,9 +36,13 @@ interface MechCardProps {
   weight_class: string | null
   tonnage: number | null
   variant_count: number
+  icon: string | null
 }
 
 const props = defineProps<MechCardProps>()
+
+const portraitSrc = ref<string | null>(portraitUrl(props.icon))
+watch(() => props.icon, (icon) => { portraitSrc.value = portraitUrl(icon) })
 
 const cardLink = computed(() => {
   const isVehicle = props.unit_type === 'vehicle' || props.unit_type === 'vtol'
@@ -68,6 +84,24 @@ const unitTypeLabel = computed(() => {
   background: var(--bg-card-hover);
   box-shadow: var(--card-shadow-hover);
 }
+.card-body {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+}
+.mech-portrait {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+}
+.card-text {
+  flex: 1;
+  min-width: 0;
+}
 .mech-name {
   color: var(--text-primary);
   font-size: 15px;
@@ -102,7 +136,6 @@ const unitTypeLabel = computed(() => {
   color: var(--text-muted);
   font-size: 12px;
   margin-top: 5px;
-  flex: 1;
 }
 .mech-footer {
   display: flex;
