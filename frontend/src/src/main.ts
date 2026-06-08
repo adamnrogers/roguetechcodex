@@ -18,6 +18,7 @@ const router = createRouter({
     { path: '/vtols', component: BrowsePage, props: { mode: 'vtol' } },
     { path: '/mechs/:prefabBase', component: ChassisPage },
     { path: '/vehicles/:prefabBase', component: ChassisPage },
+    { path: '/vtols/:prefabBase', component: ChassisPage },
     { path: '/equipment', component: GearBrowsePage, props: { mode: 'equipment' } },
     { path: '/equipment/:gearId', component: GearPage },
     { path: '/weapons', component: GearBrowsePage, props: { mode: 'weapon' } },
