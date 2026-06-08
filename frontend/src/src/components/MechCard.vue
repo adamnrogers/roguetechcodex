@@ -7,7 +7,7 @@
           :src="portraitSrc"
           class="mech-portrait"
           alt=""
-          @error="portraitSrc = null"
+          @error="portraitError = true"
         />
         <div class="card-text">
           <div class="mech-name">{{ ui_name }}</div>
@@ -41,8 +41,11 @@ interface MechCardProps {
 
 const props = defineProps<MechCardProps>()
 
-const portraitSrc = ref<string | null>(portraitUrl(props.icon))
-watch(() => props.icon, (icon) => { portraitSrc.value = portraitUrl(icon) })
+const portraitError = ref(false)
+watch(() => props.icon, () => { portraitError.value = false })
+const portraitSrc = computed(() =>
+  portraitError.value ? null : portraitUrl(props.icon)
+)
 
 const cardLink = computed(() => {
   const isVehicle = props.unit_type === 'vehicle' || props.unit_type === 'vtol'
