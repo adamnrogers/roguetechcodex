@@ -397,6 +397,10 @@ async def list_mechs(
     mod: Optional[str] = Query(default=None),
     tag: Optional[str] = Query(default=None),
     unit_type: Optional[str] = Query(default=None),
+    min_tonnage: Optional[float] = Query(default=None),
+    max_tonnage: Optional[float] = Query(default=None),
+    has_lower_arm: Optional[bool] = Query(default=None),
+    has_hand: Optional[bool] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -439,6 +443,39 @@ async def list_mechs(
     if tag:
         conditions.append("v.chassis_tags LIKE ?")
         params.append(f'%"{tag}"%')
+
+    if min_tonnage is not None:
+        conditions.append("c.tonnage >= ?")
+        params.append(min_tonnage)
+    if max_tonnage is not None:
+        conditions.append("c.tonnage <= ?")
+        params.append(max_tonnage)
+
+    if has_lower_arm is True:
+        conditions.append(
+            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE "
+            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
+        )
+        params.extend(['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%'])
+    elif has_lower_arm is False:
+        conditions.append(
+            "c.prefab_base NOT IN (SELECT DISTINCT chassis_id FROM variant WHERE "
+            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
+        )
+        params.extend(['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%'])
+
+    if has_hand is True:
+        conditions.append(
+            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE "
+            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
+        )
+        params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
+    elif has_hand is False:
+        conditions.append(
+            "c.prefab_base NOT IN (SELECT DISTINCT chassis_id FROM variant WHERE "
+            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
+        )
+        params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
 
     where_clause = " AND ".join(conditions)
 
@@ -646,6 +683,8 @@ async def list_vehicles(
     q: Optional[str] = Query(default=None),
     weight_class: Optional[list[str]] = Query(default=None),
     unit_type: Optional[str] = Query(default=None),
+    min_tonnage: Optional[float] = Query(default=None),
+    max_tonnage: Optional[float] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -670,6 +709,13 @@ async def list_vehicles(
         placeholders = ",".join("?" * len(weight_class))
         conditions.append(f"c.weight_class IN ({placeholders})")
         params.extend(weight_class)
+
+    if min_tonnage is not None:
+        conditions.append("c.tonnage >= ?")
+        params.append(min_tonnage)
+    if max_tonnage is not None:
+        conditions.append("c.tonnage <= ?")
+        params.append(max_tonnage)
 
     where_clause = " AND ".join(conditions)
 

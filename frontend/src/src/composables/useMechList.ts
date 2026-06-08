@@ -29,6 +29,10 @@ export interface MechFilters {
   page: number
   sort: string
   sortDir: string
+  minTonnage: number | null
+  maxTonnage: number | null
+  hasLowerArm: boolean | null
+  hasHand: boolean | null
 }
 
 export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string> = 'mech') {
@@ -50,6 +54,10 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
           faction: filters.value.faction || undefined,
           tag: filters.value.tag || undefined,
           unit_type: isBattleArmor.value ? 'battle_armor' : 'mech',
+          min_tonnage: filters.value.minTonnage ?? undefined,
+          max_tonnage: filters.value.maxTonnage ?? undefined,
+          has_lower_arm: filters.value.hasLowerArm ?? undefined,
+          has_hand: filters.value.hasHand ?? undefined,
           page: filters.value.page,
           page_size: 60,
           sort: filters.value.sort,
@@ -60,6 +68,8 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
         q: filters.value.q || undefined,
         weight_class: filters.value.weightClass.length ? filters.value.weightClass : undefined,
         unit_type: isVehicle.value ? 'vehicle' : isVtol.value ? 'vtol' : undefined,
+        min_tonnage: filters.value.minTonnage ?? undefined,
+        max_tonnage: filters.value.maxTonnage ?? undefined,
         page: filters.value.page,
         page_size: 60,
         sort: filters.value.sort,

@@ -23,6 +23,49 @@
         {{ eraOpt }}
       </label>
     </div>
+    <div v-if="['mech','vehicle','vtol','battle_armor'].includes(mode)" class="filter-section">
+      <h3 class="filter-title">Tonnage</h3>
+      <div class="tonnage-range">
+        <div class="tonnage-labels">
+          <span>{{ minTonnage ?? 0 }}t</span>
+          <span>{{ maxTonnage ?? 100 }}t</span>
+        </div>
+        <input type="range" min="0" max="100" step="5"
+          :value="minTonnage ?? 0"
+          @input="onMinChange"
+          class="range-slider" />
+        <input type="range" min="0" max="100" step="5"
+          :value="maxTonnage ?? 100"
+          @input="onMaxChange"
+          class="range-slider" />
+      </div>
+    </div>
+    <div v-if="mode === 'mech'" class="filter-section">
+      <h3 class="filter-title">Arm Actuators</h3>
+      <div v-for="actuator in actuators" :key="actuator.key" class="actuator-row">
+        <span class="actuator-label">{{ actuator.label }}</span>
+        <div class="actuator-toggles">
+          <button
+            class="act-btn"
+            :class="{ active: getActuatorValue(actuator.key) === true }"
+            @click="setActuator(actuator.key, true)"
+            title="Required"
+          >✓</button>
+          <button
+            class="act-btn"
+            :class="{ active: getActuatorValue(actuator.key) === null }"
+            @click="setActuator(actuator.key, null)"
+            title="Any"
+          >—</button>
+          <button
+            class="act-btn act-btn-exclude"
+            :class="{ active: getActuatorValue(actuator.key) === false }"
+            @click="setActuator(actuator.key, false)"
+            title="Excluded"
+          >✗</button>
+        </div>
+      </div>
+    </div>
     <a class="clear-all" href="#" @click.prevent="clearAll">Clear All</a>
   </aside>
 </template>
@@ -32,11 +75,20 @@ const props = defineProps<{
   mode: string
   modelValue: string[]
   era: string
+  minTonnage: number | null
+  maxTonnage: number | null
+  hasLowerArm: boolean | null
+  hasHand: boolean | null
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]]
   'update:era': [value: string]
+  'update:minTonnage': [value: number | null]
+  'update:maxTonnage': [value: number | null]
+  'update:hasLowerArm': [value: boolean | null]
+  'update:hasHand': [value: boolean | null]
+  'clearAll': []
 }>()
 
 const weightClasses = [
@@ -46,6 +98,11 @@ const weightClasses = [
   { value: 'ASSAULT', label: 'Assault', cls: 'dot-assault' },
 ]
 const eras = ['Succession Wars', 'Clan Invasion', 'Civil War', 'Jihad', 'Dark Age']
+
+const actuators = [
+  { key: 'hasLowerArm', label: 'Lower Arm' },
+  { key: 'hasHand',     label: 'Hand' },
+]
 
 function toggleWeightClass(value: string) {
   const current = props.modelValue
@@ -57,13 +114,38 @@ function toggleWeightClass(value: string) {
 }
 
 function toggleEra(value: string) {
-  // Single select: clicking selected era deselects it
   emit('update:era', props.era === value ? '' : value)
+}
+
+function onMinChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  const max = props.maxTonnage ?? 100
+  emit('update:minTonnage', val <= 0 ? null : Math.min(val, max))
+}
+
+function onMaxChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value)
+  const min = props.minTonnage ?? 0
+  emit('update:maxTonnage', val >= 100 ? null : Math.max(val, min))
+}
+
+function getActuatorValue(key: string): boolean | null {
+  return key === 'hasLowerArm' ? props.hasLowerArm : props.hasHand
+}
+
+function setActuator(key: string, value: boolean | null) {
+  if (key === 'hasLowerArm') emit('update:hasLowerArm', value)
+  else emit('update:hasHand', value)
 }
 
 function clearAll() {
   emit('update:modelValue', [])
   emit('update:era', '')
+  emit('update:minTonnage', null)
+  emit('update:maxTonnage', null)
+  emit('update:hasLowerArm', null)
+  emit('update:hasHand', null)
+  emit('clearAll')
 }
 </script>
 
@@ -100,6 +182,30 @@ function clearAll() {
 .dot-medium  { background: var(--badge-medium-fg); }
 .dot-heavy   { background: var(--badge-heavy-fg); }
 .dot-assault { background: var(--badge-assault-fg); }
+.tonnage-range { display: flex; flex-direction: column; gap: 6px; }
+.tonnage-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+.range-slider { width: 100%; accent-color: var(--accent-blue); cursor: pointer; }
+.actuator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.actuator-label { color: var(--text-primary); }
+.actuator-toggles { display: flex; gap: 4px; }
+.act-btn {
+  background: var(--bg-card);
+  border: var(--border-default);
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.act-btn.active { background: rgba(88,166,255,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+.act-btn-exclude.active { background: rgba(240,136,62,0.15); border-color: var(--accent-orange); color: var(--accent-orange); }
 .clear-all {
   display: block;
   margin-top: 8px;

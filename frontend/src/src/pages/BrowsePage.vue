@@ -4,8 +4,17 @@
       :mode="mode"
       :modelValue="filters.weightClass"
       :era="filters.era"
+      :minTonnage="filters.minTonnage"
+      :maxTonnage="filters.maxTonnage"
+      :hasLowerArm="filters.hasLowerArm"
+      :hasHand="filters.hasHand"
       @update:modelValue="onWeightClassChange"
       @update:era="onEraChange"
+      @update:minTonnage="v => filters = { ...filters, minTonnage: v, page: 1 }"
+      @update:maxTonnage="v => filters = { ...filters, maxTonnage: v, page: 1 }"
+      @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
+      @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
+      @clearAll="filters = { ...filters, weightClass: [], era: '', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, page: 1 }"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -109,7 +118,11 @@ function readFiltersFromRoute(): MechFilters {
   const page = parseInt(route.query.page as string ?? '1') || 1
   const sort = route.query.sort as string ?? 'name'
   const sortDir = route.query.dir as string ?? 'asc'
-  return { q, weightClass, era, faction, tag, page, sort, sortDir }
+  const minT = route.query.min_t ? parseFloat(route.query.min_t as string) : null
+  const maxT = route.query.max_t ? parseFloat(route.query.max_t as string) : null
+  const hasLowerArm = route.query.la === '1' ? true : route.query.la === '0' ? false : null
+  const hasHand = route.query.ha === '1' ? true : route.query.ha === '0' ? false : null
+  return { q, weightClass, era, faction, tag, page, sort, sortDir, minTonnage: minT, maxTonnage: maxT, hasLowerArm, hasHand }
 }
 
 function clearTag() {
@@ -157,7 +170,7 @@ function nextPage() {
 watch(() => props.mode, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchInput.value = ''
-  filters.value = { q: '', weightClass: [], era: '', faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc' }
+  filters.value = { q: '', weightClass: [], era: '', faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null }
 })
 
 // Sync filters to URL
@@ -171,6 +184,10 @@ watch(filters, (f) => {
   if (f.page > 1) query.page = String(f.page)
   if (f.sort !== 'name') query.sort = f.sort
   if (f.sortDir !== 'asc') query.dir = f.sortDir
+  if (f.minTonnage !== null) query.min_t = String(f.minTonnage)
+  if (f.maxTonnage !== null) query.max_t = String(f.maxTonnage)
+  if (f.hasLowerArm !== null) query.la = f.hasLowerArm ? '1' : '0'
+  if (f.hasHand !== null) query.ha = f.hasHand ? '1' : '0'
   router.replace({ query })
 }, { deep: true })
 
