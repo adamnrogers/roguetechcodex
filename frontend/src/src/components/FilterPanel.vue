@@ -46,29 +46,14 @@
     </div>
     <div v-if="mode === 'mech'" class="filter-section">
       <h3 class="filter-title">Arm Actuators</h3>
-      <div v-for="actuator in actuators" :key="actuator.key" class="actuator-row">
-        <span class="actuator-label">{{ actuator.label }}</span>
-        <div class="actuator-toggles">
-          <button
-            class="act-btn"
-            :class="{ active: getActuatorValue(actuator.key) === true }"
-            @click="setActuator(actuator.key, true)"
-            title="Required"
-          >✓</button>
-          <button
-            class="act-btn"
-            :class="{ active: getActuatorValue(actuator.key) === null }"
-            @click="setActuator(actuator.key, null)"
-            title="Any"
-          >—</button>
-          <button
-            class="act-btn act-btn-exclude"
-            :class="{ active: getActuatorValue(actuator.key) === false }"
-            @click="setActuator(actuator.key, false)"
-            title="Excluded"
-          >✗</button>
-        </div>
-      </div>
+      <label class="filter-check">
+        <input type="checkbox" :checked="!!hasLowerArm" @change="emit('update:hasLowerArm', hasLowerArm ? null : true)" />
+        Lower Arm
+      </label>
+      <label class="filter-check">
+        <input type="checkbox" :checked="!!hasHand" @change="emit('update:hasHand', hasHand ? null : true)" />
+        Hand
+      </label>
     </div>
     <a class="clear-all" href="#" @click.prevent="clearAll">Clear All</a>
   </aside>
@@ -103,10 +88,6 @@ const weightClasses = [
 ]
 const eras = ['Succession Wars', 'Clan Invasion', 'Civil War', 'Jihad', 'Dark Age']
 
-const actuators = [
-  { key: 'hasLowerArm', label: 'Lower Arm' },
-  { key: 'hasHand',     label: 'Hand' },
-]
 
 function toggleWeightClass(value: string) {
   const current = props.modelValue
@@ -133,14 +114,6 @@ function onMaxChange(e: Event) {
   emit('update:maxTonnage', val >= 420 ? null : Math.max(val, min))
 }
 
-function getActuatorValue(key: string): boolean | null {
-  return key === 'hasLowerArm' ? props.hasLowerArm : props.hasHand
-}
-
-function setActuator(key: string, value: boolean | null) {
-  if (key === 'hasLowerArm') emit('update:hasLowerArm', value)
-  else emit('update:hasHand', value)
-}
 
 function clearAll() {
   emit('update:modelValue', [])
@@ -191,27 +164,6 @@ function clearAll() {
 .tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
 .tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: right; flex-shrink: 0; }
 .range-slider { flex: 1; accent-color: var(--accent-blue); cursor: pointer; }
-.actuator-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-.actuator-label { color: var(--text-primary); }
-.actuator-toggles { display: flex; gap: 4px; }
-.act-btn {
-  background: var(--bg-card);
-  border: var(--border-default);
-  color: var(--text-muted);
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
-}
-.act-btn.active { background: rgba(88,166,255,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
-.act-btn-exclude.active { background: rgba(240,136,62,0.15); border-color: var(--accent-orange); color: var(--accent-orange); }
 .clear-all {
   display: block;
   margin-top: 8px;

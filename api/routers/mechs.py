@@ -457,22 +457,9 @@ async def list_mechs(
             "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
         )
         params.extend(['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%'])
-    elif has_lower_arm is False:
-        conditions.append(
-            "c.prefab_base NOT IN (SELECT DISTINCT chassis_id FROM variant WHERE "
-            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
-        )
-        params.extend(['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%'])
-
     if has_hand is True:
         conditions.append(
             "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE "
-            "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
-        )
-        params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
-    elif has_hand is False:
-        conditions.append(
-            "c.prefab_base NOT IN (SELECT DISTINCT chassis_id FROM variant WHERE "
             "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
         )
         params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
