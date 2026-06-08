@@ -28,7 +28,10 @@
                 <span v-if="!row.right.hps?.length" class="cell-empty">—</span>
               </template>
               <template v-else>
-                <div v-for="(item, i) in row.right.items" :key="i" class="cell-item" :data-itype="item.type">{{ item.text }}</div>
+                <div v-for="(item, i) in row.right.items" :key="i" class="cell-item" :data-itype="item.type">
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
+                  <template v-else>{{ item.text }}</template>
+                </div>
                 <span v-if="!row.right.items?.length" class="cell-empty">—</span>
               </template>
             </td>
@@ -46,7 +49,10 @@
                 <span v-if="!row.center.hps?.length" class="cell-empty">—</span>
               </template>
               <template v-else>
-                <div v-for="(item, i) in row.center.items" :key="i" class="cell-item" :data-itype="item.type">{{ item.text }}</div>
+                <div v-for="(item, i) in row.center.items" :key="i" class="cell-item" :data-itype="item.type">
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
+                  <template v-else>{{ item.text }}</template>
+                </div>
                 <span v-if="!row.center.items?.length" class="cell-empty">—</span>
               </template>
             </td>
@@ -61,7 +67,10 @@
                 <span v-if="!row.left.hps?.length" class="cell-empty">—</span>
               </template>
               <template v-else>
-                <div v-for="(item, i) in row.left.items" :key="i" class="cell-item" :data-itype="item.type">{{ item.text }}</div>
+                <div v-for="(item, i) in row.left.items" :key="i" class="cell-item" :data-itype="item.type">
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
+                  <template v-else>{{ item.text }}</template>
+                </div>
                 <span v-if="!row.left.items?.length" class="cell-empty">—</span>
               </template>
             </td>
@@ -75,7 +84,10 @@
             <td class="sub-label">Fixed</td>
             <td class="data-cell" colspan="3">
               <template v-if="unlocatedFixed.length">
-                <div v-for="(item, i) in unlocatedFixed" :key="i" class="cell-item" :data-itype="item.type">{{ item.text }}</div>
+                <div v-for="(item, i) in unlocatedFixed" :key="i" class="cell-item" :data-itype="item.type">
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
+                  <template v-else>{{ item.text }}</template>
+                </div>
               </template>
               <span v-else class="cell-empty">—</span>
             </td>
@@ -84,7 +96,10 @@
             <td class="sub-label">Dynamic</td>
             <td class="data-cell" colspan="3">
               <template v-if="unlocatedDynamic.length">
-                <div v-for="(item, i) in unlocatedDynamic" :key="i" class="cell-item" :data-itype="item.type">{{ item.text }}</div>
+                <div v-for="(item, i) in unlocatedDynamic" :key="i" class="cell-item" :data-itype="item.type">
+                  <RouterLink v-if="item.route" :to="item.route" class="item-link">{{ item.text }}</RouterLink>
+                  <template v-else>{{ item.text }}</template>
+                </div>
               </template>
               <span v-else class="cell-empty">—</span>
             </td>
@@ -97,6 +112,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { VariantLocation, LoadoutLocation, InventoryItem, EquipmentItem } from '../composables/useChassisDetail'
 
 const props = defineProps<{
@@ -188,7 +204,7 @@ const invByLoc = computed(() => {
 })
 
 interface HpBadge { label: string; style: Record<string, string> }
-interface CellItem { text: string; type: string }
+interface CellItem { text: string; type: string; route: string | null }
 interface CellData {
   healthLines?: string[]
   hps?: HpBadge[]
@@ -206,14 +222,29 @@ function componentType(id: string): string {
   return 'upgrade'
 }
 
-function aggregateItems(rawItems: { component_def_id: string }[]): CellItem[] {
+function gearRoute(id: string, defType: string): string | null {
+  if (!id) return null
+  // Structural defaults (e.g. Default_Cockpit) have no gear page
+  if (/^Default_/.test(id)) return null
+  // Quirks take precedence
+  if (/^Quirk_/.test(id)) return `/quirks/${id}`
+  if (defType === 'Weapon') return `/weapons/${id}`
+  if (defType === 'Upgrade' || defType === 'HeatSink' || defType === 'AmmunitionBox' || defType === 'JumpJet') return `/equipment/${id}`
+  return null
+}
+
+function aggregateItems(rawItems: { component_def_id: string; component_def_type: string }[]): CellItem[] {
+  // Track first-seen defType per id so aggregated items carry the right route
   const counts = new Map<string, number>()
+  const defTypes = new Map<string, string>()
   for (const item of rawItems) {
     counts.set(item.component_def_id, (counts.get(item.component_def_id) ?? 0) + 1)
+    if (!defTypes.has(item.component_def_id)) defTypes.set(item.component_def_id, item.component_def_type)
   }
   return [...counts.entries()].map(([id, count]) => ({
     text: count > 1 ? `${count}x ${formatName(id)}` : formatName(id),
     type: componentType(id),
+    route: gearRoute(id, defTypes.get(id) ?? ''),
   }))
 }
 
@@ -429,5 +460,15 @@ function _emptyCell(subrow: string): CellData {
 .cell-empty {
   color: var(--text-muted);
   font-size: 11px;
+}
+
+.item-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.item-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
 }
 </style>
