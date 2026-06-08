@@ -76,7 +76,10 @@ def main() -> None:
 
     db_path = Path(args.db_path)
     if not db_path.is_file():
-        sys.exit(f"DB not found: {db_path}")
+        sys.exit(
+            f"DB not found: {db_path}\n"
+            "  Tip: if using Docker, copy it first: docker cp <pipeline-container>:/data/db/roguetech.db ."
+        )
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -95,7 +98,7 @@ def main() -> None:
     con.close()
     print(f"  {len(icons):,} distinct icon values in DB")
 
-    converted = skipped = missing = 0
+    converted = skipped = missing = errors = 0
     for icon in icons:
         dst = out_dir / f"{icon}.png"
         src = portrait_map.get(icon.lower())
@@ -106,10 +109,14 @@ def main() -> None:
         if dst.exists() and dst.stat().st_mtime > src.stat().st_mtime:
             skipped += 1
             continue
-        _convert(src, dst)
-        converted += 1
+        try:
+            _convert(src, dst)
+            converted += 1
+        except Exception as exc:
+            print(f"  ERROR: {icon} ({src}): {exc}")
+            errors += 1
 
-    print(f"Done — {converted} converted, {skipped} skipped (up-to-date), {missing} missing")
+    print(f"Done — {converted} converted, {skipped} skipped (up-to-date), {missing} missing, {errors} errors")
 
 
 if __name__ == "__main__":

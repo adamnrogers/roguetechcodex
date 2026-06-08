@@ -81,6 +81,7 @@ portraits: ## Convert DDS portraits for dev/Docker → frontend/src/public/portr
 	python pipeline/portraits.py
 
 portraits-zip: ## Build portraits.zip for standalone release
+	rm -rf portraits-staging
 	pip3 install -r pipeline/requirements.txt -q
 	python pipeline/portraits.py --output-dir portraits-staging/portraits
 	python -c "import shutil; shutil.make_archive('portraits', 'zip', 'portraits-staging', 'portraits')"
