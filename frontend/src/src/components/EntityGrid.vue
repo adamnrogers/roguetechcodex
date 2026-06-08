@@ -26,7 +26,7 @@
       >
         <MechCard
           v-for="item in rowItems(vRow.index)"
-          :key="item.prefab_base"
+          :key="item.variant_id"
           v-bind="item"
         />
       </div>

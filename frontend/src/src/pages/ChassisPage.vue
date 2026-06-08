@@ -183,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChassisDetail } from '../composables/useChassisDetail'
 import { renderRichText } from '../utils/richText'
@@ -211,6 +211,9 @@ const portraitImgError = ref(false)
 
 // Which variant's data is shown
 const selectedVariantId = ref<string | null>(null)
+const queryVariantId = route.query.variant as string | undefined
+if (queryVariantId) selectedVariantId.value = queryVariantId
+watch(selectedVariantId, () => { window.scrollTo(0, 0) })
 
 const effectiveVariantId = computed(() =>
   selectedVariantId.value ?? data.value?.variants[0]?.id ?? null

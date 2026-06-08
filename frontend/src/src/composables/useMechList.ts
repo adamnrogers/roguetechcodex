@@ -8,8 +8,9 @@ export interface ChassisSummary {
   unit_type: string
   weight_class: string | null
   tonnage: number | null
-  variant_count: number
   icon: string | null
+  variant_id: string
+  variant_name: string | null
 }
 
 export interface ChassisListResponse {

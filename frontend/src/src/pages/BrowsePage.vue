@@ -74,10 +74,10 @@ const PAGE_SIZE = 60
 
 const modeLabel = computed(() => {
   const map: Record<string, string> = {
-    mech: 'Mechs',
-    vehicle: 'Vehicles',
-    vtol: 'VTOLs',
-    battle_armor: 'Battle Armor',
+    mech: 'Variants',
+    vehicle: 'Variants',
+    vtol: 'Variants',
+    battle_armor: 'Variants',
     weapon: 'Weapons',
     equipment: 'Equipment',
   }

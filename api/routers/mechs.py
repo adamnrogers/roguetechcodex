@@ -411,11 +411,7 @@ async def list_mechs(
     params: list = []
 
     if q:
-        conditions.append(
-            "(c.ui_name LIKE ? OR c.prefab_base IN ("
-            "SELECT DISTINCT chassis_id FROM variant WHERE variant_name LIKE ?"
-            "))"
-        )
+        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ?)")
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
@@ -437,20 +433,21 @@ async def list_mechs(
         params.append(f"%{faction}%")
 
     if mod:
-        conditions.append(
-            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE source_mod = ?)"
-        )
+        conditions.append("v.source_mod = ?")
         params.append(mod)
 
     if tag:
-        conditions.append(
-            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE chassis_tags LIKE ?)"
-        )
+        conditions.append("v.chassis_tags LIKE ?")
         params.append(f'%"{tag}"%')
 
     where_clause = " AND ".join(conditions)
 
-    count_sql = f"SELECT COUNT(*) FROM chassis c WHERE {where_clause}"
+    count_sql = f"""
+        SELECT COUNT(*)
+        FROM variant v
+        JOIN chassis c ON c.prefab_base = v.chassis_id
+        WHERE {where_clause}
+    """
     async with db.execute(count_sql, params) as cur:
         row = await cur.fetchone()
         total: int = row[0] if row else 0
@@ -458,16 +455,18 @@ async def list_mechs(
     offset = (page - 1) * page_size
     data_sql = f"""
         SELECT
+            v.id          AS variant_id,
+            v.variant_name,
             c.prefab_base,
             c.ui_name,
             c.unit_type,
             c.weight_class,
             c.tonnage,
-            c.icon,
-            (SELECT COUNT(*) FROM variant WHERE chassis_id = c.prefab_base) AS variant_count
-        FROM chassis c
+            c.icon
+        FROM variant v
+        JOIN chassis c ON c.prefab_base = v.chassis_id
         WHERE {where_clause}
-        ORDER BY {order_col} {order_dir}
+        ORDER BY {order_col} {order_dir}, v.variant_name ASC
         LIMIT ? OFFSET ?
     """
     async with db.execute(data_sql, params + [page_size, offset]) as cur:
@@ -480,8 +479,9 @@ async def list_mechs(
             unit_type=row["unit_type"],
             weight_class=row["weight_class"],
             tonnage=row["tonnage"],
-            variant_count=row["variant_count"],
             icon=row["icon"],
+            variant_id=row["variant_id"],
+            variant_name=row["variant_name"],
         )
         for row in rows
     ]
@@ -662,11 +662,7 @@ async def list_vehicles(
     params: list = []
 
     if q:
-        conditions.append(
-            "(c.ui_name LIKE ? OR c.prefab_base IN ("
-            "SELECT DISTINCT chassis_id FROM variant WHERE variant_name LIKE ?"
-            "))"
-        )
+        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ?)")
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
@@ -677,7 +673,12 @@ async def list_vehicles(
 
     where_clause = " AND ".join(conditions)
 
-    count_sql = f"SELECT COUNT(*) FROM chassis c WHERE {where_clause}"
+    count_sql = f"""
+        SELECT COUNT(*)
+        FROM variant v
+        JOIN chassis c ON c.prefab_base = v.chassis_id
+        WHERE {where_clause}
+    """
     async with db.execute(count_sql, params) as cur:
         row = await cur.fetchone()
         total: int = row[0] if row else 0
@@ -685,11 +686,18 @@ async def list_vehicles(
     offset = (page - 1) * page_size
     data_sql = f"""
         SELECT
-            c.prefab_base, c.ui_name, c.unit_type, c.weight_class, c.tonnage, c.icon,
-            (SELECT COUNT(*) FROM variant WHERE chassis_id = c.prefab_base) AS variant_count
-        FROM chassis c
+            v.id          AS variant_id,
+            v.variant_name,
+            c.prefab_base,
+            c.ui_name,
+            c.unit_type,
+            c.weight_class,
+            c.tonnage,
+            c.icon
+        FROM variant v
+        JOIN chassis c ON c.prefab_base = v.chassis_id
         WHERE {where_clause}
-        ORDER BY {order_col} {order_dir}
+        ORDER BY {order_col} {order_dir}, v.variant_name ASC
         LIMIT ? OFFSET ?
     """
     async with db.execute(data_sql, params + [page_size, offset]) as cur:
@@ -702,8 +710,9 @@ async def list_vehicles(
             unit_type=row["unit_type"],
             weight_class=row["weight_class"],
             tonnage=row["tonnage"],
-            variant_count=row["variant_count"],
             icon=row["icon"],
+            variant_id=row["variant_id"],
+            variant_name=row["variant_name"],
         )
         for row in rows
     ]

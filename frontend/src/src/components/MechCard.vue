@@ -10,16 +10,13 @@
           @error="portraitError = true"
         />
         <div class="card-text">
-          <div class="mech-name">{{ ui_name }}</div>
+          <div class="mech-name">{{ cardTitle }}</div>
           <div class="mech-meta">
             <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
             <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
           </div>
           <div class="mech-type">{{ unitTypeLabel }}</div>
         </div>
-      </div>
-      <div class="mech-footer">
-        <span class="mech-vars">{{ variant_count }} variants</span>
       </div>
     </div>
   </RouterLink>
@@ -35,8 +32,9 @@ interface MechCardProps {
   unit_type: string
   weight_class: string | null
   tonnage: number | null
-  variant_count: number
   icon: string | null
+  variant_id: string
+  variant_name: string | null
 }
 
 const props = defineProps<MechCardProps>()
@@ -47,10 +45,13 @@ const portraitSrc = computed(() =>
   portraitError.value ? null : portraitUrl(props.icon)
 )
 
+const cardTitle = computed(() => `${props.ui_name} (${props.variant_name ?? props.variant_id})`)
+
 const cardLink = computed(() => {
-  if (props.unit_type === 'vtol') return `/vtols/${props.prefab_base}`
-  if (props.unit_type === 'vehicle') return `/vehicles/${props.prefab_base}`
-  return `/mechs/${props.prefab_base}`
+  const variantParam = `?variant=${encodeURIComponent(props.variant_id)}`
+  if (props.unit_type === 'vtol') return `/vtols/${props.prefab_base}${variantParam}`
+  if (props.unit_type === 'vehicle') return `/vehicles/${props.prefab_base}${variantParam}`
+  return `/mechs/${props.prefab_base}${variantParam}`
 })
 
 const unitTypeLabel = computed(() => {
@@ -81,7 +82,6 @@ const unitTypeLabel = computed(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 .mech-card:hover {
   border-color: var(--accent-blue);
@@ -140,16 +140,5 @@ const unitTypeLabel = computed(() => {
   color: var(--text-muted);
   font-size: 12px;
   margin-top: 5px;
-}
-.mech-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(128, 128, 128, 0.12);
-}
-.mech-vars {
-  color: var(--text-muted);
-  font-size: 11px;
 }
 </style>
