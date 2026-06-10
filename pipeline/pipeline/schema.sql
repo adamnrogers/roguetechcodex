@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS variant (
     lootable_unique_mech    INTEGER DEFAULT 0,  -- Custom.LootableUniqueMech.BlockAssembly
     movement_type           TEXT,               -- NULL for mechs; 'Wheeled'|'Tracked'|'Hover'|'VTOL'
     source_file             TEXT,
-    source_mod              TEXT                -- e.g. "Eras/ClanInvasion3061"
+    source_mod              TEXT,               -- e.g. "Eras/ClanInvasion3061"
+    hardpoints_json         TEXT                -- pre-aggregated counts: {loc: {type: count, Omni: count}}
 );
 
 -- Loadouts — one row per mechdef_*.json file

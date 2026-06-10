@@ -191,6 +191,45 @@ _CT_CATEGORIES = frozenset([
     "EngineShield", "EngineHeatBlock", "EngineCore",
 ])
 
+# ── Hardpoint pre-aggregation ─────────────────────────────────────────────────
+
+_HP_SKIP_MOUNTS = frozenset({"AntiPersonnel", "BattleArmor", ""})
+_HP_ALL_TYPES = (
+    "Ballistic", "Energy", "Missile", "Special",
+    "WingMountedWeapon", "InternalBombBay", "SpecialHandHeld",
+)
+_HP_MECH_LOCATIONS = (
+    "Head", "LeftArm", "LeftTorso", "LeftLeg",
+    "RightArm", "RightTorso", "RightLeg", "CenterTorso",
+)
+
+
+def compute_hardpoints_json(locations_raw: list) -> str:
+    """Pre-aggregate hardpoint counts by location and type.
+
+    Returns JSON: {location: {type: count, ..., "Omni": count}}
+    All 8 locations and all 7 types + Omni are always present (zero-filled).
+    Omni=true hardpoints are counted under "Omni", not their WeaponMountID.
+    AntiPersonnel, BattleArmor, and empty mounts are skipped.
+    """
+    result: dict[str, dict[str, int]] = {
+        loc: {t: 0 for t in _HP_ALL_TYPES} | {"Omni": 0}
+        for loc in _HP_MECH_LOCATIONS
+    }
+    for loc_data in locations_raw:
+        loc_name = loc_data.get("Location", "")
+        if loc_name not in result:
+            continue
+        for hp in loc_data.get("Hardpoints", []):
+            mount_id = hp.get("WeaponMountID", "")
+            if mount_id in _HP_SKIP_MOUNTS:
+                continue
+            if hp.get("Omni", False):
+                result[loc_name]["Omni"] += 1
+            elif mount_id in result[loc_name]:
+                result[loc_name][mount_id] += 1
+    return json.dumps(result)
+
 
 def load_mech_global_defaults(
     rt_root: Path,
@@ -467,6 +506,9 @@ def insert_variants(
             structural + data.get("FixedEquipment", []), cat_map
         )
 
+        locations_raw = data.get("Locations", [])
+        hardpoints_json_val = compute_hardpoints_json(locations_raw)
+
         variant_to_chassis[entity_id] = prefab_base
         rows.append((
             entity_id,
@@ -482,7 +524,7 @@ def insert_variants(
             data.get("MaxJumpjets"),
             drop_cost,
             json.dumps(filter_chassis_tags(raw_tags)),
-            json.dumps(data.get("Locations", [])),
+            json.dumps(locations_raw),
             json.dumps(fixed_equipment),
             json.dumps(chassis_defaults),
             json.dumps(multi_defaults),
@@ -490,6 +532,7 @@ def insert_variants(
             data.get("movementType"),
             str(path.relative_to(rt_root)),
             source_mod(path, rt_root),
+            hardpoints_json_val,
         ))
 
     con.executemany(
@@ -497,8 +540,9 @@ def insert_variants(
            (id, chassis_id, ui_name, variant_name, details, unit_type, weight_class,
             tonnage, movement_cap_def_id, top_speed, max_jumpjets, drop_cost_modifier,
             chassis_tags, locations_json, fixed_equipment_json, chassis_defaults_json,
-            multi_defaults_json, lootable_unique_mech, movement_type, source_file, source_mod)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            multi_defaults_json, lootable_unique_mech, movement_type, source_file, source_mod,
+            hardpoints_json)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows,
     )
     con.commit()
