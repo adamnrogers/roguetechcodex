@@ -12,6 +12,16 @@
     </div>
     <div class="nav-right">
       <input class="search-input" type="text" placeholder="Search wiki..." />
+      <div class="scale-btns">
+        <button
+          v-for="s in (['normal', 'large', 'xl'] as const)"
+          :key="s"
+          class="scale-btn"
+          :class="{ active: scale === s }"
+          :title="s === 'normal' ? 'Normal size' : s === 'large' ? 'Large size' : 'Extra large size'"
+          @click="scale = s"
+        >{{ s === 'normal' ? 'A' : s === 'large' ? 'A+' : 'A++' }}</button>
+      </div>
       <button class="theme-toggle" @click="$emit('toggleTheme')" :title="theme === 'v1' ? 'Switch to V2 (Modern)' : 'Switch to V1 (Fandom)'">
         {{ theme === 'v1' ? 'V2 ↗' : 'V1 ↗' }}
       </button>
@@ -20,8 +30,10 @@
 </template>
 
 <script setup lang="ts">
+import { useUIScale } from '../composables/useUIScale'
 defineProps<{ theme: string }>()
 defineEmits(['toggleTheme'])
+const { scale } = useUIScale()
 </script>
 
 <style scoped>
@@ -92,4 +104,20 @@ defineEmits(['toggleTheme'])
   color: var(--accent-blue);
   border-color: var(--accent-blue);
 }
+.scale-btns { display: flex; gap: 4px; }
+.scale-btn {
+  background: transparent;
+  border: var(--border-default);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.scale-btn:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
+.scale-btn.active { color: var(--accent-blue); border-color: var(--accent-blue); }
 </style>

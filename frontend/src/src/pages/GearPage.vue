@@ -209,7 +209,7 @@ function formatCost(c: number): string {
 
 <style scoped>
 .gear-page-outer {
-  max-width: 1100px;
+  max-width: var(--gear-max-width, 1100px);
   margin: 0 auto;
   padding: 24px 16px;
 }

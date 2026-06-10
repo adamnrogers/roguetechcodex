@@ -8,6 +8,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import TheNavBar from './components/TheNavBar.vue'
+import { useUIScale } from './composables/useUIScale'
+useUIScale()
 
 const currentTheme = ref<'v1' | 'v2'>('v2')
 

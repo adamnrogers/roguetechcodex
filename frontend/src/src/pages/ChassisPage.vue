@@ -292,7 +292,7 @@ const parsedHardpoints = computed(() => {
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 28px;
   align-items: start;
-  max-width: 1300px;
+  max-width: var(--content-max-width, 1300px);
   margin: 0 auto;
   padding: 24px 32px;
 }
@@ -570,7 +570,7 @@ const parsedHardpoints = computed(() => {
 /* ── Loading skeleton ──────────────────────────────────────── */
 .skeleton-wrap {
   padding: 32px;
-  max-width: 1300px;
+  max-width: var(--content-max-width, 1300px);
   margin: 0 auto;
 }
 
