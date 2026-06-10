@@ -46,6 +46,21 @@ _MOUNT_CATEGORY: dict[str, str] = {
 }
 _IGNORED_MOUNTS = {"AntiPersonnel", "BattleArmor", "SpecialHandHeld", ""}
 
+_MECH_HP_LOCATIONS = (
+    "Head", "LeftArm", "LeftTorso", "LeftLeg",
+    "RightArm", "RightTorso", "RightLeg", "CenterTorso",
+)
+
+_HP_FILTER_TYPES: dict[str, str] = {
+    "ballistic": "Ballistic",
+    "energy":    "Energy",
+    "missile":   "Missile",
+    "special":   "Special",
+    "wing":      "WingMountedWeapon",
+    "bomb":      "InternalBombBay",
+    "handheld":  "SpecialHandHeld",
+}
+
 
 def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Optional[int]) -> str:
     counts: dict[str, int] = {}
@@ -110,6 +125,40 @@ def _compute_health_summary(
     if max_armor == 0 and s == 0:
         return "—"
     return f"A={current_armor}/{max_armor} S={s}"
+
+
+def _add_hp_condition(
+    conditions: list[str],
+    params: list,
+    count: Optional[int],
+    loc: Optional[str],
+    type_key: str,
+) -> None:
+    """Append a hardpoints_json filter condition if count > 0.
+
+    When loc is non-empty, filters to that specific location.
+    When loc is empty/None, sums across all 8 mech locations.
+    Omni hardpoints count toward any type.
+    """
+    if not count:
+        return
+    if loc:
+        cond = (
+            f"(COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0)"
+            f" + COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)) >= ?"
+        )
+    else:
+        type_parts = [
+            f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.{type_key}'),0)"
+            for l in _MECH_HP_LOCATIONS
+        ]
+        omni_parts = [
+            f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
+            for l in _MECH_HP_LOCATIONS
+        ]
+        cond = f"({' + '.join(type_parts + omni_parts)}) >= ?"
+    conditions.append(cond)
+    params.append(count)
 
 
 # ---------------------------------------------------------------------------
@@ -401,6 +450,20 @@ async def list_mechs(
     max_tonnage: Optional[float] = Query(default=None),
     has_lower_arm: Optional[bool] = Query(default=None),
     has_hand: Optional[bool] = Query(default=None),
+    hp_ballistic_count: Optional[int] = Query(default=None),
+    hp_ballistic_loc:   Optional[str] = Query(default=None),
+    hp_energy_count:    Optional[int] = Query(default=None),
+    hp_energy_loc:      Optional[str] = Query(default=None),
+    hp_missile_count:   Optional[int] = Query(default=None),
+    hp_missile_loc:     Optional[str] = Query(default=None),
+    hp_special_count:   Optional[int] = Query(default=None),
+    hp_special_loc:     Optional[str] = Query(default=None),
+    hp_wing_count:      Optional[int] = Query(default=None),
+    hp_wing_loc:        Optional[str] = Query(default=None),
+    hp_bomb_count:      Optional[int] = Query(default=None),
+    hp_bomb_loc:        Optional[str] = Query(default=None),
+    hp_handheld_count:  Optional[int] = Query(default=None),
+    hp_handheld_loc:    Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -463,6 +526,14 @@ async def list_mechs(
             "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
         )
         params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
+
+    _add_hp_condition(conditions, params, hp_ballistic_count, hp_ballistic_loc, "Ballistic")
+    _add_hp_condition(conditions, params, hp_energy_count,    hp_energy_loc,    "Energy")
+    _add_hp_condition(conditions, params, hp_missile_count,   hp_missile_loc,   "Missile")
+    _add_hp_condition(conditions, params, hp_special_count,   hp_special_loc,   "Special")
+    _add_hp_condition(conditions, params, hp_wing_count,      hp_wing_loc,      "WingMountedWeapon")
+    _add_hp_condition(conditions, params, hp_bomb_count,      hp_bomb_loc,      "InternalBombBay")
+    _add_hp_condition(conditions, params, hp_handheld_count,  hp_handheld_loc,  "SpecialHandHeld")
 
     where_clause = " AND ".join(conditions)
 
