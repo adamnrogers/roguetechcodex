@@ -10,7 +10,7 @@
           @error="portraitError = true"
         />
         <div class="card-text">
-          <div class="mech-name">{{ cardTitle }}</div>
+          <div class="mech-name" :title="cardTitle">{{ cardTitle }}</div>
           <div class="mech-meta">
             <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
             <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
@@ -71,6 +71,7 @@ const unitTypeLabel = computed(() => {
   display: block;
   color: inherit;
   height: 100%;
+  min-width: 0;
 }
 .mech-card {
   background: var(--bg-card);

@@ -49,7 +49,7 @@ const props = defineProps<{
 
 const containerRef = ref<HTMLElement>()
 const containerWidth = ref(800)
-const CARD_MIN_WIDTH = 200
+const CARD_MIN_WIDTH = 240
 const GAP = 12
 
 const columns = computed(() =>
@@ -96,7 +96,7 @@ function rowItems(rowIndex: number): ChassisSummary[] {
 }
 .entity-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
   padding: 0 16px;
 }
