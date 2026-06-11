@@ -8,13 +8,15 @@
       :maxTonnage="filters.maxTonnage"
       :hasLowerArm="filters.hasLowerArm"
       :hasHand="filters.hasHand"
+      v-bind="{ hardpoints: filters.hardpoints }"
       @update:modelValue="onWeightClassChange"
       @update:era="onEraChange"
       @update:minTonnage="v => filters = { ...filters, minTonnage: v, page: 1 }"
       @update:maxTonnage="v => filters = { ...filters, maxTonnage: v, page: 1 }"
       @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
       @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
-      @clearAll="filters = { ...filters, weightClass: [], era: '', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, page: 1 }"
+      @update:hardpoints="(v: any) => filters = { ...filters, hardpoints: v, page: 1 }"
+      @clearAll="filters = { ...filters, weightClass: [], era: '', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), page: 1 }"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -73,7 +75,7 @@ import { useRoute, useRouter } from 'vue-router'
 import FilterPanel from '../components/FilterPanel.vue'
 import SortBar from '../components/SortBar.vue'
 import EntityGrid from '../components/EntityGrid.vue'
-import { useMechList, type MechFilters } from '../composables/useMechList'
+import { useMechList, type MechFilters, defaultHardpoints } from '../composables/useMechList'
 
 const props = defineProps<{ mode: string }>()
 const route = useRoute()
@@ -122,7 +124,22 @@ function readFiltersFromRoute(): MechFilters {
   const maxT = route.query.max_t ? parseFloat(route.query.max_t as string) : null
   const hasLowerArm = route.query.la === '1' ? true : route.query.la === '0' ? false : null
   const hasHand = route.query.ha === '1' ? true : route.query.ha === '0' ? false : null
-  return { q, weightClass, era, faction, tag, page, sort, sortDir, minTonnage: minT, maxTonnage: maxT, hasLowerArm, hasHand }
+  const hardpoints = defaultHardpoints()
+  hardpoints.ballistic.count = parseInt(route.query.hp_b as string ?? '0') || 0
+  hardpoints.ballistic.loc   = route.query.hp_b_loc as string ?? ''
+  hardpoints.energy.count    = parseInt(route.query.hp_e as string ?? '0') || 0
+  hardpoints.energy.loc      = route.query.hp_e_loc as string ?? ''
+  hardpoints.missile.count   = parseInt(route.query.hp_m as string ?? '0') || 0
+  hardpoints.missile.loc     = route.query.hp_m_loc as string ?? ''
+  hardpoints.special.count   = parseInt(route.query.hp_s as string ?? '0') || 0
+  hardpoints.special.loc     = route.query.hp_s_loc as string ?? ''
+  hardpoints.wing.count      = parseInt(route.query.hp_w as string ?? '0') || 0
+  hardpoints.wing.loc        = route.query.hp_w_loc as string ?? ''
+  hardpoints.bomb.count      = parseInt(route.query.hp_bm as string ?? '0') || 0
+  hardpoints.bomb.loc        = route.query.hp_bm_loc as string ?? ''
+  hardpoints.handheld.count  = parseInt(route.query.hp_hh as string ?? '0') || 0
+  hardpoints.handheld.loc    = route.query.hp_hh_loc as string ?? ''
+  return { q, weightClass, era, faction, tag, page, sort, sortDir, minTonnage: minT, maxTonnage: maxT, hasLowerArm, hasHand, hardpoints }
 }
 
 function clearTag() {
@@ -170,7 +187,7 @@ function nextPage() {
 watch(() => props.mode, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchInput.value = ''
-  filters.value = { q: '', weightClass: [], era: '', faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null }
+  filters.value = { q: '', weightClass: [], era: '', faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints() }
 })
 
 // Sync filters to URL
@@ -188,6 +205,13 @@ watch(filters, (f) => {
   if (f.maxTonnage !== null) query.max_t = String(f.maxTonnage)
   if (f.hasLowerArm !== null) query.la = f.hasLowerArm ? '1' : '0'
   if (f.hasHand !== null) query.ha = f.hasHand ? '1' : '0'
+  if (f.hardpoints.ballistic.count) { query.hp_b = String(f.hardpoints.ballistic.count); if (f.hardpoints.ballistic.loc) query.hp_b_loc = f.hardpoints.ballistic.loc }
+  if (f.hardpoints.energy.count)    { query.hp_e = String(f.hardpoints.energy.count);    if (f.hardpoints.energy.loc)    query.hp_e_loc = f.hardpoints.energy.loc }
+  if (f.hardpoints.missile.count)   { query.hp_m = String(f.hardpoints.missile.count);   if (f.hardpoints.missile.loc)   query.hp_m_loc = f.hardpoints.missile.loc }
+  if (f.hardpoints.special.count)   { query.hp_s = String(f.hardpoints.special.count);   if (f.hardpoints.special.loc)   query.hp_s_loc = f.hardpoints.special.loc }
+  if (f.hardpoints.wing.count)      { query.hp_w = String(f.hardpoints.wing.count);      if (f.hardpoints.wing.loc)      query.hp_w_loc = f.hardpoints.wing.loc }
+  if (f.hardpoints.bomb.count)      { query.hp_bm = String(f.hardpoints.bomb.count);     if (f.hardpoints.bomb.loc)      query.hp_bm_loc = f.hardpoints.bomb.loc }
+  if (f.hardpoints.handheld.count)  { query.hp_hh = String(f.hardpoints.handheld.count); if (f.hardpoints.handheld.loc)  query.hp_hh_loc = f.hardpoints.handheld.loc }
   router.replace({ query })
 }, { deep: true })
 
