@@ -205,3 +205,27 @@ class StatsResponse(BaseModel):
     vehicles: int
     weapons: int
     equipment: int
+
+
+# ---------------------------------------------------------------------------
+# Global search
+# ---------------------------------------------------------------------------
+
+class SearchHit(BaseModel):
+    id: str
+    name: str
+    subtitle: str
+    result_type: str   # mech | vehicle | vtol | battle_armor | equipment | weapon | quirk
+
+
+class SearchResponse(BaseModel):
+    q: str
+    chassis: list[SearchHit]
+    gear: list[SearchHit]
+
+
+class SearchPageResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    results: list[SearchHit]
