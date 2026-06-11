@@ -20,6 +20,33 @@ export interface ChassisListResponse {
   results: ChassisSummary[]
 }
 
+export interface HardpointFilter {
+  count: number
+  loc: string
+}
+
+export type HardpointFilters = {
+  ballistic: HardpointFilter
+  energy:    HardpointFilter
+  missile:   HardpointFilter
+  special:   HardpointFilter
+  wing:      HardpointFilter
+  bomb:      HardpointFilter
+  handheld:  HardpointFilter
+}
+
+export function defaultHardpoints(): HardpointFilters {
+  return {
+    ballistic: { count: 0, loc: '' },
+    energy:    { count: 0, loc: '' },
+    missile:   { count: 0, loc: '' },
+    special:   { count: 0, loc: '' },
+    wing:      { count: 0, loc: '' },
+    bomb:      { count: 0, loc: '' },
+    handheld:  { count: 0, loc: '' },
+  }
+}
+
 export interface MechFilters {
   q: string
   weightClass: string[]
@@ -33,6 +60,40 @@ export interface MechFilters {
   maxTonnage: number | null
   hasLowerArm: boolean | null
   hasHand: boolean | null
+  hardpoints: HardpointFilters
+}
+
+export function defaultMechFilters(): MechFilters {
+  return {
+    q: '',
+    weightClass: [],
+    era: '',
+    faction: '',
+    tag: '',
+    page: 1,
+    sort: 'name',
+    sortDir: 'asc',
+    minTonnage: null,
+    maxTonnage: null,
+    hasLowerArm: null,
+    hasHand: null,
+    hardpoints: defaultHardpoints(),
+  }
+}
+
+type HpKey = keyof HardpointFilters
+
+function hpParams(hp: HardpointFilters): Record<string, unknown> {
+  const params: Record<string, unknown> = {}
+  const keys: HpKey[] = ['ballistic', 'energy', 'missile', 'special', 'wing', 'bomb', 'handheld']
+  for (const key of keys) {
+    const { count, loc } = hp[key]
+    if (count > 0) {
+      params[`hp_${key}_count`] = count
+      if (loc) params[`hp_${key}_loc`] = loc
+    }
+  }
+  return params
 }
 
 export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string> = 'mech') {
@@ -62,6 +123,7 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
           page_size: 60,
           sort: filters.value.sort,
           sort_dir: filters.value.sortDir,
+          ...hpParams(filters.value.hardpoints),
         })
       }
       return apiFetch<ChassisListResponse>('/api/v1/vehicles', {
