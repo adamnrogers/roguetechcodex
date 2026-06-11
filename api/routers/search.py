@@ -6,7 +6,7 @@ import aiosqlite
 from fastapi import APIRouter, Depends, Query
 
 from db import get_db
-from models import SearchHit, SearchResponse
+from models import SearchHit, SearchResponse, SearchPageResponse
 
 router = APIRouter(prefix="/api/v1", tags=["search"])
 
@@ -117,3 +117,84 @@ async def search(
             )
 
     return SearchResponse(q=q, chassis=chassis_hits, gear=gear_hits)
+
+
+@router.get("/search/chassis", response_model=SearchPageResponse)
+async def search_chassis(
+    q: str = Query(min_length=2),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: aiosqlite.Connection = Depends(get_db),
+) -> SearchPageResponse:
+    q_starts = f"{q}%"
+    q_contains = f"%{q}%"
+    offset = (page - 1) * page_size
+
+    async with db.execute(
+        """
+        SELECT COUNT(DISTINCT c.prefab_base)
+        FROM chassis c
+        LEFT JOIN variant v ON v.chassis_id = c.prefab_base
+        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ?
+        """,
+        [q_contains, q_contains],
+    ) as cursor:
+        row = await cursor.fetchone()
+        total = row[0] if row else 0
+
+    results: list[SearchHit] = []
+    async with db.execute(
+        """
+        SELECT
+            c.prefab_base, c.ui_name, c.unit_type, c.tonnage,
+            (
+                SELECT v2.variant_name FROM variant v2
+                WHERE v2.chassis_id = c.prefab_base AND v2.variant_name LIKE ?
+                ORDER BY
+                    CASE WHEN LOWER(v2.variant_name) = LOWER(?) THEN 1
+                         WHEN v2.variant_name LIKE ? THEN 2
+                         ELSE 3 END
+                LIMIT 1
+            ) AS matched_variant,
+            CASE
+                WHEN LOWER(c.ui_name) = LOWER(?) THEN 1
+                WHEN EXISTS(SELECT 1 FROM variant v3 WHERE v3.chassis_id = c.prefab_base
+                            AND LOWER(v3.variant_name) = LOWER(?)) THEN 2
+                WHEN c.ui_name LIKE ? THEN 3
+                WHEN EXISTS(SELECT 1 FROM variant v4 WHERE v4.chassis_id = c.prefab_base
+                            AND v4.variant_name LIKE ?) THEN 4
+                WHEN c.ui_name LIKE ? THEN 5
+                ELSE 6
+            END AS rank
+        FROM chassis c
+        WHERE c.ui_name LIKE ?
+           OR EXISTS(SELECT 1 FROM variant v5 WHERE v5.chassis_id = c.prefab_base
+                     AND v5.variant_name LIKE ?)
+        ORDER BY rank, c.ui_name
+        LIMIT ? OFFSET ?
+        """,
+        [q_contains, q, q_starts, q, q, q_starts, q_starts, q_contains, q_contains, q_contains, page_size, offset],
+    ) as cursor:
+        async for row in cursor:
+            unit_type: str = row["unit_type"] or "mech"
+            tonnage = row["tonnage"]
+            t = f"{int(tonnage)}t" if tonnage else ""
+            ut = unit_type.replace("_", " ").title()
+            base_subtitle = f"{t} · {ut}" if t else ut
+            matched_variant: Optional[str] = row["matched_variant"]
+            q_in_name = q.lower() in (row["ui_name"] or "").lower()
+            subtitle = (
+                f"{matched_variant} · {base_subtitle}"
+                if matched_variant and not q_in_name
+                else base_subtitle
+            )
+            results.append(
+                SearchHit(
+                    id=row["prefab_base"],
+                    name=row["ui_name"],
+                    subtitle=subtitle,
+                    result_type=_UNIT_TYPE_TO_RESULT_TYPE.get(unit_type, "mech"),
+                )
+            )
+
+    return SearchPageResponse(total=total, page=page, page_size=page_size, results=results)
