@@ -51,16 +51,6 @@ _MECH_HP_LOCATIONS = (
     "RightArm", "RightTorso", "RightLeg", "CenterTorso",
 )
 
-_HP_FILTER_TYPES: dict[str, str] = {
-    "ballistic": "Ballistic",
-    "energy":    "Energy",
-    "missile":   "Missile",
-    "special":   "Special",
-    "wing":      "WingMountedWeapon",
-    "bomb":      "InternalBombBay",
-    "handheld":  "SpecialHandHeld",
-}
-
 
 def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Optional[int]) -> str:
     counts: dict[str, int] = {}
@@ -142,6 +132,8 @@ def _add_hp_condition(
     """
     if not count:
         return
+    if loc and loc not in _MECH_HP_LOCATIONS:
+        loc = None  # silently ignore unknown location names
     if loc:
         cond = (
             f"(COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0)"
@@ -450,19 +442,19 @@ async def list_mechs(
     max_tonnage: Optional[float] = Query(default=None),
     has_lower_arm: Optional[bool] = Query(default=None),
     has_hand: Optional[bool] = Query(default=None),
-    hp_ballistic_count: Optional[int] = Query(default=None),
+    hp_ballistic_count: Optional[int] = Query(default=None, ge=0),
     hp_ballistic_loc:   Optional[str] = Query(default=None),
-    hp_energy_count:    Optional[int] = Query(default=None),
+    hp_energy_count:    Optional[int] = Query(default=None, ge=0),
     hp_energy_loc:      Optional[str] = Query(default=None),
-    hp_missile_count:   Optional[int] = Query(default=None),
+    hp_missile_count:   Optional[int] = Query(default=None, ge=0),
     hp_missile_loc:     Optional[str] = Query(default=None),
-    hp_special_count:   Optional[int] = Query(default=None),
+    hp_special_count:   Optional[int] = Query(default=None, ge=0),
     hp_special_loc:     Optional[str] = Query(default=None),
-    hp_wing_count:      Optional[int] = Query(default=None),
+    hp_wing_count:      Optional[int] = Query(default=None, ge=0),
     hp_wing_loc:        Optional[str] = Query(default=None),
-    hp_bomb_count:      Optional[int] = Query(default=None),
+    hp_bomb_count:      Optional[int] = Query(default=None, ge=0),
     hp_bomb_loc:        Optional[str] = Query(default=None),
-    hp_handheld_count:  Optional[int] = Query(default=None),
+    hp_handheld_count:  Optional[int] = Query(default=None, ge=0),
     hp_handheld_loc:    Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
