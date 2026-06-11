@@ -11,7 +11,20 @@
       <RouterLink to="/quirks"    class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>
     </div>
     <div class="nav-right">
-      <input class="search-input" type="text" placeholder="Search wiki..." />
+      <div class="search-wrapper">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search wiki..."
+          v-model="rawQuery"
+          @focus="inputFocused = true"
+        />
+        <GlobalSearchResults
+          v-if="showResults"
+          :data="searchData!"
+          @close="closeSearch"
+        />
+      </div>
       <div class="scale-btns">
         <button
           v-for="s in (['normal', 'large', 'xl'] as const)"
@@ -30,10 +43,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { useUIScale } from '../composables/useUIScale'
+import { useGlobalSearch } from '../composables/useGlobalSearch'
+import GlobalSearchResults from './GlobalSearchResults.vue'
+
 defineProps<{ theme: string }>()
 defineEmits(['toggleTheme'])
+
 const { scale } = useUIScale()
+
+const rawQuery = ref('')
+const debouncedQuery = ref('')
+const inputFocused = ref(false)
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(rawQuery, (val) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  if (val.length < 2) { debouncedQuery.value = ''; return }
+  debounceTimer = setTimeout(() => { debouncedQuery.value = val }, 300)
+})
+
+const { data: searchData } = useGlobalSearch(debouncedQuery)
+
+const showResults = computed(
+  () => debouncedQuery.value.length >= 2 && searchData.value !== undefined
+)
+
+function closeSearch() {
+  rawQuery.value = ''
+  debouncedQuery.value = ''
+  inputFocused.value = false
+}
 </script>
 
 <style scoped>
@@ -49,7 +90,7 @@ const { scale } = useUIScale()
   align-items: center;
   padding: 0 24px;
   gap: 32px;
-  z-index: 100;
+  z-index: 1000;
 }
 .logo {
   color: var(--text-primary) !important;
@@ -74,6 +115,9 @@ const { scale } = useUIScale()
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.search-wrapper {
+  position: relative;
 }
 .search-input {
   background: var(--bg-primary);
