@@ -83,9 +83,9 @@ export function defaultMechFilters(): MechFilters {
 
 type HpKey = keyof HardpointFilters
 
-function hpParams(hp: HardpointFilters): Record<string, unknown> {
-  const params: Record<string, unknown> = {}
-  const keys: HpKey[] = ['ballistic', 'energy', 'missile', 'special', 'wing', 'bomb', 'handheld']
+function hpParams(hp: HardpointFilters): Record<string, string | number> {
+  const params: Record<string, string | number> = {}
+  const keys = Object.keys(defaultHardpoints()) as HpKey[]
   for (const key of keys) {
     const { count, loc } = hp[key]
     if (count > 0) {
