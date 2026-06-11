@@ -50,3 +50,7 @@ portraits.zip
 .DS_Store
 Thumbs.db
 desktop.ini
+.aider*
+
+# Superpowers plans/specs
+docs/superpowers/

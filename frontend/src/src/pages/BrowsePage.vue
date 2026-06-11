@@ -139,6 +139,8 @@ function readFiltersFromRoute(): MechFilters {
   hardpoints.bomb.loc        = route.query.hp_bm_loc as string ?? ''
   hardpoints.handheld.count  = parseInt(route.query.hp_hh as string ?? '0') || 0
   hardpoints.handheld.loc    = route.query.hp_hh_loc as string ?? ''
+  hardpoints.excludeOmni     = route.query.hp_excl_omni === '1'
+  hardpoints.omniOnly        = route.query.hp_omni_only === '1'
   return { q, weightClass, era, faction, tag, page, sort, sortDir, minTonnage: minT, maxTonnage: maxT, hasLowerArm, hasHand, hardpoints }
 }
 
@@ -212,6 +214,8 @@ watch(filters, (f) => {
   if (f.hardpoints.wing.count)      { query.hp_w = String(f.hardpoints.wing.count);      if (f.hardpoints.wing.loc)      query.hp_w_loc = f.hardpoints.wing.loc }
   if (f.hardpoints.bomb.count)      { query.hp_bm = String(f.hardpoints.bomb.count);     if (f.hardpoints.bomb.loc)      query.hp_bm_loc = f.hardpoints.bomb.loc }
   if (f.hardpoints.handheld.count)  { query.hp_hh = String(f.hardpoints.handheld.count); if (f.hardpoints.handheld.loc)  query.hp_hh_loc = f.hardpoints.handheld.loc }
+  if (f.hardpoints.excludeOmni) query.hp_excl_omni = '1'
+  if (f.hardpoints.omniOnly)    query.hp_omni_only = '1'
   router.replace({ query })
 }, { deep: true })
 

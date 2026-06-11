@@ -27,20 +27,24 @@
       <h3 class="filter-title">Tonnage</h3>
       <div class="tonnage-range">
         <label class="tonnage-row">
-          <span class="tonnage-label">Min</span>
+          <div class="tonnage-header">
+            <span class="tonnage-label">Min</span>
+            <span class="tonnage-val">{{ minTonnage != null ? minTonnage + 't' : '0t' }}</span>
+          </div>
           <input type="range" min="0" max="420" step="5"
             :value="minTonnage ?? 0"
             @input="onMinChange"
             class="range-slider" />
-          <span class="tonnage-val">{{ minTonnage != null ? minTonnage + 't' : '0t' }}</span>
         </label>
         <label class="tonnage-row">
-          <span class="tonnage-label">Max</span>
+          <div class="tonnage-header">
+            <span class="tonnage-label">Max</span>
+            <span class="tonnage-val">{{ maxTonnage != null ? maxTonnage + 't' : '∞' }}</span>
+          </div>
           <input type="range" min="0" max="420" step="5"
             :value="maxTonnage ?? 420"
             @input="onMaxChange"
             class="range-slider" />
-          <span class="tonnage-val">{{ maxTonnage != null ? maxTonnage + 't' : '∞' }}</span>
         </label>
       </div>
     </div>
@@ -80,6 +84,24 @@
             />
           </label>
         </div>
+      </div>
+      <div class="hp-omni-toggles">
+        <label class="filter-check hp-excl-omni">
+          <input
+            type="checkbox"
+            :checked="hardpoints.excludeOmni"
+            @change="emit('update:hardpoints', { ...hardpoints, excludeOmni: !hardpoints.excludeOmni, omniOnly: false })"
+          />
+          Exclude Omni
+        </label>
+        <label class="filter-check hp-omni-only">
+          <input
+            type="checkbox"
+            :checked="hardpoints.omniOnly"
+            @change="emit('update:hardpoints', { ...hardpoints, omniOnly: !hardpoints.omniOnly, excludeOmni: false })"
+          />
+          Omni only
+        </label>
       </div>
     </div>
     <a class="clear-all" href="#" @click.prevent="clearAll">Clear All</a>
@@ -130,8 +152,6 @@ const HP_LOCS = [
   { key: 'Head',        label: 'HD'  },
   { key: 'LeftTorso',   label: 'LT'  },
   { key: 'LeftArm',     label: 'LA'  },
-  { key: 'RightLeg',    label: 'RL'  },
-  { key: 'LeftLeg',     label: 'LL'  },
 ]
 
 const weightClasses = [
@@ -197,8 +217,8 @@ function clearAll() {
 
 <style scoped>
 .filter-panel {
-  width: var(--filter-panel-width, 220px);
-  min-width: var(--filter-panel-width, 220px);
+  width: var(--filter-panel-width, 280px);
+  min-width: var(--filter-panel-width, 280px);
   background: var(--bg-sidebar);
   border-right: var(--border-default);
   padding: 16px;
@@ -228,11 +248,12 @@ function clearAll() {
 .dot-medium  { background: var(--badge-medium-fg); }
 .dot-heavy   { background: var(--badge-heavy-fg); }
 .dot-assault { background: var(--badge-assault-fg); }
-.tonnage-range { display: flex; flex-direction: column; gap: 8px; }
-.tonnage-row { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.tonnage-label { font-size: 11px; color: var(--text-muted); width: 26px; flex-shrink: 0; }
-.tonnage-val { font-size: 11px; color: var(--text-muted); width: 32px; text-align: left; flex-shrink: 0; margin-left: 4px; margin-right: 8px; }
-.range-slider { flex: 1; accent-color: var(--accent-blue); cursor: pointer; }
+.tonnage-range { display: flex; flex-direction: column; gap: 6px; }
+.tonnage-row { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.tonnage-header { display: flex; justify-content: space-between; align-items: center; }
+.tonnage-label { font-size: 11px; color: var(--text-muted); }
+.tonnage-val { font-size: 11px; color: var(--text-muted); }
+.range-slider { width: 100%; accent-color: var(--accent-blue); cursor: pointer; }
 .clear-all {
   display: block;
   margin-top: 8px;

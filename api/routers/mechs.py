@@ -123,32 +123,33 @@ def _add_hp_condition(
     count: Optional[int],
     loc: Optional[str],
     type_key: str,
+    exclude_omni: bool = False,
 ) -> None:
-    """Append a hardpoints_json filter condition if count > 0.
-
-    When loc is non-empty, filters to that specific location.
-    When loc is empty/None, sums across all 8 mech locations.
-    Omni hardpoints count toward any type.
-    """
     if not count:
         return
     if loc and loc not in _MECH_HP_LOCATIONS:
-        loc = None  # silently ignore unknown location names
+        loc = None
     if loc:
-        cond = (
-            f"(COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0)"
-            f" + COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)) >= ?"
-        )
+        if exclude_omni:
+            cond = f"COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0) >= ?"
+        else:
+            cond = (
+                f"(COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0)"
+                f" + COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)) >= ?"
+            )
     else:
         type_parts = [
             f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.{type_key}'),0)"
             for l in _MECH_HP_LOCATIONS
         ]
-        omni_parts = [
-            f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
-            for l in _MECH_HP_LOCATIONS
-        ]
-        cond = f"({' + '.join(type_parts + omni_parts)}) >= ?"
+        if exclude_omni:
+            cond = f"({' + '.join(type_parts)}) >= ?"
+        else:
+            omni_parts = [
+                f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
+                for l in _MECH_HP_LOCATIONS
+            ]
+            cond = f"({' + '.join(type_parts + omni_parts)}) >= ?"
     conditions.append(cond)
     params.append(count)
 
@@ -456,6 +457,8 @@ async def list_mechs(
     hp_bomb_loc:        Optional[str] = Query(default=None),
     hp_handheld_count:  Optional[int] = Query(default=None, ge=0),
     hp_handheld_loc:    Optional[str] = Query(default=None),
+    hp_exclude_omni:    bool          = Query(default=False),
+    hp_omni_only:       bool          = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -519,13 +522,22 @@ async def list_mechs(
         )
         params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
 
-    _add_hp_condition(conditions, params, hp_ballistic_count, hp_ballistic_loc, "Ballistic")
-    _add_hp_condition(conditions, params, hp_energy_count,    hp_energy_loc,    "Energy")
-    _add_hp_condition(conditions, params, hp_missile_count,   hp_missile_loc,   "Missile")
-    _add_hp_condition(conditions, params, hp_special_count,   hp_special_loc,   "Special")
-    _add_hp_condition(conditions, params, hp_wing_count,      hp_wing_loc,      "WingMountedWeapon")
-    _add_hp_condition(conditions, params, hp_bomb_count,      hp_bomb_loc,      "InternalBombBay")
-    _add_hp_condition(conditions, params, hp_handheld_count,  hp_handheld_loc,  "SpecialHandHeld")
+    omni_total = " + ".join(
+        f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
+        for l in _MECH_HP_LOCATIONS
+    )
+    if hp_exclude_omni:
+        conditions.append(f"({omni_total}) = 0")
+    elif hp_omni_only:
+        conditions.append(f"({omni_total}) > 0")
+
+    _add_hp_condition(conditions, params, hp_ballistic_count, hp_ballistic_loc, "Ballistic",        hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_energy_count,    hp_energy_loc,    "Energy",            hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_missile_count,   hp_missile_loc,   "Missile",           hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_special_count,   hp_special_loc,   "Special",           hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_wing_count,      hp_wing_loc,      "WingMountedWeapon", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_bomb_count,      hp_bomb_loc,      "InternalBombBay",   hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_handheld_count,  hp_handheld_loc,  "SpecialHandHeld",   hp_exclude_omni)
 
     where_clause = " AND ".join(conditions)
 

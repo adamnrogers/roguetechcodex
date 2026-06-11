@@ -26,24 +26,28 @@ export interface HardpointFilter {
 }
 
 export type HardpointFilters = {
-  ballistic: HardpointFilter
-  energy:    HardpointFilter
-  missile:   HardpointFilter
-  special:   HardpointFilter
-  wing:      HardpointFilter
-  bomb:      HardpointFilter
-  handheld:  HardpointFilter
+  ballistic:    HardpointFilter
+  energy:       HardpointFilter
+  missile:      HardpointFilter
+  special:      HardpointFilter
+  wing:         HardpointFilter
+  bomb:         HardpointFilter
+  handheld:     HardpointFilter
+  excludeOmni:  boolean
+  omniOnly:     boolean
 }
 
 export function defaultHardpoints(): HardpointFilters {
   return {
-    ballistic: { count: 0, loc: '' },
-    energy:    { count: 0, loc: '' },
-    missile:   { count: 0, loc: '' },
-    special:   { count: 0, loc: '' },
-    wing:      { count: 0, loc: '' },
-    bomb:      { count: 0, loc: '' },
-    handheld:  { count: 0, loc: '' },
+    ballistic:   { count: 0, loc: '' },
+    energy:      { count: 0, loc: '' },
+    missile:     { count: 0, loc: '' },
+    special:     { count: 0, loc: '' },
+    wing:        { count: 0, loc: '' },
+    bomb:        { count: 0, loc: '' },
+    handheld:    { count: 0, loc: '' },
+    excludeOmni: false,
+    omniOnly:    false,
   }
 }
 
@@ -81,18 +85,20 @@ export function defaultMechFilters(): MechFilters {
   }
 }
 
-type HpKey = keyof HardpointFilters
+type HpKey = Exclude<keyof HardpointFilters, 'excludeOmni' | 'omniOnly'>
 
-function hpParams(hp: HardpointFilters): Record<string, string | number> {
-  const params: Record<string, string | number> = {}
-  const keys = Object.keys(defaultHardpoints()) as HpKey[]
+function hpParams(hp: HardpointFilters): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {}
+  const keys = ['ballistic', 'energy', 'missile', 'special', 'wing', 'bomb', 'handheld'] as HpKey[]
   for (const key of keys) {
-    const { count, loc } = hp[key]
+    const { count, loc } = hp[key] as HardpointFilter
     if (count > 0) {
       params[`hp_${key}_count`] = count
       if (loc) params[`hp_${key}_loc`] = loc
     }
   }
+  if (hp.excludeOmni) params['hp_exclude_omni'] = true
+  if (hp.omniOnly)    params['hp_omni_only'] = true
   return params
 }
 
