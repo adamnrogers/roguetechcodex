@@ -17,7 +17,7 @@
           type="text"
           placeholder="Search wiki..."
           v-model="rawQuery"
-          @focus="inputFocused = true"
+          @keydown.escape="closeSearch"
         />
         <GlobalSearchResults
           v-if="showResults"
@@ -55,7 +55,6 @@ const { scale } = useUIScale()
 
 const rawQuery = ref('')
 const debouncedQuery = ref('')
-const inputFocused = ref(false)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(rawQuery, (val) => {
@@ -73,7 +72,6 @@ const showResults = computed(
 function closeSearch() {
   rawQuery.value = ''
   debouncedQuery.value = ''
-  inputFocused.value = false
 }
 </script>
 
