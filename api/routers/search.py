@@ -198,3 +198,53 @@ async def search_chassis(
             )
 
     return SearchPageResponse(total=total, page=page, page_size=page_size, results=results)
+
+
+@router.get("/search/gear", response_model=SearchPageResponse)
+async def search_gear(
+    q: str = Query(min_length=2),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: aiosqlite.Connection = Depends(get_db),
+) -> SearchPageResponse:
+    q_starts = f"{q}%"
+    q_contains = f"%{q}%"
+    offset = (page - 1) * page_size
+
+    async with db.execute(
+        "SELECT COUNT(*) FROM gear WHERE ui_name LIKE ?",
+        [q_contains],
+    ) as cursor:
+        row = await cursor.fetchone()
+        total = row[0] if row else 0
+
+    results: list[SearchHit] = []
+    async with db.execute(
+        """
+        SELECT id, ui_name, component_type,
+            CASE
+                WHEN LOWER(ui_name) = LOWER(?) THEN 1
+                WHEN ui_name LIKE ? THEN 2
+                WHEN ui_name LIKE ? THEN 3
+                ELSE 4
+            END AS rank
+        FROM gear
+        WHERE ui_name LIKE ?
+        ORDER BY rank, ui_name
+        LIMIT ? OFFSET ?
+        """,
+        [q, q_starts, q_contains, q_contains, page_size, offset],
+    ) as cursor:
+        async for row in cursor:
+            ct: Optional[str] = row["component_type"]
+            subtitle = ct.replace("_", " ").title() if ct else "Equipment"
+            results.append(
+                SearchHit(
+                    id=row["id"],
+                    name=row["ui_name"],
+                    subtitle=subtitle,
+                    result_type=_component_result_type(ct),
+                )
+            )
+
+    return SearchPageResponse(total=total, page=page, page_size=page_size, results=results)
