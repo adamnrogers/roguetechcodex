@@ -55,11 +55,40 @@
         Hand
       </label>
     </div>
+    <div v-if="mode === 'mech'" class="filter-section hardpoints-section">
+      <h3 class="filter-title">Hardpoints</h3>
+      <div class="hp-grid">
+        <div class="hp-header-row">
+          <span class="hp-type-col"></span>
+          <span class="hp-amt-col">AMT</span>
+          <span v-for="col in HP_LOCS" :key="col.key" class="hp-loc-col">{{ col.label }}</span>
+        </div>
+        <div v-for="row in HP_TYPES" :key="row.key" class="hp-row" :class="{ 'hp-row-dim': hardpoints[row.key].count === 0 }">
+          <span class="hp-type-label" :style="{ color: row.color }">{{ row.label }}</span>
+          <span class="hp-amt-col">
+            <button class="hp-step" @click="stepCount(row.key, -1)" :disabled="hardpoints[row.key].count === 0">−</button>
+            <span class="hp-count">{{ hardpoints[row.key].count }}</span>
+            <button class="hp-step" @click="stepCount(row.key, 1)" :disabled="hardpoints[row.key].count >= 20">+</button>
+          </span>
+          <label v-for="col in HP_LOCS" :key="col.key" class="hp-loc-col">
+            <input
+              type="radio"
+              :name="`hp-loc-${row.key}`"
+              :value="col.key"
+              :checked="hardpoints[row.key].loc === col.key"
+              @change="setLoc(row.key, col.key)"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
     <a class="clear-all" href="#" @click.prevent="clearAll">Clear All</a>
   </aside>
 </template>
 
 <script setup lang="ts">
+import type { HardpointFilters } from '../composables/useMechList'
+
 const props = defineProps<{
   mode: string
   modelValue: string[]
@@ -68,6 +97,7 @@ const props = defineProps<{
   maxTonnage: number | null
   hasLowerArm: boolean | null
   hasHand: boolean | null
+  hardpoints: HardpointFilters
 }>()
 
 const emit = defineEmits<{
@@ -77,8 +107,31 @@ const emit = defineEmits<{
   'update:maxTonnage': [value: number | null]
   'update:hasLowerArm': [value: boolean | null]
   'update:hasHand': [value: boolean | null]
+  'update:hardpoints': [value: HardpointFilters]
   'clearAll': []
 }>()
+
+const HP_TYPES = [
+  { key: 'ballistic' as const, label: 'Ballistic',   color: '#58a6ff' },
+  { key: 'energy'    as const, label: 'Energy',      color: '#3fb950' },
+  { key: 'missile'   as const, label: 'Missile',     color: '#b482ff' },
+  { key: 'special'   as const, label: 'Special',     color: '#f0883e' },
+  { key: 'wing'      as const, label: 'WingMount',   color: '#8b96a3' },
+  { key: 'bomb'      as const, label: 'BombBay',     color: '#f85149' },
+  { key: 'handheld'  as const, label: 'HandHeld',    color: '#38bdc1' },
+]
+
+const HP_LOCS = [
+  { key: '',             label: 'ANY' },
+  { key: 'RightArm',    label: 'RA'  },
+  { key: 'RightTorso',  label: 'RT'  },
+  { key: 'CenterTorso', label: 'CT'  },
+  { key: 'Head',        label: 'HD'  },
+  { key: 'LeftTorso',   label: 'LT'  },
+  { key: 'LeftArm',     label: 'LA'  },
+  { key: 'RightLeg',    label: 'RL'  },
+  { key: 'LeftLeg',     label: 'LL'  },
+]
 
 const weightClasses = [
   { value: 'LIGHT',   label: 'Light',   cls: 'dot-light' },
@@ -114,6 +167,20 @@ function onMaxChange(e: Event) {
   emit('update:maxTonnage', val >= 420 ? null : Math.max(val, min))
 }
 
+
+function stepCount(key: keyof HardpointFilters, delta: number) {
+  const updated = { ...props.hardpoints }
+  const cur = updated[key].count
+  const next = Math.max(0, Math.min(20, cur + delta))
+  updated[key] = { ...updated[key], count: next }
+  emit('update:hardpoints', updated)
+}
+
+function setLoc(key: keyof HardpointFilters, loc: string) {
+  const updated = { ...props.hardpoints }
+  updated[key] = { ...updated[key], loc }
+  emit('update:hardpoints', updated)
+}
 
 function clearAll() {
   emit('update:modelValue', [])
@@ -171,4 +238,99 @@ function clearAll() {
   color: var(--text-muted);
 }
 .clear-all:hover { color: var(--accent-orange); text-decoration: none; }
+
+.hardpoints-section {
+  overflow-x: auto;
+}
+
+.hp-grid {
+  font-size: 11px;
+  min-width: 0;
+}
+
+.hp-header-row,
+.hp-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.hp-row-dim {
+  opacity: 0.5;
+}
+
+.hp-type-col,
+.hp-type-label {
+  width: 60px;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hp-amt-col {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.hp-step {
+  background: var(--bg-tertiary, #2d333b);
+  border: 1px solid var(--border, #444c56);
+  color: var(--text-primary, #e6edf3);
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hp-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.hp-count {
+  width: 14px;
+  text-align: center;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.hp-loc-col {
+  width: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.hp-header-row .hp-loc-col {
+  font-size: 9px;
+  color: var(--text-secondary, #8b949e);
+  cursor: default;
+}
+
+.hp-loc-col input[type="radio"] {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--accent, #58a6ff);
+}
 </style>
