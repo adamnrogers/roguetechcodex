@@ -27,6 +27,6 @@ export function useGlobalSearch(query: Ref<string>) {
     queryKey: computed(() => ['search', query.value]),
     queryFn: () => apiFetch<SearchResponse>('/api/v1/search', { q: query.value }),
     enabled: computed(() => query.value.length >= 2),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   })
 }

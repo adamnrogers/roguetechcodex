@@ -5,7 +5,7 @@ import type { SearchPageResponse } from './useGlobalSearch'
 
 export function useChassisSearch(query: Ref<string>, page: Ref<number>) {
   return useQuery({
-    queryKey: computed(() => ['search/chassis', query.value, page.value]),
+    queryKey: computed(() => ['search', 'chassis', query.value, page.value]),
     queryFn: () =>
       apiFetch<SearchPageResponse>('/api/v1/search/chassis', {
         q: query.value,
@@ -13,13 +13,13 @@ export function useChassisSearch(query: Ref<string>, page: Ref<number>) {
         page_size: 20,
       }),
     enabled: computed(() => query.value.length >= 2),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
 export function useGearSearch(query: Ref<string>, page: Ref<number>) {
   return useQuery({
-    queryKey: computed(() => ['search/gear', query.value, page.value]),
+    queryKey: computed(() => ['search', 'gear', query.value, page.value]),
     queryFn: () =>
       apiFetch<SearchPageResponse>('/api/v1/search/gear', {
         q: query.value,
@@ -27,6 +27,6 @@ export function useGearSearch(query: Ref<string>, page: Ref<number>) {
         page_size: 20,
       }),
     enabled: computed(() => query.value.length >= 2),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
   })
 }
