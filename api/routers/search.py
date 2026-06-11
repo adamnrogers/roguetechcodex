@@ -1,0 +1,119 @@
+from __future__ import annotations
+
+from typing import Optional
+
+import aiosqlite
+from fastapi import APIRouter, Depends, Query
+
+from db import get_db
+from models import SearchHit, SearchResponse
+
+router = APIRouter(prefix="/api/v1", tags=["search"])
+
+_UNIT_TYPE_TO_RESULT_TYPE: dict[str, str] = {
+    "mech": "mech",
+    "vehicle": "vehicle",
+    "vtol": "vtol",
+    "battle_armor": "battle_armor",
+}
+
+_COMPONENT_TYPE_TO_RESULT_TYPE: dict[str, str] = {
+    "weapon": "weapon",
+    "heatsink": "equipment",
+    "jumpjet": "equipment",
+    "upgrade": "equipment",
+    "ammobox": "equipment",
+}
+
+
+def _component_result_type(component_type: Optional[str]) -> str:
+    if component_type is None:
+        return "equipment"
+    ct = component_type.lower()
+    if ct.startswith("quirk"):
+        return "quirk"
+    return _COMPONENT_TYPE_TO_RESULT_TYPE.get(ct, "equipment")
+
+
+@router.get("/search", response_model=SearchResponse)
+async def search(
+    q: str = Query(min_length=2),
+    db: aiosqlite.Connection = Depends(get_db),
+) -> SearchResponse:
+    q_starts = f"{q}%"
+    q_contains = f"%{q}%"
+
+    chassis_hits: list[SearchHit] = []
+    async with db.execute(
+        """
+        SELECT
+            c.prefab_base, c.ui_name, c.unit_type, c.tonnage,
+            (
+                SELECT v2.variant_name FROM variant v2
+                WHERE v2.chassis_id = c.prefab_base AND v2.variant_name LIKE ?
+                ORDER BY
+                    CASE WHEN LOWER(v2.variant_name) = LOWER(?) THEN 1
+                         WHEN v2.variant_name LIKE ? THEN 2
+                         ELSE 3 END
+                LIMIT 1
+            ) AS matched_variant,
+            CASE
+                WHEN LOWER(c.ui_name) = LOWER(?) THEN 1
+                WHEN EXISTS(SELECT 1 FROM variant v3 WHERE v3.chassis_id = c.prefab_base
+                            AND LOWER(v3.variant_name) = LOWER(?)) THEN 2
+                WHEN c.ui_name LIKE ? THEN 3
+                WHEN EXISTS(SELECT 1 FROM variant v4 WHERE v4.chassis_id = c.prefab_base
+                            AND v4.variant_name LIKE ?) THEN 4
+                WHEN c.ui_name LIKE ? THEN 5
+                ELSE 6
+            END AS rank
+        FROM chassis c
+        WHERE c.ui_name LIKE ?
+           OR EXISTS(SELECT 1 FROM variant v5 WHERE v5.chassis_id = c.prefab_base
+                     AND v5.variant_name LIKE ?)
+        ORDER BY rank, c.ui_name
+        LIMIT 8
+        """,
+        [q_contains, q, q_starts, q, q, q_starts, q_starts, q_contains, q_contains, q_contains],
+    ) as cursor:
+        async for row in cursor:
+            unit_type: str = row["unit_type"] or "mech"
+            tonnage = row["tonnage"]
+            t = f"{int(tonnage)}t" if tonnage else ""
+            ut = unit_type.replace("_", " ").title()
+            base_subtitle = f"{t} · {ut}" if t else ut
+            matched_variant: Optional[str] = row["matched_variant"]
+            q_in_name = q.lower() in (row["ui_name"] or "").lower()
+            subtitle = (
+                f"{matched_variant} · {base_subtitle}"
+                if matched_variant and not q_in_name
+                else base_subtitle
+            )
+            chassis_hits.append(
+                SearchHit(
+                    id=row["prefab_base"],
+                    name=row["ui_name"],
+                    subtitle=subtitle,
+                    result_type=_UNIT_TYPE_TO_RESULT_TYPE.get(unit_type, "mech"),
+                )
+            )
+
+    gear_hits: list[SearchHit] = []
+    async with db.execute(
+        "SELECT id, ui_name, component_type FROM gear "
+        "WHERE ui_name LIKE ? ORDER BY ui_name LIMIT 8",
+        [q_contains],
+    ) as cursor:
+        async for row in cursor:
+            ct: Optional[str] = row["component_type"]
+            subtitle = ct.replace("_", " ").title() if ct else "Equipment"
+            gear_hits.append(
+                SearchHit(
+                    id=row["id"],
+                    name=row["ui_name"],
+                    subtitle=subtitle,
+                    result_type=_component_result_type(ct),
+                )
+            )
+
+    return SearchResponse(q=q, chassis=chassis_hits, gear=gear_hits)
