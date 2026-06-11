@@ -87,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import { defaultHardpoints } from '../composables/useMechList'
 import type { HardpointFilters } from '../composables/useMechList'
 
 const props = defineProps<{
@@ -189,6 +190,7 @@ function clearAll() {
   emit('update:maxTonnage', null)
   emit('update:hasLowerArm', null)
   emit('update:hasHand', null)
+  emit('update:hardpoints', defaultHardpoints())
   emit('clearAll')
 }
 </script>

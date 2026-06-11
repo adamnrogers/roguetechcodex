@@ -8,14 +8,14 @@
       :maxTonnage="filters.maxTonnage"
       :hasLowerArm="filters.hasLowerArm"
       :hasHand="filters.hasHand"
-      v-bind="{ hardpoints: filters.hardpoints }"
+      :hardpoints="filters.hardpoints"
       @update:modelValue="onWeightClassChange"
       @update:era="onEraChange"
       @update:minTonnage="v => filters = { ...filters, minTonnage: v, page: 1 }"
       @update:maxTonnage="v => filters = { ...filters, maxTonnage: v, page: 1 }"
       @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
       @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
-      @update:hardpoints="(v: any) => filters = { ...filters, hardpoints: v, page: 1 }"
+      @update:hardpoints="v => filters = { ...filters, hardpoints: v, page: 1 }"
       @clearAll="filters = { ...filters, weightClass: [], era: '', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), page: 1 }"
     />
     <div class="browse-main">
