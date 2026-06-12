@@ -41,6 +41,8 @@ export interface GearFilters {
   maxTonnage: number | null
   minHeat: number | null
   maxHeat: number | null
+  minSlots: number | null
+  maxSlots: number | null
   page: number
   sort: string
   sortDir: string
@@ -145,6 +147,8 @@ export function useGearList(filters: Ref<GearFilters>) {
       if (filters.value.maxTonnage !== null) params.max_tonnage = filters.value.maxTonnage
       if (filters.value.minHeat !== null) params.min_heat = filters.value.minHeat
       if (filters.value.maxHeat !== null) params.max_heat = filters.value.maxHeat
+      if (filters.value.minSlots !== null) params.min_slots = filters.value.minSlots
+      if (filters.value.maxSlots !== null) params.max_slots = filters.value.maxSlots
       return apiFetch<GearListResponse>('/api/v1/gear', params)
     },
     staleTime: 5 * 60 * 1000,

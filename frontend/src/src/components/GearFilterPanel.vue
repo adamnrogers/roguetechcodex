@@ -27,20 +27,8 @@
       </div>
     </template>
 
-    <!-- Weapon: category, type hierarchy, weight/heat ranges -->
+    <!-- Weapon: type hierarchy, weight/heat/slots ranges -->
     <template v-if="mode === 'weapon'">
-      <div class="filter-section">
-        <h3 class="filter-title">Category</h3>
-        <p class="filter-hint"><span class="hint-inc">+ include only</span> · <span class="hint-exc">− exclude</span></p>
-        <TriStatePills
-          :options="weaponCategories"
-          :includeValues="includeCategories"
-          :excludeValues="excludeCategories"
-          @update:includeValues="$emit('update:includeCategories', $event)"
-          @update:excludeValues="$emit('update:excludeCategories', $event)"
-        />
-      </div>
-
       <div class="filter-section">
         <h3 class="filter-title">Type</h3>
         <div v-for="group in WEAPON_TYPE_GROUPS" :key="group.type" class="type-group">
@@ -101,6 +89,23 @@
           />
         </div>
       </div>
+
+      <div class="filter-section">
+        <h3 class="filter-title">Slots</h3>
+        <div class="range-inputs">
+          <input
+            type="number" class="range-input" placeholder="Min" min="0" max="20" step="1"
+            :value="minSlots ?? ''"
+            @change="emit('update:minSlots', ($event.target as HTMLInputElement).value ? parseInt(($event.target as HTMLInputElement).value) : null)"
+          />
+          <span class="range-sep">–</span>
+          <input
+            type="number" class="range-input" placeholder="Max" min="0" max="20" step="1"
+            :value="maxSlots ?? ''"
+            @change="emit('update:maxSlots', ($event.target as HTMLInputElement).value ? parseInt(($event.target as HTMLInputElement).value) : null)"
+          />
+        </div>
+      </div>
     </template>
 
     <a v-if="hasActiveFilters" class="clear-all" href="#" @click.prevent="clearAll">Clear All</a>
@@ -125,6 +130,8 @@ const props = defineProps<{
   maxTonnage: number | null
   minHeat: number | null
   maxHeat: number | null
+  minSlots: number | null
+  maxSlots: number | null
 }>()
 
 const emit = defineEmits<{
@@ -140,6 +147,8 @@ const emit = defineEmits<{
   'update:maxTonnage':     [value: number | null]
   'update:minHeat':        [value: number | null]
   'update:maxHeat':        [value: number | null]
+  'update:minSlots':       [value: number | null]
+  'update:maxSlots':       [value: number | null]
 }>()
 
 const equipmentTypes = [
@@ -257,7 +266,9 @@ const hasActiveFilters = computed(() =>
   props.minTonnage !== null ||
   props.maxTonnage !== null ||
   props.minHeat !== null ||
-  props.maxHeat !== null
+  props.maxHeat !== null ||
+  props.minSlots !== null ||
+  props.maxSlots !== null
 )
 
 function clearAll() {
@@ -273,6 +284,8 @@ function clearAll() {
   emit('update:maxTonnage', null)
   emit('update:minHeat', null)
   emit('update:maxHeat', null)
+  emit('update:minSlots', null)
+  emit('update:maxSlots', null)
 }
 
 const expandedTypes = ref<Record<string, boolean>>({})

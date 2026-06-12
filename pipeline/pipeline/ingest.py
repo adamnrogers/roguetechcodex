@@ -881,6 +881,8 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
     for entity_id, (data, path) in gear_data.items():
         if should_exclude(path):
             continue
+        if entity_id.startswith("Weapon_MeleeAttackEx"):
+            continue
         ct = data.get("ComponentType")
         if ct not in GEAR_COMPONENT_TYPES:
             continue  # skip non-gear files that matched a gear prefix (e.g. turret AI files)

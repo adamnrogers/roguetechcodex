@@ -14,6 +14,8 @@
       :maxTonnage="filters.maxTonnage"
       :minHeat="filters.minHeat"
       :maxHeat="filters.maxHeat"
+      :minSlots="filters.minSlots"
+      :maxSlots="filters.maxSlots"
       @update:includeTypes="v => onFilterUpdate({ includeTypes: v })"
       @update:excludeTypes="v => onFilterUpdate({ excludeTypes: v })"
       @update:includeCategories="v => onFilterUpdate({ includeCategories: v })"
@@ -26,6 +28,8 @@
       @update:maxTonnage="v => onFilterUpdate({ maxTonnage: v })"
       @update:minHeat="v => onFilterUpdate({ minHeat: v })"
       @update:maxHeat="v => onFilterUpdate({ maxHeat: v })"
+      @update:minSlots="v => onFilterUpdate({ minSlots: v })"
+      @update:maxSlots="v => onFilterUpdate({ maxSlots: v })"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -141,6 +145,8 @@ function defaultFilters(): GearFilters {
     maxTonnage: null,
     minHeat: null,
     maxHeat: null,
+    minSlots: null,
+    maxSlots: null,
     page: 1,
     sort: 'name',
     sortDir: 'asc',
@@ -166,6 +172,8 @@ function readFilters(): GearFilters {
   const maxT     = route.query.maxt ? parseFloat(route.query.maxt as string) : null
   const minH     = route.query.minh ? parseFloat(route.query.minh as string) : null
   const maxH     = route.query.maxh ? parseFloat(route.query.maxh as string) : null
+  const minS     = route.query.mins ? parseInt(route.query.mins as string) : null
+  const maxS     = route.query.maxs ? parseInt(route.query.maxs as string) : null
   return {
     q,
     componentType: componentTypeParam.value,
@@ -181,6 +189,8 @@ function readFilters(): GearFilters {
     maxTonnage: maxT,
     minHeat:    minH,
     maxHeat:    maxH,
+    minSlots:   minS,
+    maxSlots:   maxS,
     page, sort, sortDir,
   }
 }
@@ -239,6 +249,8 @@ watch(filters, (f) => {
   if (f.maxTonnage !== null)   query.maxt = String(f.maxTonnage)
   if (f.minHeat !== null)      query.minh = String(f.minHeat)
   if (f.maxHeat !== null)      query.maxh = String(f.maxHeat)
+  if (f.minSlots !== null)     query.mins = String(f.minSlots)
+  if (f.maxSlots !== null)     query.maxs = String(f.maxSlots)
   if (f.page > 1)                 query.page = String(f.page)
   if (f.sort !== defaultSort) query.sort = f.sort
   if (f.sortDir !== defaultDir) query.dir = f.sortDir

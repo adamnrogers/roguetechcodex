@@ -44,6 +44,8 @@ async def list_gear(
     max_tonnage: Optional[float] = Query(default=None),
     min_heat: Optional[float] = Query(default=None),
     max_heat: Optional[float] = Query(default=None),
+    min_slots: Optional[int] = Query(default=None),
+    max_slots: Optional[int] = Query(default=None),
     include_locations: Optional[list[str]] = Query(default=None),
     exclude_locations: Optional[list[str]] = Query(default=None),
     source_mod: Optional[str] = Query(default=None),
@@ -137,6 +139,14 @@ async def list_gear(
     if max_heat is not None:
         conditions.append("g.heat_generated <= ?")
         params.append(max_heat)
+
+    if min_slots is not None:
+        conditions.append("g.slots >= ?")
+        params.append(min_slots)
+
+    if max_slots is not None:
+        conditions.append("g.slots <= ?")
+        params.append(max_slots)
 
     if include_locations:
         parts: list[str] = []
