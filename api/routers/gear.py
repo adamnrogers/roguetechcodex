@@ -36,6 +36,14 @@ async def list_gear(
     exclude_types: Optional[list[str]] = Query(default=None),
     include_categories: Optional[list[str]] = Query(default=None),
     exclude_categories: Optional[list[str]] = Query(default=None),
+    include_weapon_types: Optional[list[str]] = Query(default=None),
+    exclude_weapon_types: Optional[list[str]] = Query(default=None),
+    include_weapon_subtypes: Optional[list[str]] = Query(default=None),
+    exclude_weapon_subtypes: Optional[list[str]] = Query(default=None),
+    min_tonnage: Optional[float] = Query(default=None),
+    max_tonnage: Optional[float] = Query(default=None),
+    min_heat: Optional[float] = Query(default=None),
+    max_heat: Optional[float] = Query(default=None),
     include_locations: Optional[list[str]] = Query(default=None),
     exclude_locations: Optional[list[str]] = Query(default=None),
     source_mod: Optional[str] = Query(default=None),
@@ -86,6 +94,42 @@ async def list_gear(
         placeholders = ",".join("?" * len(exclude_categories))
         conditions.append(f"(g.weapon_category NOT IN ({placeholders}) OR g.weapon_category IS NULL)")
         params.extend(exclude_categories)
+
+    if include_weapon_types:
+        placeholders = ",".join("?" * len(include_weapon_types))
+        conditions.append(f"g.weapon_type IN ({placeholders})")
+        params.extend(include_weapon_types)
+
+    if exclude_weapon_types:
+        placeholders = ",".join("?" * len(exclude_weapon_types))
+        conditions.append(f"(g.weapon_type NOT IN ({placeholders}) OR g.weapon_type IS NULL)")
+        params.extend(exclude_weapon_types)
+
+    if include_weapon_subtypes:
+        placeholders = ",".join("?" * len(include_weapon_subtypes))
+        conditions.append(f"g.weapon_subtype IN ({placeholders})")
+        params.extend(include_weapon_subtypes)
+
+    if exclude_weapon_subtypes:
+        placeholders = ",".join("?" * len(exclude_weapon_subtypes))
+        conditions.append(f"(g.weapon_subtype NOT IN ({placeholders}) OR g.weapon_subtype IS NULL)")
+        params.extend(exclude_weapon_subtypes)
+
+    if min_tonnage is not None:
+        conditions.append("g.tonnage >= ?")
+        params.append(min_tonnage)
+
+    if max_tonnage is not None:
+        conditions.append("g.tonnage <= ?")
+        params.append(max_tonnage)
+
+    if min_heat is not None:
+        conditions.append("g.heat_generated >= ?")
+        params.append(min_heat)
+
+    if max_heat is not None:
+        conditions.append("g.heat_generated <= ?")
+        params.append(max_heat)
 
     if include_locations:
         parts: list[str] = []
