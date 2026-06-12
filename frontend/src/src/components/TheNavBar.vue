@@ -116,6 +116,7 @@ watch(() => route.path, (path, prev) => {
   align-items: center;
   line-height: 1;
   gap: 2px;
+  flex-shrink: 0;
 }
 .logo {
   color: var(--text-primary) !important;
@@ -147,6 +148,7 @@ watch(() => route.path, (path, prev) => {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 .search-wrapper {
   position: relative;
