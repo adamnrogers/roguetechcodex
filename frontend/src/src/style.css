@@ -11,9 +11,9 @@
   --accent-orange: #ff8000;
   --text-primary: #d0d7de;
   --text-muted: #9aa5b4;
-  --border-color: #3860be;
-  --border-default: 1px solid #3860be;
-  --border-hover: 1px solid #ff8000;
+  --border-color: rgba(56, 96, 190, 0.4);
+  --border-default: 1px solid rgba(56, 96, 190, 0.4);
+  --border-hover: 1px solid rgba(255, 128, 0, 0.7);
   --sortbar-divider: rgba(56, 96, 190, 0.3);
   --viewbtn-active: rgba(56, 96, 190, 0.3);
   --viewbtn-hover: rgba(56, 96, 190, 0.2);
