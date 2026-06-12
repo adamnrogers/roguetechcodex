@@ -44,10 +44,10 @@
 /* ── Light theme ─────────────────────────────────────────────────────────── */
 [data-theme="v2"] {
   --bg-primary: #f6f8fa;
-  --bg-card: #ffffff;
-  --bg-sidebar: #eaeef2;
-  --bg-card-hover: #f0f4f8;
-  --bg-infobox: #ffffff;
+  --bg-card: #eef1f5;
+  --bg-sidebar: #e4e8ed;
+  --bg-card-hover: #e8ecf1;
+  --bg-infobox: #eef1f5;
   --bg-nav: rgba(246, 248, 250, 0.95);
   --bg-select: #ffffff;
   --accent-blue: #0969da;
