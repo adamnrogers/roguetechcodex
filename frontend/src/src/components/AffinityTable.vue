@@ -60,7 +60,7 @@ const flatRows = computed((): FlatRow[] => {
       } else if (aff.affinity_type === 'Chassis') {
         source = 'Chassis'
       } else if (aff.affinity_type === 'Quirk') {
-        source = humanizeTag(aff.quirk_name.replace(/^Quirk_/, ''))
+        source = aff.quirk_ui_name || humanizeTag(aff.quirk_name.replace(/^Quirk_/, ''))
       } else {
         source = aff.affinity_type
       }

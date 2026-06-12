@@ -12,6 +12,7 @@ export interface AffinityEntry {
   id: string
   affinity_type: string   // "Global" | "Chassis" | "Quirk"
   quirk_name: string      // quirk ID for /quirks/:id link (Quirk type only)
+  quirk_ui_name?: string  // gear table UIName for Quirk type (e.g. "Morrigan C3i")
   levels: AffinityLevel[]
 }
 
@@ -42,6 +43,7 @@ export interface InventoryItem {
   component_def_type: string
   hardpoint_slot: number
   weapon_category: string | null
+  ui_name?: string | null
 }
 
 export interface EquipmentItem {
@@ -50,6 +52,7 @@ export interface EquipmentItem {
   component_def_type: string
   hardpoint_slot: number
   weapon_category: string | null
+  ui_name?: string | null
 }
 
 export interface VariantDetail {

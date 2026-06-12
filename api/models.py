@@ -17,6 +17,7 @@ class AffinityEntry(BaseModel):
     id: str
     affinity_type: str       # "Global" | "Chassis" | "Quirk" | "Tag"
     quirk_name: str          # quirk ID (Quirk type only, used for /quirks/:id link)
+    quirk_ui_name: str = ""  # UIName from gear table (Quirk type only)
     levels: list[AffinityLevel]
 
 
@@ -55,6 +56,7 @@ class InventoryItem(BaseModel):
     component_def_type: str
     hardpoint_slot: int
     weapon_category: Optional[str] = None
+    ui_name: Optional[str] = None
 
 
 class EquipmentItem(BaseModel):
@@ -63,6 +65,7 @@ class EquipmentItem(BaseModel):
     component_def_type: str
     hardpoint_slot: int
     weapon_category: Optional[str] = None
+    ui_name: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

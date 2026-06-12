@@ -207,7 +207,7 @@ def _parse_loadout_locations(raw: Optional[str]) -> list[LoadoutLocation]:
     ]
 
 
-def _parse_inventory(raw: Optional[str]) -> list[InventoryItem]:
+def _parse_inventory(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] = None) -> list[InventoryItem]:
     if not raw:
         return []
     try:
@@ -221,12 +221,13 @@ def _parse_inventory(raw: Optional[str]) -> list[InventoryItem]:
             component_def_type=item.get("ComponentDefType", ""),
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
             weapon_category=item.get("weapon_category"),
+            ui_name=gear_ui_map.get(item.get("ComponentDefID", "")) if gear_ui_map else None,
         )
         for item in items
     ]
 
 
-def _parse_equipment(raw: Optional[str]) -> list[EquipmentItem]:
+def _parse_equipment(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] = None) -> list[EquipmentItem]:
     if not raw:
         return []
     try:
@@ -240,6 +241,7 @@ def _parse_equipment(raw: Optional[str]) -> list[EquipmentItem]:
             component_def_type=item.get("ComponentDefType", ""),
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
             weapon_category=item.get("weapon_category"),
+            ui_name=gear_ui_map.get(item.get("ComponentDefID", "")) if gear_ui_map else None,
         )
         for item in items
     ]
@@ -289,6 +291,7 @@ def _parse_affinity_levels(raw: Optional[str]) -> list[AffinityLevel]:
 def _build_affinity_context(
     affinity_rows: list,
     chassis_prefab: str,
+    gear_ui_map: Optional[dict[str, str]] = None,
 ) -> tuple[list[AffinityEntry], dict[str, list[AffinityEntry]]]:
     """Return (chassis_level_affinities, quirk_map).
 
@@ -326,7 +329,8 @@ def _build_affinity_context(
             except (json.JSONDecodeError, TypeError):
                 quirk_names = []
             for qname in quirk_names:
-                entry = AffinityEntry(id=arow["id"], affinity_type="Quirk", quirk_name=qname, levels=levels)
+                quirk_ui_name = (gear_ui_map.get(qname) or "") if gear_ui_map else ""
+                entry = AffinityEntry(id=arow["id"], affinity_type="Quirk", quirk_name=qname, quirk_ui_name=quirk_ui_name, levels=levels)
                 quirk_map.setdefault(qname, []).append(entry)
 
     return chassis_affinities, quirk_map
@@ -337,12 +341,13 @@ def _build_variant_detail(
     lrow: Optional[aiosqlite.Row],
     chassis_affinities: Optional[list[AffinityEntry]] = None,
     quirk_map: Optional[dict[str, list[AffinityEntry]]] = None,
+    gear_ui_map: Optional[dict[str, str]] = None,
 ) -> VariantDetail:
     loadout_id = lrow["id"] if lrow else None
     era_tags = _split_csv(lrow["era_tags"] if lrow else None)
     faction_tags = _split_csv(lrow["faction_tags"] if lrow else None)
     loadout_locations = _parse_loadout_locations(lrow["locations_json"] if lrow else None)
-    inventory = _parse_inventory(lrow["inventory_json"] if lrow else None)
+    inventory = _parse_inventory(lrow["inventory_json"] if lrow else None, gear_ui_map)
     spawn_tags = _parse_json_list(lrow["required_to_spawn_tags"] if lrow else None)
 
     hardpoints_summary = _compute_hardpoints_summary(
@@ -375,7 +380,7 @@ def _build_variant_detail(
         drop_cost_modifier=vrow["drop_cost_modifier"],
         chassis_tags=_parse_json_list(vrow["chassis_tags"]),
         locations=_parse_variant_locations(vrow["locations_json"]),
-        fixed_equipment=_parse_equipment(vrow["fixed_equipment_json"]),
+        fixed_equipment=_parse_equipment(vrow["fixed_equipment_json"], gear_ui_map),
         chassis_defaults=_parse_json_list(vrow["chassis_defaults_json"]),
         multi_defaults=_parse_json_list(vrow["multi_defaults_json"]),
         lootable_unique_mech=bool(vrow["lootable_unique_mech"]),
@@ -390,6 +395,12 @@ def _build_variant_detail(
         health_summary=health_summary,
         affinities=affinities,
     )
+
+
+async def _fetch_gear_ui_map(db: aiosqlite.Connection) -> dict[str, str]:
+    async with db.execute("SELECT id, ui_name FROM gear WHERE ui_name IS NOT NULL") as cur:
+        rows = await cur.fetchall()
+    return {row["id"]: row["ui_name"] for row in rows}
 
 
 # ---------------------------------------------------------------------------
@@ -634,18 +645,20 @@ async def get_mech(
         row["variant_id"]: row for row in loadout_rows
     }
 
+    gear_ui_map = await _fetch_gear_ui_map(db)
+
     # Fetch all affinities once; resolve Global+Chassis pre-matched + quirk map for per-variant
     try:
         async with db.execute(
             "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base)
+        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
         chassis_affs, quirk_map = [], {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
         for vrow in variant_rows
     ]
 
@@ -708,17 +721,19 @@ async def get_battle_armor(
         row["variant_id"]: row for row in loadout_rows
     }
 
+    gear_ui_map = await _fetch_gear_ui_map(db)
+
     try:
         async with db.execute(
             "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base)
+        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
         chassis_affs, quirk_map = [], {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
         for vrow in variant_rows
     ]
 
@@ -862,17 +877,19 @@ async def get_vehicle(
 
     loadout_by_variant = {row["variant_id"]: row for row in loadout_rows}
 
+    gear_ui_map = await _fetch_gear_ui_map(db)
+
     try:
         async with db.execute(
             "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base)
+        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
         chassis_affs, quirk_map = [], {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
         for vrow in variant_rows
     ]
 

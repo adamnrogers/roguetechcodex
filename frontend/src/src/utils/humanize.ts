@@ -12,7 +12,7 @@ export function humanizeTag(raw: string): string {
     .replace(/[_\-]/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]{2,})([A-Z][a-z])/g, '$1 $2')
-    .replace(/([a-zA-Z])(\d)/g, '$1 $2')
+    .replace(/([a-zA-Z])(\d{2,})/g, '$1 $2')
     .replace(/\s{2,}/g, ' ')
     .trim()
     .replace(/\b\w/g, c => c.toUpperCase())
