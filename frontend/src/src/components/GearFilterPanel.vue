@@ -44,16 +44,18 @@
       <div class="filter-section">
         <h3 class="filter-title">Type</h3>
         <div v-for="group in WEAPON_TYPE_GROUPS" :key="group.type" class="type-group">
-          <label class="type-group-label">
+          <div class="type-group-header" @click="group.subtypes.length ? toggleTypeExpand(group.type) : undefined">
             <input
               type="checkbox"
               :checked="isGroupTypeChecked(group)"
               :indeterminate.prop="isGroupTypeIndeterminate(group)"
+              @click.stop
               @change="toggleGroupType(group)"
             />
-            {{ group.label }}
-          </label>
-          <div v-if="group.subtypes.length" class="type-subtypes">
+            <span class="type-group-label-text">{{ group.label }}</span>
+            <span v-if="group.subtypes.length" class="type-chevron" :class="{ open: expandedTypes[group.type] }">›</span>
+          </div>
+          <div v-if="group.subtypes.length && expandedTypes[group.type]" class="type-subtypes">
             <label v-for="sub in group.subtypes" :key="sub.value" class="type-sub-label">
               <input
                 type="checkbox"
@@ -67,7 +69,7 @@
       </div>
 
       <div class="filter-section">
-        <h3 class="filter-title">Weight (t)</h3>
+        <h3 class="filter-title">Weight</h3>
         <div class="range-inputs">
           <input
             type="number" class="range-input" placeholder="Min" min="0" max="55" step="0.5"
@@ -106,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import TriStatePills from './TriStatePills.vue'
 
 const props = defineProps<{
@@ -273,6 +275,12 @@ function clearAll() {
   emit('update:maxHeat', null)
 }
 
+const expandedTypes = ref<Record<string, boolean>>({})
+
+function toggleTypeExpand(type: string) {
+  expandedTypes.value = { ...expandedTypes.value, [type]: !expandedTypes.value[type] }
+}
+
 function allSubtypesOf(group: WeaponTypeGroup): string[] {
   return group.subtypes.map(s => s.value)
 }
@@ -360,22 +368,37 @@ function toggleSubtype(value: string) {
 .clear-all:hover { color: var(--accent-orange); }
 
 .type-group {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.type-group-label {
+.type-group-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: var(--text-primary);
   cursor: pointer;
   user-select: none;
 }
 
-.type-group-label input[type="checkbox"] {
+.type-group-header input[type="checkbox"] {
   accent-color: var(--accent-blue);
   cursor: pointer;
+}
+
+.type-group-label-text {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.type-chevron {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+  line-height: 1;
+}
+
+.type-chevron.open {
+  transform: rotate(90deg);
 }
 
 .type-subtypes {
