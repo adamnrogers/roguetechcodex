@@ -35,6 +35,12 @@ export interface GearFilters {
   excludeCategories: string[]
   includeLocations: string[]
   excludeLocations: string[]
+  weaponTypes: string[]
+  weaponSubtypes: string[]
+  minTonnage: number | null
+  maxTonnage: number | null
+  minHeat: number | null
+  maxHeat: number | null
   page: number
   sort: string
   sortDir: string
@@ -133,6 +139,12 @@ export function useGearList(filters: Ref<GearFilters>) {
       if (filters.value.excludeCategories.length) params.exclude_categories = filters.value.excludeCategories
       if (filters.value.includeLocations.length) params.include_locations = filters.value.includeLocations
       if (filters.value.excludeLocations.length) params.exclude_locations = filters.value.excludeLocations
+      if (filters.value.weaponTypes.length) params.include_weapon_types = filters.value.weaponTypes
+      if (filters.value.weaponSubtypes.length) params.include_weapon_subtypes = filters.value.weaponSubtypes
+      if (filters.value.minTonnage !== null) params.min_tonnage = filters.value.minTonnage
+      if (filters.value.maxTonnage !== null) params.max_tonnage = filters.value.maxTonnage
+      if (filters.value.minHeat !== null) params.min_heat = filters.value.minHeat
+      if (filters.value.maxHeat !== null) params.max_heat = filters.value.maxHeat
       return apiFetch<GearListResponse>('/api/v1/gear', params)
     },
     staleTime: 5 * 60 * 1000,
