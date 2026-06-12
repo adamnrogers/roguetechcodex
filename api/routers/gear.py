@@ -95,20 +95,27 @@ async def list_gear(
         conditions.append(f"(g.weapon_category NOT IN ({placeholders}) OR g.weapon_category IS NULL)")
         params.extend(exclude_categories)
 
-    if include_weapon_types:
+    if include_weapon_types and include_weapon_subtypes:
+        type_ph = ",".join("?" * len(include_weapon_types))
+        sub_ph  = ",".join("?" * len(include_weapon_subtypes))
+        conditions.append(
+            f"(g.weapon_type IN ({type_ph}) OR g.weapon_subtype IN ({sub_ph}))"
+        )
+        params.extend(include_weapon_types)
+        params.extend(include_weapon_subtypes)
+    elif include_weapon_types:
         placeholders = ",".join("?" * len(include_weapon_types))
         conditions.append(f"g.weapon_type IN ({placeholders})")
         params.extend(include_weapon_types)
+    elif include_weapon_subtypes:
+        placeholders = ",".join("?" * len(include_weapon_subtypes))
+        conditions.append(f"g.weapon_subtype IN ({placeholders})")
+        params.extend(include_weapon_subtypes)
 
     if exclude_weapon_types:
         placeholders = ",".join("?" * len(exclude_weapon_types))
         conditions.append(f"(g.weapon_type NOT IN ({placeholders}) OR g.weapon_type IS NULL)")
         params.extend(exclude_weapon_types)
-
-    if include_weapon_subtypes:
-        placeholders = ",".join("?" * len(include_weapon_subtypes))
-        conditions.append(f"g.weapon_subtype IN ({placeholders})")
-        params.extend(include_weapon_subtypes)
 
     if exclude_weapon_subtypes:
         placeholders = ",".join("?" * len(exclude_weapon_subtypes))

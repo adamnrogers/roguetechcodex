@@ -48,7 +48,7 @@
             <input
               type="checkbox"
               :checked="isGroupTypeChecked(group)"
-              :indeterminate="isGroupTypeIndeterminate(group)"
+              :indeterminate.prop="isGroupTypeIndeterminate(group)"
               @change="toggleGroupType(group)"
             />
             {{ group.label }}
