@@ -40,6 +40,7 @@ async def list_gear(
     exclude_weapon_types: Optional[list[str]] = Query(default=None),
     include_weapon_subtypes: Optional[list[str]] = Query(default=None),
     exclude_weapon_subtypes: Optional[list[str]] = Query(default=None),
+    include_weapon_category_ids: Optional[list[str]] = Query(default=None),
     min_tonnage: Optional[float] = Query(default=None),
     max_tonnage: Optional[float] = Query(default=None),
     min_heat: Optional[float] = Query(default=None),
@@ -123,6 +124,11 @@ async def list_gear(
         placeholders = ",".join("?" * len(exclude_weapon_subtypes))
         conditions.append(f"(g.weapon_subtype NOT IN ({placeholders}) OR g.weapon_subtype IS NULL)")
         params.extend(exclude_weapon_subtypes)
+
+    if include_weapon_category_ids:
+        placeholders = ",".join("?" * len(include_weapon_category_ids))
+        conditions.append(f"g.weapon_category_id IN ({placeholders})")
+        params.extend(include_weapon_category_ids)
 
     if min_tonnage is not None:
         conditions.append("g.tonnage >= ?")

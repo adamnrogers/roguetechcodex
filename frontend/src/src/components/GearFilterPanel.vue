@@ -31,24 +31,24 @@
     <template v-if="mode === 'weapon'">
       <div class="filter-section">
         <h3 class="filter-title">Type</h3>
-        <div v-for="group in WEAPON_TYPE_GROUPS" :key="group.type" class="type-group">
-          <div class="type-group-header" @click="group.subtypes.length ? toggleTypeExpand(group.type) : undefined">
+        <div v-for="group in WEAPON_CATEGORY_GROUPS" :key="group.groupId" class="type-group">
+          <div class="type-group-header" @click="group.subtypes.length ? toggleTypeExpand(group.groupId) : undefined">
             <input
               type="checkbox"
-              :checked="isGroupTypeChecked(group)"
-              :indeterminate.prop="isGroupTypeIndeterminate(group)"
+              :checked="isGroupChecked(group)"
+              :indeterminate.prop="isGroupIndeterminate(group)"
               @click.stop
-              @change="toggleGroupType(group)"
+              @change="toggleGroup(group)"
             />
             <span class="type-group-label-text">{{ group.label }}</span>
-            <span v-if="group.subtypes.length" class="type-chevron" :class="{ open: expandedTypes[group.type] }">›</span>
+            <span v-if="group.subtypes.length" class="type-chevron" :class="{ open: expandedTypes[group.groupId] }">›</span>
           </div>
-          <div v-if="group.subtypes.length && expandedTypes[group.type]" class="type-subtypes">
-            <label v-for="sub in group.subtypes" :key="sub.value" class="type-sub-label">
+          <div v-if="group.subtypes.length && expandedTypes[group.groupId]" class="type-subtypes">
+            <label v-for="sub in group.subtypes" :key="sub.id" class="type-sub-label">
               <input
                 type="checkbox"
-                :checked="isSubtypeChecked(sub.value)"
-                @change="toggleSubtype(sub.value)"
+                :checked="isCategoryIdChecked(sub.id)"
+                @change="toggleCategoryId(sub.id)"
               />
               {{ sub.label }}
             </label>
@@ -126,6 +126,7 @@ const props = defineProps<{
   excludeLocations: string[]
   weaponTypes: string[]
   weaponSubtypes: string[]
+  weaponCategoryIds: string[]
   minTonnage: number | null
   maxTonnage: number | null
   minHeat: number | null
@@ -141,14 +142,15 @@ const emit = defineEmits<{
   'update:excludeCategories': [value: string[]]
   'update:includeLocations':  [value: string[]]
   'update:excludeLocations':  [value: string[]]
-  'update:weaponTypes':    [value: string[]]
-  'update:weaponSubtypes': [value: string[]]
-  'update:minTonnage':     [value: number | null]
-  'update:maxTonnage':     [value: number | null]
-  'update:minHeat':        [value: number | null]
-  'update:maxHeat':        [value: number | null]
-  'update:minSlots':       [value: number | null]
-  'update:maxSlots':       [value: number | null]
+  'update:weaponTypes':       [value: string[]]
+  'update:weaponSubtypes':    [value: string[]]
+  'update:weaponCategoryIds': [value: string[]]
+  'update:minTonnage':        [value: number | null]
+  'update:maxTonnage':        [value: number | null]
+  'update:minHeat':           [value: number | null]
+  'update:maxHeat':           [value: number | null]
+  'update:minSlots':          [value: number | null]
+  'update:maxSlots':          [value: number | null]
 }>()
 
 const equipmentTypes = [
@@ -168,89 +170,155 @@ const locationOptions = [
   { value: 'Legs',         label: 'Legs' },
 ]
 
-const weaponCategories = [
-  { value: 'Ballistic', label: 'Ballistic' },
-  { value: 'Energy',    label: 'Energy' },
-  { value: 'Missile',   label: 'Missile' },
-  { value: 'Melee',     label: 'Melee' },
-  { value: 'Support',   label: 'Support' },
-]
+interface WeaponCategorySubOption { id: string; label: string }
+interface WeaponCategoryGroup { groupId: string; label: string; subtypes: WeaponCategorySubOption[] }
 
-interface WeaponSubOption { value: string; label: string }
-interface WeaponTypeGroup { type: string; label: string; subtypes: WeaponSubOption[] }
-
-const WEAPON_TYPE_GROUPS: WeaponTypeGroup[] = [
+const WEAPON_CATEGORY_GROUPS: WeaponCategoryGroup[] = [
   {
-    type: 'Autocannon', label: 'Autocannon',
+    groupId: 'autocannon', label: 'Autocannons',
     subtypes: [
-      { value: 'AC2',   label: 'AC/2' },
-      { value: 'AC5',   label: 'AC/5' },
-      { value: 'AC10',  label: 'AC/10' },
-      { value: 'AC20',  label: 'AC/20' },
-      { value: 'UAC2',  label: 'UAC/2' },
-      { value: 'UAC5',  label: 'UAC/5' },
-      { value: 'UAC10', label: 'UAC/10' },
-      { value: 'UAC20', label: 'UAC/20' },
-      { value: 'LB2X',  label: 'LB-2X' },
-      { value: 'LB5X',  label: 'LB-5X' },
-      { value: 'LB10X', label: 'LB-10X' },
-      { value: 'LB20X', label: 'LB-20X' },
+      { id: 'w/a/a/ac',    label: 'AutoCannon' },
+      { id: 'w/a/a/lac',   label: 'Light AC' },
+      { id: 'w/a/a/hvac',  label: 'HV AC' },
+      { id: 'w/a/a/rac',   label: 'Rotary AC' },
+      { id: 'w/a/a/shrac', label: 'SH Rotary AC' },
+      { id: 'w/a/a/uac',   label: 'Ultra AC' },
+      { id: 'w/a/a/md',    label: 'Mass Driver' },
+      { id: 'w/a/a/lbx',   label: 'LB-X AC' },
+      { id: 'w/a/a/rifle', label: 'Rifle' },
     ],
   },
   {
-    type: 'Gauss', label: 'Gauss',
-    subtypes: [{ value: 'Gauss', label: 'Gauss' }],
-  },
-  {
-    type: 'MachineGun', label: 'Machine Gun',
-    subtypes: [{ value: 'MachineGun', label: 'MG' }],
-  },
-  {
-    type: 'Laser', label: 'Laser',
+    groupId: 'gauss', label: 'Magnetic Files',
     subtypes: [
-      { value: 'SmallLaser',       label: 'Small' },
-      { value: 'SmallLaserER',     label: 'Small ER' },
-      { value: 'SmallLaserPulse',  label: 'Small Pulse' },
-      { value: 'MediumLaser',      label: 'Medium' },
-      { value: 'MediumLaserER',    label: 'Medium ER' },
-      { value: 'MediumLaserPulse', label: 'Medium Pulse' },
-      { value: 'LargeLaser',       label: 'Large' },
-      { value: 'LargeLaserER',     label: 'Large ER' },
-      { value: 'LargeLaserPulse',  label: 'Large Pulse' },
+      { id: 'w/a/g/gaussrifle',      label: 'Gauss Rifle' },
+      { id: 'w/a/g/lightgaussrifle', label: 'Light Gauss' },
+      { id: 'w/a/g/heavygaussrifle', label: 'Heavy Gauss' },
+      { id: 'w/a/g/sb',              label: 'Silver Bullet' },
+      { id: 'w/a/g/hag',             label: 'Hyper-Assault' },
+      { id: 'w/a/g/railgun',         label: 'Railgun' },
+      { id: 'w/a/g/plasmarailgun',   label: 'Plasma Railgun' },
+      { id: 'w/a/g/helicalrailgun',  label: 'Helical Railgun' },
+      { id: 'w/a/g/magshot',         label: 'Magshot' },
+      { id: 'w/a/g/raplbgr',         label: 'RAPLBGR' },
+      { id: 'w/a/g/taser',           label: 'Taser' },
     ],
   },
   {
-    type: 'PPC', label: 'PPC',
+    groupId: 'other-ballistic', label: 'Other Ballistics',
     subtypes: [
-      { value: 'PPC',     label: 'PPC' },
-      { value: 'PPCER',   label: 'ER PPC' },
-      { value: 'PPCSnub', label: 'Snub-Nose' },
+      { id: 'w/a/o/mg',        label: 'Machine Gun' },
+      { id: 'w/a/o/artillery', label: 'Artillery' },
+      { id: 'w/a/o/mortar',    label: 'Mortar' },
     ],
   },
   {
-    type: 'Flamer', label: 'Flamer',
-    subtypes: [{ value: 'Flamer', label: 'Flamer' }],
-  },
-  {
-    type: 'LRM', label: 'LRM',
+    groupId: 'laser', label: 'Lasers',
     subtypes: [
-      { value: 'LRM5',  label: 'LRM-5' },
-      { value: 'LRM10', label: 'LRM-10' },
-      { value: 'LRM15', label: 'LRM-15' },
-      { value: 'LRM20', label: 'LRM-20' },
+      { id: 'w/e/l/laser',    label: 'Laser' },
+      { id: 'w/e/l/er',       label: 'ER Laser' },
+      { id: 'w/e/l/pulse',    label: 'Pulse' },
+      { id: 'w/e/l/x-pulse',  label: 'X-Pulse' },
+      { id: 'w/e/l/erpulse',  label: 'ER Pulse' },
+      { id: 'w/e/l/vspl',     label: 'VSPL' },
+      { id: 'w/e/l/heavy',    label: 'Heavy' },
+      { id: 'w/e/l/bombast',  label: 'Bombast' },
+      { id: 'w/e/l/binary',   label: 'Binary' },
+      { id: 'w/e/l/re',       label: 'Re-engineered' },
+      { id: 'w/e/l/chemical', label: 'Chemical' },
     ],
   },
   {
-    type: 'SRM', label: 'SRM',
+    groupId: 'ppc', label: 'PPCs',
     subtypes: [
-      { value: 'SRM2', label: 'SRM-2' },
-      { value: 'SRM4', label: 'SRM-4' },
-      { value: 'SRM6', label: 'SRM-6' },
+      { id: 'w/e/p/ppc',   label: 'PPC' },
+      { id: 'w/e/p/erppc', label: 'ER PPC' },
+      { id: 'w/e/p/hppc',  label: 'Heavy PPC' },
+      { id: 'w/e/p/snppc', label: 'Snubnose' },
+      { id: 'w/e/p/lppc',  label: 'Light PPC' },
+      { id: 'w/e/p/rppc',  label: 'Rotary PPC' },
+      { id: 'w/e/p/xppc',  label: 'Experimental' },
+      { id: 'w/e/p/tsemp', label: 'TSEMP' },
     ],
   },
   {
-    type: 'Melee', label: 'Melee',
-    subtypes: [],
+    groupId: 'flamer', label: 'Plasma & Flamers',
+    subtypes: [
+      { id: 'w/e/p/flamer',  label: 'Flamer' },
+      { id: 'w/e/p/aflamer', label: 'Ammo Flamer' },
+      { id: 'w/e/p/plasma',  label: 'Plasma Cannon' },
+    ],
+  },
+  {
+    groupId: 'lrm', label: 'LRM',
+    subtypes: [
+      { id: 'w/m/l/lrm',          label: 'LRM' },
+      { id: 'w/m/l/clrm',         label: 'Clan LRM' },
+      { id: 'w/m/l/slrm',         label: 'Streak LRM' },
+      { id: 'w/m/l/elrm',         label: 'Extended LRM' },
+      { id: 'w/m/l/nlrm',         label: 'Enhanced LRM' },
+      { id: 'w/m/l/rlrm',         label: 'Rotary LRM' },
+      { id: 'w/m/l/mrm',          label: 'MRM' },
+      { id: 'w/m/t/thunderbolt',  label: 'Thunderbolt' },
+      { id: 'w/m/t/arrowiv',      label: 'Arrow IV' },
+      { id: 'w/m/t/cruisemissile', label: 'Cruise Missile' },
+    ],
+  },
+  {
+    groupId: 'srm', label: 'SRM',
+    subtypes: [
+      { id: 'w/m/s/srm',  label: 'SRM' },
+      { id: 'w/m/s/csrm', label: 'Clan SRM' },
+      { id: 'w/m/s/ssrm', label: 'Streak SRM' },
+      { id: 'w/m/s/smrm', label: 'Streak MRM' },
+      { id: 'w/m/s/hmrm', label: 'Heavy MRM' },
+      { id: 'w/m/s/mrm',  label: 'MRM' },
+      { id: 'w/m/s/rl',   label: 'Rocket Launcher' },
+      { id: 'w/m/s/mms',  label: 'MMS' },
+    ],
+  },
+  {
+    groupId: 'multimissile', label: 'Multi Missile',
+    subtypes: [
+      { id: 'w/m/s/mml',  label: 'MML' },
+      { id: 'w/m/s/smml', label: 'Streak MML' },
+      { id: 'w/m/l/atm',  label: 'ATM' },
+      { id: 'w/m/l/iatm', label: 'iATM' },
+    ],
+  },
+  {
+    groupId: 'support', label: 'Support',
+    subtypes: [
+      { id: 'w/s/a/ams',     label: 'AMS' },
+      { id: 'w/s/a/lams',    label: 'Laser AMS' },
+      { id: 'w/s/t/tag',     label: 'TAG' },
+      { id: 'w/s/t/narc',    label: 'NARC' },
+      { id: 'w/s/t/inarc',   label: 'iNARC' },
+      { id: 'w/s/m/support', label: 'Support Weapon' },
+      { id: 'w/s/m/explode', label: 'Suicide Weapon' },
+    ],
+  },
+  {
+    groupId: 'squad', label: 'Squad',
+    subtypes: [
+      { id: 'w/s/m/pa', label: 'Power Armor' },
+      { id: 'w/s/m/ul', label: 'Ultralight' },
+    ],
+  },
+  {
+    groupId: 'specialist', label: 'Specialist / LAM',
+    subtypes: [
+      { id: 'w/s/h/HandHeld',        label: 'Hand Held' },
+      { id: 'w/s/h/BoltOn',          label: 'Bolt On' },
+      { id: 'w/w/w/bomb',            label: 'Aircraft Weapon' },
+      { id: 'w/b/b/InternalBombBay', label: 'Bomb Bay' },
+      { id: 'LAMInternalBombBay',    label: 'LAM Bomb Bay' },
+      { id: 'LAMWingMount',          label: 'LAM Wing Mount' },
+      { id: 'LAMBAWingmountBay',     label: 'LAM BA Wing Bay' },
+      { id: 'LAMBooster',            label: 'LAM Booster' },
+      { id: 'LAMFlightSystems',      label: 'LAM Flight Systems' },
+      { id: 'LAMInfantryBay',        label: 'LAM Infantry Bay' },
+    ],
   },
 ]
 
@@ -261,8 +329,7 @@ const hasActiveFilters = computed(() =>
   props.excludeCategories.length > 0 ||
   props.includeLocations.length > 0 ||
   props.excludeLocations.length > 0 ||
-  props.weaponTypes.length > 0 ||
-  props.weaponSubtypes.length > 0 ||
+  props.weaponCategoryIds.length > 0 ||
   props.minTonnage !== null ||
   props.maxTonnage !== null ||
   props.minHeat !== null ||
@@ -278,8 +345,7 @@ function clearAll() {
   emit('update:excludeCategories', [])
   emit('update:includeLocations', [])
   emit('update:excludeLocations', [])
-  emit('update:weaponTypes', [])
-  emit('update:weaponSubtypes', [])
+  emit('update:weaponCategoryIds', [])
   emit('update:minTonnage', null)
   emit('update:maxTonnage', null)
   emit('update:minHeat', null)
@@ -290,52 +356,43 @@ function clearAll() {
 
 const expandedTypes = ref<Record<string, boolean>>({})
 
-function toggleTypeExpand(type: string) {
-  expandedTypes.value = { ...expandedTypes.value, [type]: !expandedTypes.value[type] }
+function toggleTypeExpand(groupId: string) {
+  expandedTypes.value = { ...expandedTypes.value, [groupId]: !expandedTypes.value[groupId] }
 }
 
-function allSubtypesOf(group: WeaponTypeGroup): string[] {
-  return group.subtypes.map(s => s.value)
+function groupIds(group: WeaponCategoryGroup): string[] {
+  return group.subtypes.map(s => s.id)
 }
 
-function isGroupTypeChecked(group: WeaponTypeGroup): boolean {
-  if (group.subtypes.length === 0) return props.weaponTypes.includes(group.type)
-  return allSubtypesOf(group).every(v => props.weaponSubtypes.includes(v))
+function isGroupChecked(group: WeaponCategoryGroup): boolean {
+  const ids = groupIds(group)
+  return ids.length > 0 && ids.every(id => props.weaponCategoryIds.includes(id))
 }
 
-function isGroupTypeIndeterminate(group: WeaponTypeGroup): boolean {
-  if (group.subtypes.length === 0) return false
-  const subs = allSubtypesOf(group)
-  const some = subs.some(v => props.weaponSubtypes.includes(v))
-  return some && !subs.every(v => props.weaponSubtypes.includes(v))
+function isGroupIndeterminate(group: WeaponCategoryGroup): boolean {
+  const ids = groupIds(group)
+  const some = ids.some(id => props.weaponCategoryIds.includes(id))
+  return some && !ids.every(id => props.weaponCategoryIds.includes(id))
 }
 
-function toggleGroupType(group: WeaponTypeGroup) {
-  if (group.subtypes.length === 0) {
-    const next = props.weaponTypes.includes(group.type)
-      ? props.weaponTypes.filter(t => t !== group.type)
-      : [...props.weaponTypes, group.type]
-    emit('update:weaponTypes', next)
-    return
-  }
-  const subs = allSubtypesOf(group)
-  if (isGroupTypeChecked(group)) {
-    emit('update:weaponSubtypes', props.weaponSubtypes.filter(v => !subs.includes(v)))
+function toggleGroup(group: WeaponCategoryGroup) {
+  const ids = groupIds(group)
+  if (isGroupChecked(group)) {
+    emit('update:weaponCategoryIds', props.weaponCategoryIds.filter(id => !ids.includes(id)))
   } else {
-    const merged = [...new Set([...props.weaponSubtypes, ...subs])]
-    emit('update:weaponSubtypes', merged)
+    emit('update:weaponCategoryIds', [...new Set([...props.weaponCategoryIds, ...ids])])
   }
 }
 
-function isSubtypeChecked(value: string): boolean {
-  return props.weaponSubtypes.includes(value)
+function isCategoryIdChecked(id: string): boolean {
+  return props.weaponCategoryIds.includes(id)
 }
 
-function toggleSubtype(value: string) {
-  const next = props.weaponSubtypes.includes(value)
-    ? props.weaponSubtypes.filter(v => v !== value)
-    : [...props.weaponSubtypes, value]
-  emit('update:weaponSubtypes', next)
+function toggleCategoryId(id: string) {
+  const next = props.weaponCategoryIds.includes(id)
+    ? props.weaponCategoryIds.filter(v => v !== id)
+    : [...props.weaponCategoryIds, id]
+  emit('update:weaponCategoryIds', next)
 }
 </script>
 

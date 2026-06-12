@@ -898,6 +898,16 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
         resolved_bonus = resolve_bonus_descriptions(raw_bonus_descs, bd_lookup) if raw_bonus_descs else []
         modes = compute_modes(data) if is_weapon else []
 
+        custom_categories = data.get("Custom", {}).get("Category", [])
+        weapon_category_id: str | None = None
+        if isinstance(custom_categories, list):
+            for cat in custom_categories:
+                if isinstance(cat, dict):
+                    cid = cat.get("CategoryID", "")
+                    if isinstance(cid, str) and (cid.startswith("w/") or cid.startswith("LAM")):
+                        weapon_category_id = cid
+                        break
+
         rows.append((
             entity_id,
             desc.get("UIName") or desc.get("Name") or entity_id,
@@ -945,6 +955,7 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
             json.dumps(modes) if modes else None,
             str(path.relative_to(rt_root)),
             source_mod(path, rt_root),
+            weapon_category_id,
         ))
     con.executemany(
         """INSERT OR REPLACE INTO gear
@@ -958,8 +969,8 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
             ap_shards_mod, ap_crit_chance_mult,
             range_short, range_medium, range_long, indirect_fire_capable,
             bonus_descriptions, modes_json,
-            source_file, source_mod)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            source_file, source_mod, weapon_category_id)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows,
     )
     con.commit()

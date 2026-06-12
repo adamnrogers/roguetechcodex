@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS gear (
     weapon_category      TEXT,   -- 'Ballistic'|'Energy'|'Missile'|'Melee'|'Support' (weapons only)
     weapon_type          TEXT,   -- e.g. 'LRM', 'Autocannon', 'Laser'
     weapon_subtype       TEXT,   -- e.g. 'LRM20', 'AC10'
+    weapon_category_id   TEXT,   -- e.g. 'w/a/a/ac', 'w/m/s/srm' from Custom.Category[].CategoryID
     damage               REAL,
     heat_generated       REAL,
     min_range            INTEGER,
@@ -113,8 +114,9 @@ CREATE TABLE IF NOT EXISTS gear (
 
 CREATE INDEX IF NOT EXISTS idx_gear_component_type  ON gear(component_type);
 CREATE INDEX IF NOT EXISTS idx_gear_weapon_category ON gear(weapon_category);
-CREATE INDEX IF NOT EXISTS idx_gear_weapon_type     ON gear(weapon_type);
-CREATE INDEX IF NOT EXISTS idx_gear_weapon_subtype  ON gear(weapon_subtype);
+CREATE INDEX IF NOT EXISTS idx_gear_weapon_type        ON gear(weapon_type);
+CREATE INDEX IF NOT EXISTS idx_gear_weapon_subtype     ON gear(weapon_subtype);
+CREATE INDEX IF NOT EXISTS idx_gear_weapon_category_id ON gear(weapon_category_id);
 CREATE INDEX IF NOT EXISTS idx_gear_tonnage         ON gear(tonnage);
 CREATE INDEX IF NOT EXISTS idx_gear_heat            ON gear(heat_generated);
 CREATE INDEX IF NOT EXISTS idx_gear_source_mod      ON gear(source_mod);

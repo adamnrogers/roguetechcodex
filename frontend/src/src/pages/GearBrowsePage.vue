@@ -10,6 +10,7 @@
       :excludeLocations="filters.excludeLocations"
       :weaponTypes="filters.weaponTypes"
       :weaponSubtypes="filters.weaponSubtypes"
+      :weaponCategoryIds="filters.weaponCategoryIds"
       :minTonnage="filters.minTonnage"
       :maxTonnage="filters.maxTonnage"
       :minHeat="filters.minHeat"
@@ -24,6 +25,7 @@
       @update:excludeLocations="v => onFilterUpdate({ excludeLocations: v })"
       @update:weaponTypes="v => onFilterUpdate({ weaponTypes: v })"
       @update:weaponSubtypes="v => onFilterUpdate({ weaponSubtypes: v })"
+      @update:weaponCategoryIds="v => onFilterUpdate({ weaponCategoryIds: v })"
       @update:minTonnage="v => onFilterUpdate({ minTonnage: v })"
       @update:maxTonnage="v => onFilterUpdate({ maxTonnage: v })"
       @update:minHeat="v => onFilterUpdate({ minHeat: v })"
@@ -141,6 +143,7 @@ function defaultFilters(): GearFilters {
     excludeLocations: [],
     weaponTypes: [],
     weaponSubtypes: [],
+    weaponCategoryIds: [],
     minTonnage: null,
     maxTonnage: null,
     minHeat: null,
@@ -168,6 +171,7 @@ function readFilters(): GearFilters {
   const excLocRaw   = (route.query.excl as string) ?? ''
   const wtRaw    = (route.query.wt   as string) ?? ''
   const wstRaw   = (route.query.wst  as string) ?? ''
+  const wcidRaw  = (route.query.wcid as string) ?? ''
   const minT     = route.query.mint ? parseFloat(route.query.mint as string) : null
   const maxT     = route.query.maxt ? parseFloat(route.query.maxt as string) : null
   const minH     = route.query.minh ? parseFloat(route.query.minh as string) : null
@@ -183,8 +187,9 @@ function readFilters(): GearFilters {
     excludeCategories: excCatRaw ? excCatRaw.split(',').filter(Boolean) : [],
     includeLocations:  incLocRaw ? incLocRaw.split(',').filter(Boolean) : [],
     excludeLocations:  excLocRaw ? excLocRaw.split(',').filter(Boolean) : [],
-    weaponTypes:    wtRaw  ? wtRaw.split(',').filter(Boolean)  : [],
-    weaponSubtypes: wstRaw ? wstRaw.split(',').filter(Boolean) : [],
+    weaponTypes:       wtRaw   ? wtRaw.split(',').filter(Boolean)   : [],
+    weaponSubtypes:    wstRaw  ? wstRaw.split(',').filter(Boolean)  : [],
+    weaponCategoryIds: wcidRaw ? wcidRaw.split(',').filter(Boolean) : [],
     minTonnage: minT,
     maxTonnage: maxT,
     minHeat:    minH,
@@ -243,8 +248,9 @@ watch(filters, (f) => {
   if (f.excludeCategories.length) query.excc = f.excludeCategories.join(',')
   if (f.includeLocations.length)  query.incl = f.includeLocations.join(',')
   if (f.excludeLocations.length)  query.excl = f.excludeLocations.join(',')
-  if (f.weaponTypes.length)    query.wt   = f.weaponTypes.join(',')
-  if (f.weaponSubtypes.length) query.wst  = f.weaponSubtypes.join(',')
+  if (f.weaponTypes.length)       query.wt   = f.weaponTypes.join(',')
+  if (f.weaponSubtypes.length)    query.wst  = f.weaponSubtypes.join(',')
+  if (f.weaponCategoryIds.length) query.wcid = f.weaponCategoryIds.join(',')
   if (f.minTonnage !== null)   query.mint = String(f.minTonnage)
   if (f.maxTonnage !== null)   query.maxt = String(f.maxTonnage)
   if (f.minHeat !== null)      query.minh = String(f.minHeat)

@@ -37,6 +37,7 @@ export interface GearFilters {
   excludeLocations: string[]
   weaponTypes: string[]
   weaponSubtypes: string[]
+  weaponCategoryIds: string[]
   minTonnage: number | null
   maxTonnage: number | null
   minHeat: number | null
@@ -143,6 +144,7 @@ export function useGearList(filters: Ref<GearFilters>) {
       if (filters.value.excludeLocations.length) params.exclude_locations = filters.value.excludeLocations
       if (filters.value.weaponTypes.length) params.include_weapon_types = filters.value.weaponTypes
       if (filters.value.weaponSubtypes.length) params.include_weapon_subtypes = filters.value.weaponSubtypes
+      if (filters.value.weaponCategoryIds.length) params.include_weapon_category_ids = filters.value.weaponCategoryIds
       if (filters.value.minTonnage !== null) params.min_tonnage = filters.value.minTonnage
       if (filters.value.maxTonnage !== null) params.max_tonnage = filters.value.maxTonnage
       if (filters.value.minHeat !== null) params.min_heat = filters.value.minHeat
