@@ -174,6 +174,8 @@ watch(() => route.path, (path, prev) => {
   letter-spacing: 0.5px;
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
+  width: 72px;
+  text-align: center;
 }
 .theme-toggle:hover {
   color: var(--accent-blue);
