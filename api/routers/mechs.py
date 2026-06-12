@@ -67,12 +67,14 @@ def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Opt
                     has_handheld = True
                 elif mid in _IGNORED_MOUNTS:
                     continue
+                elif hp.get("Omni", False):
+                    counts["O"] = counts.get("O", 0) + 1
                 else:
                     cat = _MOUNT_CATEGORY.get(mid, mid)
                     counts[cat] = counts.get(cat, 0) + 1
 
     parts = []
-    for cat in ["B", "E", "M", "S", "WM", "IB"]:
+    for cat in ["O", "B", "E", "M", "S", "WM", "IB"]:
         if counts.get(cat):
             parts.append(f"{counts[cat]}{cat}")
     if has_handheld:

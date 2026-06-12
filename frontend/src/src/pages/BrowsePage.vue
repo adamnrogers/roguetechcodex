@@ -301,7 +301,7 @@ const isLastPage = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 16px 0;
+  padding: 8px 0;
 }
 .page-btn {
   border: var(--border-default);

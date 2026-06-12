@@ -167,6 +167,7 @@ const colHeaders = computed(() =>
 )
 
 const HP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
+  Omni:              { label: 'O',  bg: 'rgba(230,180,60,0.2)',   color: '#e6b43c' },
   Ballistic:         { label: 'B',  bg: 'rgba(88,166,255,0.2)',   color: '#58a6ff' },
   Energy:            { label: 'E',  bg: 'rgba(63,185,80,0.2)',    color: '#3fb950' },
   Missile:           { label: 'M',  bg: 'rgba(180,130,255,0.2)',  color: '#b482ff' },
@@ -321,7 +322,7 @@ function buildCell(locName: string | null, subrow: string): CellData | null {
     const hps: HpBadge[] = loc.hardpoints
       .filter(hp => hp.weapon_mount_id !== 'AntiPersonnel' && hp.weapon_mount_id !== 'BattleArmor')
       .map(hp => {
-        const s = HP_STYLES[hp.weapon_mount_id]
+        const s = hp.omni ? HP_STYLES['Omni'] : HP_STYLES[hp.weapon_mount_id]
         return {
           label: s?.label ?? hp.weapon_mount_id.slice(0, 1),
           style: s

@@ -271,6 +271,7 @@ const biomeRestrictions = computed(() => {
 })
 
 const HP_BADGE_STYLES: Record<string, { bg: string; color: string }> = {
+  O:  { bg: 'rgba(230,180,60,0.2)',   color: '#e6b43c' },
   B:  { bg: 'rgba(88,166,255,0.2)',   color: '#58a6ff' },
   E:  { bg: 'rgba(63,185,80,0.2)',    color: '#3fb950' },
   M:  { bg: 'rgba(180,130,255,0.2)',  color: '#b482ff' },
