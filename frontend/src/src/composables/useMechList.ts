@@ -91,7 +91,7 @@ export function defaultMechFilters(): MechFilters {
   }
 }
 
-type HpKey = Exclude<keyof HardpointFilters, 'excludeOmni' | 'omniOnly'>
+export type HpKey = Exclude<keyof HardpointFilters, 'excludeOmni' | 'omniOnly'>
 
 function hpParams(hp: HardpointFilters): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {}

@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { defaultHardpoints } from '../composables/useMechList'
-import type { HardpointFilters } from '../composables/useMechList'
+import type { HardpointFilters, HpKey } from '../composables/useMechList'
 
 interface TonnageOption {
   label: string
@@ -367,15 +367,15 @@ function toggleEra(value: string) {
   emit('update:era', next)
 }
 
-function stepCount(key: keyof HardpointFilters, delta: number) {
+function stepCount(key: HpKey, delta: number) {
   const updated = { ...props.hardpoints }
-  const cur = (updated[key] as { count: number; loc: string }).count
+  const cur = updated[key].count
   const next = Math.max(0, Math.min(20, cur + delta))
   updated[key] = { ...updated[key], count: next }
   emit('update:hardpoints', updated)
 }
 
-function setLoc(key: keyof HardpointFilters, loc: string) {
+function setLoc(key: HpKey, loc: string) {
   const updated = { ...props.hardpoints }
   updated[key] = { ...updated[key], loc }
   emit('update:hardpoints', updated)
