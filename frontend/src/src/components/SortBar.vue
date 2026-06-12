@@ -24,13 +24,13 @@
         </svg>
       </div>
       <div class="view-toggle">
-        <button class="view-btn view-btn--active" title="Grid view">
+        <button :class="['view-btn', viewMode === 'grid' && 'view-btn--active']" title="Grid view" @click="emit('update:viewMode', 'grid')">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
             <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
             <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
           </svg>
         </button>
-        <button class="view-btn" title="List view">
+        <button :class="['view-btn', viewMode === 'list' && 'view-btn--active']" title="List view" @click="emit('update:viewMode', 'list')">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
             <rect x="0" y="0" width="14" height="2"/><rect x="0" y="4" width="14" height="2"/>
             <rect x="0" y="8" width="14" height="2"/><rect x="0" y="12" width="14" height="2"/>
@@ -52,10 +52,12 @@ const props = defineProps<{
   label: string
   sortKey: string
   options?: SortOption[]
+  viewMode?: 'grid' | 'list'
 }>()
 
 const emit = defineEmits<{
   'update:sortKey': [value: string]
+  'update:viewMode': [value: 'grid' | 'list']
 }>()
 
 function onSortChange(event: Event) {

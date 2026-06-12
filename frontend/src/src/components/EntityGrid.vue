@@ -5,7 +5,7 @@
       <SkeletonCard v-for="n in 12" :key="n" />
     </div>
 
-    <!-- Virtual scrolled grid -->
+    <!-- Virtual scrolled grid/list -->
     <div
       v-else
       :style="{ position: 'relative', height: totalSize + 'px' }"
@@ -28,6 +28,7 @@
           v-for="item in rowItems(vRow.index)"
           :key="item.variant_id"
           v-bind="item"
+          :list="viewMode === 'list'"
         />
       </div>
     </div>
@@ -45,6 +46,7 @@ const props = defineProps<{
   items: ChassisSummary[]
   mode: string
   loading?: boolean
+  viewMode?: 'grid' | 'list'
 }>()
 
 const containerRef = ref<HTMLElement>()
@@ -53,7 +55,9 @@ const CARD_MIN_WIDTH = 240
 const GAP = 12
 
 const columns = computed(() =>
-  Math.max(1, Math.floor((containerWidth.value - 32 + GAP) / (CARD_MIN_WIDTH + GAP)))
+  props.viewMode === 'list'
+    ? 1
+    : Math.max(1, Math.floor((containerWidth.value - 32 + GAP) / (CARD_MIN_WIDTH + GAP)))
 )
 
 const rows = computed(() => Math.ceil(props.items.length / columns.value))
@@ -75,7 +79,7 @@ const rowVirtualizer = useVirtualizer(
   computed(() => ({
     count: rows.value,
     getScrollElement: () => document.documentElement,
-    estimateSize: () => 140,
+    estimateSize: () => props.viewMode === 'list' ? 48 : 140,
     overscan: 3,
   }))
 )

@@ -48,20 +48,23 @@
         :label="modeLabel"
         :sortKey="`${filters.sort}:${filters.sortDir}`"
         :options="sortOptions"
+        :viewMode="viewMode"
         @update:sortKey="onSortKeyChange"
+        @update:viewMode="v => viewMode = v"
       />
       <div v-if="isError" class="error-msg">
         Failed to load data. Please check your connection and try again.
       </div>
-      <div v-else-if="isLoading" class="gear-grid">
+      <div v-else-if="isLoading" :class="['gear-grid', viewMode === 'list' && 'gear-list']">
         <SkeletonCard v-for="n in 12" :key="n" />
       </div>
-      <div v-else class="gear-grid">
+      <div v-else :class="['gear-grid', viewMode === 'list' && 'gear-list']">
         <GearCard
           v-for="item in data?.results ?? []"
           :key="item.id"
           v-bind="item"
           :mode="mode"
+          :list="viewMode === 'list'"
         />
         <div v-if="!data?.results?.length" class="empty-msg">No results found.</div>
       </div>
@@ -89,6 +92,10 @@ const route = useRoute()
 const router = useRouter()
 
 const PAGE_SIZE = 60
+const viewMode = ref<'grid' | 'list'>(
+  (localStorage.getItem('gear-view-mode') as 'grid' | 'list') ?? 'grid'
+)
+watch(viewMode, v => localStorage.setItem('gear-view-mode', v))
 
 // ── Computed labels ──────────────────────────────────────────────────────────
 
@@ -314,6 +321,10 @@ const isLastPage = computed(() => {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   padding: 16px;
+}
+.gear-list {
+  grid-template-columns: 1fr;
+  gap: 4px;
 }
 
 .empty-msg {

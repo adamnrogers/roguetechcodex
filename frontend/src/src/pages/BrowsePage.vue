@@ -35,7 +35,9 @@
         :total="data?.total ?? 0"
         :label="modeLabel"
         :sortKey="`${filters.sort}:${filters.sortDir}`"
+        :viewMode="viewMode"
         @update:sortKey="onSortKeyChange"
+        @update:viewMode="v => viewMode = v"
       />
       <div v-if="isError" class="error-msg">
         Failed to load data. Please check your connection and try again.
@@ -45,6 +47,7 @@
         :items="isLoading ? [] : (data?.results ?? [])"
         :mode="mode"
         :loading="isLoading"
+        :viewMode="viewMode"
       />
       <div class="pagination">
         <button
@@ -78,6 +81,10 @@ const route = useRoute()
 const router = useRouter()
 
 const PAGE_SIZE = 60
+const viewMode = ref<'grid' | 'list'>(
+  (localStorage.getItem('browse-view-mode') as 'grid' | 'list') ?? 'grid'
+)
+watch(viewMode, v => localStorage.setItem('browse-view-mode', v))
 
 const modeLabel = computed(() => {
   const map: Record<string, string> = {

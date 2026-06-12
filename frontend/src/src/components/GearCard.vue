@@ -1,8 +1,8 @@
 <template>
-  <RouterLink :to="cardLink" class="gear-card-link">
-    <div class="gear-card">
+  <RouterLink :to="cardLink" :class="['gear-card-link', list && 'gear-card-link--list']">
+    <div :class="['gear-card', list && 'gear-card--list']">
       <div class="gear-name">{{ ui_name }}</div>
-      <div v-if="qualifier" class="gear-qualifier">{{ qualifier }}</div>
+      <div v-if="qualifier && !list" class="gear-qualifier">{{ qualifier }}</div>
       <div class="gear-badges">
         <span v-if="mode !== 'weapon'" class="ct-badge" :data-ct="badgeKey">{{ badgeLabel }}</span>
         <span v-if="weapon_category && mode !== 'quirk'" class="wcat-badge" :data-wcat="weapon_category">
@@ -32,7 +32,7 @@ import { RouterLink } from 'vue-router'
 import type { GearSummary } from '../composables/useGearList'
 import { gearQualifier } from '../utils/humanize'
 
-const props = defineProps<GearSummary & { mode: string }>()
+const props = defineProps<GearSummary & { mode: string; list?: boolean }>()
 
 const cardLink = computed(() => {
   const base = props.mode === 'weapon' ? '/weapons'
@@ -144,5 +144,28 @@ const badgeKey = computed(() => {
 .stat-item {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.gear-card-link--list {
+  height: auto;
+}
+.gear-card--list {
+  padding: 6px 14px;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.gear-card--list .gear-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.gear-card--list .gear-badges {
+  flex-shrink: 0;
+}
+.gear-card--list .gear-stats {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 </style>

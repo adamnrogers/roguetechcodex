@@ -1,9 +1,9 @@
 <template>
-  <RouterLink :to="cardLink" class="mech-card-link">
-    <div class="mech-card">
+  <RouterLink :to="cardLink" :class="['mech-card-link', list && 'mech-card-link--list']">
+    <div :class="['mech-card', list && 'mech-card--list']">
       <div class="card-body">
         <img
-          v-if="portraitSrc"
+          v-if="portraitSrc && !list"
           :src="portraitSrc"
           class="mech-portrait"
           alt=""
@@ -14,8 +14,9 @@
           <div class="mech-meta">
             <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
             <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
+            <span v-if="list" class="mech-type-inline">{{ unitTypeLabel }}</span>
           </div>
-          <div class="mech-type">{{ unitTypeLabel }}</div>
+          <div v-if="!list" class="mech-type">{{ unitTypeLabel }}</div>
         </div>
       </div>
     </div>
@@ -36,6 +37,7 @@ interface MechCardProps {
   variant_id: string
   variant_name: string | null
   variant_ui_name?: string | null
+  list?: boolean
 }
 
 const props = defineProps<MechCardProps>()
@@ -146,5 +148,26 @@ const unitTypeLabel = computed(() => {
   color: var(--text-muted);
   font-size: 12px;
   margin-top: 5px;
+}
+.mech-type-inline {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.mech-card-link--list {
+  height: auto;
+}
+.mech-card--list {
+  padding: 8px 14px;
+  height: auto;
+}
+.mech-card--list .card-body {
+  align-items: center;
+}
+.mech-card--list .mech-name {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.mech-card--list .mech-meta {
+  gap: 6px;
 }
 </style>
