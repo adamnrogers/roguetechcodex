@@ -1,23 +1,31 @@
 # GitHub Actions Release Setup
 
-Trunk-based deployment: all work merges to `main`; a version tag on `main` triggers a release build.
+Trunk-based deployment: all work merges to `main`; a version tag on `main` triggers a release.
+
+---
+
+## What CI can and cannot build
+
+| Artifact | CI can build? | Reason |
+|---|---|---|
+| Frontend (JS/CSS) | ✅ | Pure code — no mod files needed |
+| `roguetech.db` | ❌ | Built from mod files at `RT_ROOT`, not in repo |
+| `portraits.zip` | ❌ | Converted from mod DDS files at `RT_ROOT`, not in repo |
+| `RogueTech-Codex.exe` | ⚠️ Partially | Windows runner can run PyInstaller, but the exe bundles `roguetech.db` which CI doesn't have |
+
+**Practical conclusion:** use CI to create the release and generate notes; upload the built artifacts manually.
 
 ---
 
 ## 1. Repository Prerequisites
 
 ### Enable GitHub Actions
-In your repository: **Settings → Actions → General → Allow all actions**.
+**Settings → Actions → General → Allow all actions**.
 
-### Create a Personal Access Token (if needed)
-The default `GITHUB_TOKEN` provided by Actions is sufficient for creating releases and uploading assets. No PAT required unless you push to other repositories as part of the workflow.
-
-### Protect `main`
+### Protect `main` (optional but recommended)
 **Settings → Branches → Add rule → `main`**:
 - Require pull request before merging
 - Require status checks to pass
-
-This is optional but recommended for trunk-based flow.
 
 ---
 
@@ -26,14 +34,12 @@ This is optional but recommended for trunk-based flow.
 Use [Semantic Versioning](https://semver.org/): `v<MAJOR>.<MINOR>.<PATCH>`
 
 ```bash
-# Create and push a release tag
 git tag v1.2.0 -m "Release v1.2.0"
 git push origin v1.2.0
 ```
 
-The tag must be on `main`. Never tag a feature branch.
+Tag must be on `main`. To delete a tag before a release is created:
 
-To delete a tag (before a release is created):
 ```bash
 git tag -d v1.2.0
 git push origin :refs/tags/v1.2.0
@@ -41,7 +47,7 @@ git push origin :refs/tags/v1.2.0
 
 ---
 
-## 3. Workflow File
+## 3. Workflow File — CI creates the release, you upload artifacts
 
 Create `.github/workflows/release.yml`:
 
@@ -54,7 +60,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write   # required to create releases and upload assets
+  contents: write
 
 jobs:
   release:
@@ -64,124 +70,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Frontend build ──────────────────────────────────────────────────────
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/src/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend/src
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend/src
-        run: npm run build
-
-      - name: Archive frontend dist
-        run: |
-          cd frontend/src
-          zip -r ../../roguetech-codex-frontend-${{ github.ref_name }}.zip dist/
-
-      # ── Create GitHub Release ───────────────────────────────────────────────
-      - name: Create Release
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} \
-            --title "RogueTech Codex ${{ github.ref_name }}" \
-            --generate-notes \
-            roguetech-codex-frontend-${{ github.ref_name }}.zip
-```
-
----
-
-## 4. What `--generate-notes` Does
-
-GitHub auto-generates release notes from PR titles and commit messages since the previous tag. The result can be edited after creation. For clean notes, use descriptive PR titles and conventional commit messages (`feat:`, `fix:`, `chore:` etc.).
-
----
-
-## 5. Adding More Artifacts
-
-Each additional artifact is appended to the `gh release create` command:
-
-```yaml
-gh release create ${{ github.ref_name }} \
-  --title "RogueTech Codex ${{ github.ref_name }}" \
-  --generate-notes \
-  roguetech-codex-frontend-${{ github.ref_name }}.zip \
-  roguetech-codex-standalone-${{ github.ref_name }}.exe \
-  roguetech.db
-```
-
----
-
-## 6. Standalone Windows Executable (PyInstaller)
-
-The PyInstaller build must run on Windows. Add a second job:
-
-```yaml
-  build-standalone:
-    runs-on: windows-latest
-    needs: []   # run in parallel with the main release job
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: pip install -r standalone/requirements.txt pyinstaller
-
-      - name: Build executable
-        run: pyinstaller standalone/codex.spec
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: standalone-exe
-          path: dist/RogueTechCodex.exe
-```
-
-Then in the release job, download that artifact before calling `gh release create`:
-
-```yaml
-      - name: Download standalone artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: standalone-exe
-
-      - name: Create Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create ${{ github.ref_name }} \
-            --title "RogueTech Codex ${{ github.ref_name }}" \
-            --generate-notes \
-            roguetech-codex-frontend-${{ github.ref_name }}.zip \
-            RogueTechCodex.exe
-```
-
-`needs: [build-standalone]` on the release job ensures the exe is ready before the release is created.
-
----
-
-## 7. Pre-releases
-
-Add `--prerelease` to mark alpha/beta tags:
-
-```yaml
-      - name: Create Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Mark as pre-release if tag contains a hyphen (e.g. v1.0.0-beta)
           PRERELEASE_FLAG=""
           if [[ "${{ github.ref_name }}" == *-* ]]; then
             PRERELEASE_FLAG="--prerelease"
@@ -190,39 +82,142 @@ Add `--prerelease` to mark alpha/beta tags:
           gh release create ${{ github.ref_name }} \
             --title "RogueTech Codex ${{ github.ref_name }}" \
             --generate-notes \
-            $PRERELEASE_FLAG \
-            roguetech-codex-frontend-${{ github.ref_name }}.zip
+            --draft \
+            $PRERELEASE_FLAG
 ```
 
-Tags like `v1.0.0-beta`, `v1.0.0-rc1` will be marked pre-release automatically.
+The release is created as a **draft**. After you upload your artifacts (see below), publish it manually via the GitHub UI.
 
 ---
 
-## 8. Version in the UI
+## 4. Uploading artifacts to the release
 
-The navbar version label is read at build time from `frontend/src/package.json` via a Vite `define` constant (`__APP_VERSION__`). To update it, bump the `version` field in `package.json` before tagging — no code changes needed in the component itself.
-
----
-
-## 9. Typical Release Flow
+After building locally (see `docs/building-locally.md`), upload with the `gh` CLI:
 
 ```bash
-# 1. Ensure main is up to date and green
-git checkout main
-git pull
+gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip portraits.zip
+```
 
-# 2. Bump the version in frontend/src/package.json
-#    e.g. "0.1.0-beta" → "1.0.0"
-#    The navbar label updates automatically on the next build.
+Then publish the draft:
 
-# 3. Commit the version bump
+```bash
+gh release edit v1.0.0 --draft=false
+```
+
+Or publish via the GitHub UI: go to **Releases**, open the draft, click **Publish release**.
+
+---
+
+## 5. What `--generate-notes` does
+
+GitHub auto-generates release notes from PR titles and commit messages since the previous tag. The result can be edited before publishing. For clean notes, use conventional commit messages (`feat:`, `fix:`, `chore:` etc.).
+
+---
+
+## 6. Pre-releases
+
+Tags containing a hyphen (e.g. `v1.0.0-beta`, `v1.0.0-rc1`) are automatically marked as pre-releases by the workflow above.
+
+---
+
+## 7. Version in the UI
+
+The navbar version label is read at build time from `frontend/src/package.json` via a Vite `define` constant (`__APP_VERSION__`). Bump the `version` field before tagging — the built app shows it automatically.
+
+---
+
+## 8. Typical Release Flow
+
+```bash
+# 1. Ensure main is up to date
+git checkout main && git pull
+
+# 2. Bump version in frontend/src/package.json (e.g. "1.0.0")
 git add frontend/src/package.json
 git commit -m "chore: bump version to v1.0.0"
 git push
 
-# 4. Tag and push — must match the version in package.json
+# 3. Build artifacts locally (see docs/building-locally.md)
+#    - make dev-pipeline && make copy-db   (WSL)
+#    - make portraits-zip                  (WSL)
+#    - cd frontend/src && npm run build    (WSL)
+#    - pyinstaller standalone/roguetech.spec  (PowerShell)
+#    - Compress-Archive dist\RogueTech-Codex RogueTech-Codex-v1.0.0.zip  (PowerShell)
+
+# 4. Tag and push — triggers the workflow which creates a draft release
 git tag v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 
-# 5. Watch the Actions tab — release appears under Releases when the job completes
+# 5. Upload artifacts to the draft release
+gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip portraits.zip
+
+# 6. Publish
+gh release edit v1.0.0 --draft=false
 ```
+
+---
+
+## 9. Advanced: CI builds the exe (optional)
+
+If you want CI to build the exe, it needs `roguetech.db`. One way: maintain a `data-latest` release tag containing only the DB, updated whenever the mod changes.
+
+**Upload the DB to a data release (run locally after each mod update):**
+
+```bash
+# First time
+gh release create data-latest --title "Data (DB)" roguetech.db
+
+# Subsequent updates
+gh release upload data-latest roguetech.db --clobber
+```
+
+**Workflow job on `windows-latest` that downloads the DB and builds the exe:**
+
+```yaml
+  build-exe:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download DB from data release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download data-latest --pattern roguetech.db
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend
+        working-directory: frontend/src
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build exe
+        run: |
+          pip install pyinstaller
+          pip install -r api/requirements.txt
+          pyinstaller standalone/roguetech.spec
+
+      - name: Package
+        run: |
+          Compress-Archive -Path dist\RogueTech-Codex `
+            -DestinationPath "RogueTech-Codex-${{ github.ref_name }}.zip"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} `
+            "RogueTech-Codex-${{ github.ref_name }}.zip"
+```
+
+`portraits.zip` still needs to be uploaded manually — it requires the mod DDS files.
