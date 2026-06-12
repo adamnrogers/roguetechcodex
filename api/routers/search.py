@@ -83,10 +83,9 @@ async def search(
             ut = unit_type.replace("_", " ").title()
             base_subtitle = f"{t} · {ut}" if t else ut
             matched_variant: Optional[str] = row["matched_variant"]
-            q_in_name = q.lower() in (row["ui_name"] or "").lower()
             subtitle = (
                 f"{matched_variant} · {base_subtitle}"
-                if matched_variant and not q_in_name
+                if matched_variant
                 else base_subtitle
             )
             chassis_hits.append(
@@ -132,9 +131,9 @@ async def search_chassis(
 
     async with db.execute(
         """
-        SELECT COUNT(DISTINCT c.prefab_base)
+        SELECT COUNT(*)
         FROM chassis c
-        LEFT JOIN variant v ON v.chassis_id = c.prefab_base
+        JOIN variant v ON v.chassis_id = c.prefab_base
         WHERE c.ui_name LIKE ? OR v.variant_name LIKE ?
         """,
         [q_contains, q_contains],
@@ -147,53 +146,39 @@ async def search_chassis(
         """
         SELECT
             c.prefab_base, c.ui_name, c.unit_type, c.tonnage,
-            (
-                SELECT v2.variant_name FROM variant v2
-                WHERE v2.chassis_id = c.prefab_base AND v2.variant_name LIKE ?
-                ORDER BY
-                    CASE WHEN LOWER(v2.variant_name) = LOWER(?) THEN 1
-                         WHEN v2.variant_name LIKE ? THEN 2
-                         ELSE 3 END
-                LIMIT 1
-            ) AS matched_variant,
+            v.id AS variant_id, v.variant_name, v.ui_name AS variant_ui_name,
             CASE
                 WHEN LOWER(c.ui_name) = LOWER(?) THEN 1
-                WHEN EXISTS(SELECT 1 FROM variant v3 WHERE v3.chassis_id = c.prefab_base
-                            AND LOWER(v3.variant_name) = LOWER(?)) THEN 2
+                WHEN LOWER(v.variant_name) = LOWER(?) THEN 2
                 WHEN c.ui_name LIKE ? THEN 3
-                WHEN EXISTS(SELECT 1 FROM variant v4 WHERE v4.chassis_id = c.prefab_base
-                            AND v4.variant_name LIKE ?) THEN 4
+                WHEN v.variant_name LIKE ? THEN 4
                 WHEN c.ui_name LIKE ? THEN 5
                 ELSE 6
             END AS rank
         FROM chassis c
-        WHERE c.ui_name LIKE ?
-           OR EXISTS(SELECT 1 FROM variant v5 WHERE v5.chassis_id = c.prefab_base
-                     AND v5.variant_name LIKE ?)
-        ORDER BY rank, c.ui_name
+        JOIN variant v ON v.chassis_id = c.prefab_base
+        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ?
+        ORDER BY rank, c.ui_name, v.variant_name
         LIMIT ? OFFSET ?
         """,
-        [q_contains, q, q_starts, q, q, q_starts, q_starts, q_contains, q_contains, q_contains, page_size, offset],
+        [q, q, q_starts, q_starts, q_contains, q_contains, q_contains, page_size, offset],
     ) as cursor:
         async for row in cursor:
             unit_type: str = row["unit_type"] or "mech"
             tonnage = row["tonnage"]
             t = f"{int(tonnage)}t" if tonnage else ""
             ut = unit_type.replace("_", " ").title()
-            base_subtitle = f"{t} · {ut}" if t else ut
-            matched_variant: Optional[str] = row["matched_variant"]
-            q_in_name = q.lower() in (row["ui_name"] or "").lower()
-            subtitle = (
-                f"{matched_variant} · {base_subtitle}"
-                if matched_variant and not q_in_name
-                else base_subtitle
-            )
+            subtitle = f"{t} · {ut}" if t else ut
+            variant_ui = row["variant_ui_name"]
+            chassis_ui = row["ui_name"]
+            display_name = variant_ui if (variant_ui and variant_ui != chassis_ui) else f"{chassis_ui} ({row['variant_name']})"
             results.append(
                 SearchHit(
                     id=row["prefab_base"],
-                    name=row["ui_name"],
+                    name=display_name,
                     subtitle=subtitle,
                     result_type=_UNIT_TYPE_TO_RESULT_TYPE.get(unit_type, "mech"),
+                    variant_id=row["variant_id"],
                 )
             )
 

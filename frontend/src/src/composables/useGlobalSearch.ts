@@ -7,6 +7,7 @@ export interface SearchHit {
   name: string
   subtitle: string
   result_type: string
+  variant_id?: string
 }
 
 export interface SearchResponse {

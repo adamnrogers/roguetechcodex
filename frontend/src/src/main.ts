@@ -7,6 +7,7 @@ import BrowsePage from './pages/BrowsePage.vue'
 import ChassisPage from './pages/ChassisPage.vue'
 import GearBrowsePage from './pages/GearBrowsePage.vue'
 import GearPage from './pages/GearPage.vue'
+import SearchPage from './pages/SearchPage.vue'
 import './style.css'
 
 const router = createRouter({
@@ -27,6 +28,7 @@ const router = createRouter({
     { path: '/weapons/:gearId', component: GearPage },
     { path: '/quirks', component: GearBrowsePage, props: { mode: 'quirk' } },
     { path: '/quirks/:gearId', component: GearPage },
+    { path: '/search', component: SearchPage },
   ]
 })
 

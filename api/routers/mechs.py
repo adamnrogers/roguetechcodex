@@ -433,14 +433,12 @@ _MECH_ENDPOINT_UNIT_TYPES = {"mech", "battle_armor"}
 @router.get("/mechs", response_model=ChassisListResponse)
 async def list_mechs(
     q: Optional[str] = Query(default=None),
-    weight_class: Optional[list[str]] = Query(default=None),
-    era: Optional[str] = Query(default=None),
+    era: list[str] = Query(default=[]),
     faction: Optional[str] = Query(default=None),
     mod: Optional[str] = Query(default=None),
     tag: Optional[str] = Query(default=None),
     unit_type: Optional[str] = Query(default=None),
-    min_tonnage: Optional[float] = Query(default=None),
-    max_tonnage: Optional[float] = Query(default=None),
+    tonnage: list[float] = Query(default=[]),
     has_lower_arm: Optional[bool] = Query(default=None),
     has_hand: Optional[bool] = Query(default=None),
     hp_ballistic_count: Optional[int] = Query(default=None, ge=0),
@@ -477,16 +475,17 @@ async def list_mechs(
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
-    if weight_class:
-        placeholders = ",".join("?" * len(weight_class))
-        conditions.append(f"c.weight_class IN ({placeholders})")
-        params.extend(weight_class)
+    if tonnage:
+        placeholders = ",".join("?" * len(tonnage))
+        conditions.append(f"c.tonnage IN ({placeholders})")
+        params.extend(tonnage)
 
     if era:
+        placeholders = " OR ".join("era_tags LIKE ?" for _ in era)
         conditions.append(
-            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE era_tags LIKE ?)"
+            f"c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE {placeholders})"
         )
-        params.append(f"%{era}%")
+        params.extend(f"%{e}%" for e in era)
 
     if faction:
         conditions.append(
@@ -501,13 +500,6 @@ async def list_mechs(
     if tag:
         conditions.append("v.chassis_tags LIKE ?")
         params.append(f'%"{tag}"%')
-
-    if min_tonnage is not None:
-        conditions.append("c.tonnage >= ?")
-        params.append(min_tonnage)
-    if max_tonnage is not None:
-        conditions.append("c.tonnage <= ?")
-        params.append(max_tonnage)
 
     if has_lower_arm is True:
         conditions.append(
@@ -556,6 +548,7 @@ async def list_mechs(
         SELECT
             v.id          AS variant_id,
             v.variant_name,
+            v.ui_name     AS variant_ui_name,
             c.prefab_base,
             c.ui_name,
             c.unit_type,
@@ -581,6 +574,7 @@ async def list_mechs(
             icon=row["icon"],
             variant_id=row["variant_id"],
             variant_name=row["variant_name"],
+            variant_ui_name=row["variant_ui_name"] if row["variant_ui_name"] != row["ui_name"] else None,
         )
         for row in rows
     ]
@@ -743,10 +737,8 @@ async def get_battle_armor(
 @router.get("/vehicles", response_model=ChassisListResponse)
 async def list_vehicles(
     q: Optional[str] = Query(default=None),
-    weight_class: Optional[list[str]] = Query(default=None),
     unit_type: Optional[str] = Query(default=None),
-    min_tonnage: Optional[float] = Query(default=None),
-    max_tonnage: Optional[float] = Query(default=None),
+    tonnage: list[float] = Query(default=[]),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -767,17 +759,10 @@ async def list_vehicles(
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
-    if weight_class:
-        placeholders = ",".join("?" * len(weight_class))
-        conditions.append(f"c.weight_class IN ({placeholders})")
-        params.extend(weight_class)
-
-    if min_tonnage is not None:
-        conditions.append("c.tonnage >= ?")
-        params.append(min_tonnage)
-    if max_tonnage is not None:
-        conditions.append("c.tonnage <= ?")
-        params.append(max_tonnage)
+    if tonnage:
+        placeholders = ",".join("?" * len(tonnage))
+        conditions.append(f"c.tonnage IN ({placeholders})")
+        params.extend(tonnage)
 
     where_clause = " AND ".join(conditions)
 
@@ -796,6 +781,7 @@ async def list_vehicles(
         SELECT
             v.id          AS variant_id,
             v.variant_name,
+            v.ui_name     AS variant_ui_name,
             c.prefab_base,
             c.ui_name,
             c.unit_type,
@@ -821,6 +807,7 @@ async def list_vehicles(
             icon=row["icon"],
             variant_id=row["variant_id"],
             variant_name=row["variant_name"],
+            variant_ui_name=row["variant_ui_name"] if row["variant_ui_name"] != row["ui_name"] else None,
         )
         for row in rows
     ]

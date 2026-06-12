@@ -1,8 +1,15 @@
 <template>
   <div class="search-page">
-    <h1 class="search-heading">
-      Results for <span class="search-term">{{ q }}</span>
-    </h1>
+    <div class="search-bar-row">
+      <input
+        class="search-bar-input"
+        type="text"
+        placeholder="Search wiki..."
+        :value="searchInput"
+        @input="searchInput = ($event.target as HTMLInputElement).value"
+        @keydown.enter="runSearch"
+      />
+    </div>
 
     <!-- Chassis section -->
     <section class="result-section">
@@ -11,6 +18,7 @@
         <span v-if="chassisData" class="result-count">{{ chassisData.total }} results</span>
       </h2>
       <div v-if="chassisLoading" class="loading">Loading…</div>
+      <div v-else-if="q.length < 2" class="empty">Enter at least 2 characters to search.</div>
       <div v-else-if="!chassisData?.results.length" class="empty">No chassis results.</div>
       <template v-else>
         <div class="result-list">
@@ -39,6 +47,7 @@
         <span v-if="gearData" class="result-count">{{ gearData.total }} results</span>
       </h2>
       <div v-if="gearLoading" class="loading">Loading…</div>
+      <div v-else-if="q.length < 2" class="empty">Enter at least 2 characters to search.</div>
       <div v-else-if="!gearData?.results.length" class="empty">No gear results.</div>
       <template v-else>
         <div class="result-list">
@@ -63,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChassisSearch, useGearSearch } from '../composables/useSearchPage'
 import type { SearchHit } from '../composables/useGlobalSearch'
@@ -74,6 +83,13 @@ const route = useRoute()
 const router = useRouter()
 
 const q = computed(() => (route.query.q as string) || '')
+const searchInput = ref(q.value)
+watch(q, (v) => { searchInput.value = v })
+
+function runSearch() {
+  const term = searchInput.value.trim()
+  if (term.length >= 2) router.push({ path: '/search', query: { q: term } })
+}
 const chassisPage = computed(() => parseInt(route.query.chassis_page as string) || 1)
 const gearPage = computed(() => parseInt(route.query.gear_page as string) || 1)
 
@@ -91,8 +107,15 @@ const TYPE_ROUTE: Record<string, string> = {
 }
 
 function navigate(hit: SearchHit) {
-  router.push(`${TYPE_ROUTE[hit.result_type] ?? '/mechs'}/${hit.id}`)
+  const base = `${TYPE_ROUTE[hit.result_type] ?? '/mechs'}/${hit.id}`
+  router.push(hit.variant_id ? `${base}?variant=${encodeURIComponent(hit.variant_id)}` : base)
 }
+
+watch(q, () => {
+  if (chassisPage.value !== 1 || gearPage.value !== 1) {
+    router.replace({ query: { q: q.value } })
+  }
+})
 
 function setChassisPage(p: number) {
   router.push({ query: { ...route.query, chassis_page: p } })
@@ -109,6 +132,22 @@ function setGearPage(p: number) {
   margin: 0 auto;
   padding: 24px 16px;
 }
+.search-bar-row {
+  margin-bottom: 32px;
+}
+.search-bar-input {
+  width: 100%;
+  max-width: 520px;
+  background: var(--bg-card);
+  border: var(--border-default);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-bar-input:focus { border-color: var(--accent-orange); }
 .search-heading {
   font-size: 20px;
   font-weight: 600;

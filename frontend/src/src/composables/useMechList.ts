@@ -2,6 +2,15 @@ import { computed, type Ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { apiFetch } from './useApi'
 
+const ERA_TAG_MAP: Record<string, string> = {
+  'Succession Wars': 'succession_wars',
+  'Clan Invasion':   'clan_invasion',
+  'Civil War':       'civil_war',
+  'Jihad':           'jihad',
+  'Republic':        'republic',
+  'Dark Age':        'dark_ages',
+}
+
 export interface ChassisSummary {
   prefab_base: string
   ui_name: string
@@ -11,6 +20,7 @@ export interface ChassisSummary {
   icon: string | null
   variant_id: string
   variant_name: string | null
+  variant_ui_name?: string | null
 }
 
 export interface ChassisListResponse {
@@ -53,15 +63,13 @@ export function defaultHardpoints(): HardpointFilters {
 
 export interface MechFilters {
   q: string
-  weightClass: string[]
-  era: string
+  tonnage: number[]
+  era: string[]
   faction: string
   tag: string
   page: number
   sort: string
   sortDir: string
-  minTonnage: number | null
-  maxTonnage: number | null
   hasLowerArm: boolean | null
   hasHand: boolean | null
   hardpoints: HardpointFilters
@@ -70,15 +78,13 @@ export interface MechFilters {
 export function defaultMechFilters(): MechFilters {
   return {
     q: '',
-    weightClass: [],
-    era: '',
+    tonnage: [],
+    era: [],
     faction: '',
     tag: '',
     page: 1,
     sort: 'name',
     sortDir: 'asc',
-    minTonnage: null,
-    maxTonnage: null,
     hasLowerArm: null,
     hasHand: null,
     hardpoints: defaultHardpoints(),
@@ -116,13 +122,11 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
       if (isMech.value || isBattleArmor.value) {
         return apiFetch<ChassisListResponse>('/api/v1/mechs', {
           q: filters.value.q || undefined,
-          weight_class: filters.value.weightClass.length ? filters.value.weightClass : undefined,
-          era: filters.value.era || undefined,
+          tonnage: filters.value.tonnage.length ? filters.value.tonnage : undefined,
+          era: filters.value.era.length ? filters.value.era.map(e => ERA_TAG_MAP[e] ?? e) : undefined,
           faction: filters.value.faction || undefined,
           tag: filters.value.tag || undefined,
           unit_type: isBattleArmor.value ? 'battle_armor' : 'mech',
-          min_tonnage: filters.value.minTonnage ?? undefined,
-          max_tonnage: filters.value.maxTonnage ?? undefined,
           has_lower_arm: filters.value.hasLowerArm ?? undefined,
           has_hand: filters.value.hasHand ?? undefined,
           page: filters.value.page,
@@ -134,10 +138,8 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
       }
       return apiFetch<ChassisListResponse>('/api/v1/vehicles', {
         q: filters.value.q || undefined,
-        weight_class: filters.value.weightClass.length ? filters.value.weightClass : undefined,
+        tonnage: filters.value.tonnage.length ? filters.value.tonnage : undefined,
         unit_type: isVehicle.value ? 'vehicle' : isVtol.value ? 'vtol' : undefined,
-        min_tonnage: filters.value.minTonnage ?? undefined,
-        max_tonnage: filters.value.maxTonnage ?? undefined,
         page: filters.value.page,
         page_size: 60,
         sort: filters.value.sort,

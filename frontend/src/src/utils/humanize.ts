@@ -18,6 +18,22 @@ export function humanizeTag(raw: string): string {
     .replace(/\b\w/g, c => c.toUpperCase())
 }
 
+function splitIdWords(s: string): string[] {
+  return s.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s_]+/).filter(Boolean)
+}
+
+export function gearQualifier(id: string, uiName: string): string | null {
+  const prefixes = ['Quirk_', 'Weapon_', 'Gear_', 'emod_', 'Ammo_']
+  let rest = id
+  for (const p of prefixes) {
+    if (id.startsWith(p)) { rest = id.slice(p.length); break }
+  }
+  const nameWordSet = new Set(splitIdWords(uiName).map(w => w.toLowerCase()))
+  const extra = splitIdWords(rest).filter(w => !nameWordSet.has(w.toLowerCase()))
+  if (!extra.length) return null
+  return extra.map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
+}
+
 /**
  * Convert a NoBiome_* chassis tag into a human-readable biome name.
  *   "NoBiome_lunarVacuum"   → "Lunar Vacuum"

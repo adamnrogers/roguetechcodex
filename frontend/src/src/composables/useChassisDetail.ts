@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
+import { computed, type Ref } from 'vue'
 import { apiFetch } from './useApi'
 
 export interface AffinityLevel {
@@ -89,15 +90,24 @@ export interface ChassisDetail {
   variants: VariantDetail[]
 }
 
-export function useChassisDetail(prefabBase: string, isVehicle = false, isBattleArmor = false) {
-  const endpoint = isVehicle
-    ? `/api/v1/vehicles/${prefabBase}`
-    : isBattleArmor
-      ? `/api/v1/battle-armor/${prefabBase}`
-      : `/api/v1/mechs/${prefabBase}`
+export function useChassisDetail(
+  prefabBase: Ref<string> | string,
+  isVehicle: Ref<boolean> | boolean = false,
+  isBattleArmor: Ref<boolean> | boolean = false,
+) {
+  const id = typeof prefabBase === 'string' ? { value: prefabBase } : prefabBase
+  const vehicle = typeof isVehicle === 'boolean' ? { value: isVehicle } : isVehicle
+  const battleArmor = typeof isBattleArmor === 'boolean' ? { value: isBattleArmor } : isBattleArmor
   return useQuery({
-    queryKey: ['chassis', prefabBase],
-    queryFn: () => apiFetch<ChassisDetail>(endpoint),
+    queryKey: computed(() => ['chassis', id.value, vehicle.value, battleArmor.value]),
+    queryFn: () => {
+      const endpoint = vehicle.value
+        ? `/api/v1/vehicles/${id.value}`
+        : battleArmor.value
+          ? `/api/v1/battle-armor/${id.value}`
+          : `/api/v1/mechs/${id.value}`
+      return apiFetch<ChassisDetail>(endpoint)
+    },
     staleTime: 10 * 60 * 1000,
   })
 }

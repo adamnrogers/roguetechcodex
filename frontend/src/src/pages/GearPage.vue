@@ -18,9 +18,10 @@
             <nav class="breadcrumb">
               in:&nbsp;<RouterLink :to="browsePath" class="bc-link">{{ browseLabel }}</RouterLink>
               <span class="bc-sep"> / </span>
-              <span class="bc-id">{{ data.id }}</span>
+              <span class="bc-id">{{ data.ui_name }}</span>
             </nav>
             <h1 class="gear-title">{{ data.ui_name }}</h1>
+            <div v-if="qualifier" class="gear-qualifier">{{ qualifier }}</div>
             <div class="gear-badges">
               <span v-if="componentTypeLabel" class="ct-badge" :data-ct="componentTypeBadgeKey">
                 {{ componentTypeLabel }}
@@ -47,10 +48,21 @@
             </ul>
           </section>
 
+          <!-- Traits (resolved BonusDescriptions) -->
+          <section v-if="data.bonus_descriptions?.length" class="content-section">
+            <h2 class="section-title">Traits</h2>
+            <ul class="trait-list">
+              <li v-for="(trait, i) in data.bonus_descriptions" :key="i" class="trait-item">
+                {{ trait }}
+              </li>
+            </ul>
+          </section>
+
           <!-- Weapon stats (weapons only) -->
           <section v-if="data.weapon_category" class="content-section">
-            <h2 class="section-title">Weapon Statistics</h2>
-            <table class="stat-table">
+            <h2 class="section-title">Weapon Stats</h2>
+            <WeaponStatsTable v-if="data.modes?.length" :modes="(data.modes as any)" />
+            <table v-else class="stat-table">
               <tbody>
                 <tr v-if="data.damage != null">
                   <td class="stat-label">Damage</td>
@@ -84,8 +96,11 @@
 
           <!-- Used by mechs -->
           <section v-if="data.used_by_mechs.length" class="content-section">
-            <h2 class="section-title">Used by Mechs ({{ data.used_by_mechs.length }})</h2>
-            <div class="used-by-grid">
+            <h2 class="section-title collapsible" @click="mechsOpen = !mechsOpen">
+              Used by Mechs ({{ data.used_by_mechs.length }})
+              <span class="collapse-chevron" :class="{ open: mechsOpen }">›</span>
+            </h2>
+            <div v-if="mechsOpen" class="used-by-grid">
               <RouterLink
                 v-for="m in data.used_by_mechs"
                 :key="m.prefab_base"
@@ -97,8 +112,11 @@
 
           <!-- Used by vehicles -->
           <section v-if="data.used_by_vehicles.length" class="content-section">
-            <h2 class="section-title">Used by Vehicles ({{ data.used_by_vehicles.length }})</h2>
-            <div class="used-by-grid">
+            <h2 class="section-title collapsible" @click="vehiclesOpen = !vehiclesOpen">
+              Used by Vehicles ({{ data.used_by_vehicles.length }})
+              <span class="collapse-chevron" :class="{ open: vehiclesOpen }">›</span>
+            </h2>
+            <div v-if="vehiclesOpen" class="used-by-grid">
               <RouterLink
                 v-for="v in data.used_by_vehicles"
                 :key="v.prefab_base"
@@ -115,32 +133,42 @@
             <table class="infobox-table">
               <tbody>
                 <tr v-if="data.tonnage != null">
-                  <td class="ib-label">Tonnage</td>
-                  <td class="ib-value">{{ data.tonnage }} t</td>
+                  <td class="ib-label">Weight</td>
+                  <td class="ib-value">{{ data.tonnage }}t</td>
                 </tr>
                 <tr v-if="data.slots != null">
                   <td class="ib-label">Slots</td>
                   <td class="ib-value">{{ data.slots }}</td>
                 </tr>
-                <tr v-if="data.cost != null">
-                  <td class="ib-label">Cost</td>
-                  <td class="ib-value">{{ formatCost(data.cost) }}</td>
+                <tr v-if="data.allowed_locations">
+                  <td class="ib-label">Locations</td>
+                  <td class="ib-value">{{ data.allowed_locations }}</td>
                 </tr>
-                <tr v-if="data.battle_value != null">
-                  <td class="ib-label">Battle Value</td>
-                  <td class="ib-value">{{ data.battle_value.toLocaleString() }}</td>
+                <tr v-if="data.cost != null">
+                  <td class="ib-label">Value</td>
+                  <td class="ib-value">{{ data.cost.toLocaleString() }} ¢</td>
+                </tr>
+                <tr v-if="data.weapon_category">
+                  <td class="ib-label">Salvage</td>
+                  <td class="ib-value" :class="data.purchasable ? 'ib-yes' : 'ib-no'">
+                    {{ data.purchasable ? 'Yes' : 'No' }}
+                  </td>
                 </tr>
                 <tr v-if="data.manufacturer">
                   <td class="ib-label">Manufacturer</td>
                   <td class="ib-value">{{ data.manufacturer }}</td>
                 </tr>
-                <tr v-if="data.model">
-                  <td class="ib-label">Model</td>
-                  <td class="ib-value">{{ data.model }}</td>
+                <tr v-if="data.weapon_category">
+                  <td class="ib-label">Weapon</td>
+                  <td class="ib-value">{{ data.weapon_category }}</td>
                 </tr>
-                <tr v-if="data.allowed_locations">
-                  <td class="ib-label">Locations</td>
-                  <td class="ib-value">{{ data.allowed_locations }}</td>
+                <tr v-if="data.weapon_type">
+                  <td class="ib-label">Type</td>
+                  <td class="ib-value">{{ data.weapon_type }}</td>
+                </tr>
+                <tr v-if="data.weapon_subtype">
+                  <td class="ib-label">SubType</td>
+                  <td class="ib-value">{{ data.weapon_subtype }}</td>
                 </tr>
                 <tr v-if="data.source_mod">
                   <td class="ib-label">Module</td>
@@ -156,30 +184,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useGearDetail } from '../composables/useGearList'
 import { renderRichText } from '../utils/richText'
-import { humanizeMod } from '../utils/humanize'
+import { humanizeMod, gearQualifier } from '../utils/humanize'
 import AffinityTable from '../components/AffinityTable.vue'
+import WeaponStatsTable from '../components/WeaponStatsTable.vue'
 
 const route = useRoute()
-const gearId = route.params.gearId as string
+const gearId = computed(() => route.params.gearId as string)
 
 const { data, isLoading, isError } = useGearDetail(gearId)
 
 // Infer browse mode from current URL prefix
-const currentPath = route.path
 const browsePath = computed(() => {
-  if (currentPath.startsWith('/weapons')) return '/weapons'
-  if (currentPath.startsWith('/quirks'))  return '/quirks'
+  if (route.path.startsWith('/weapons')) return '/weapons'
+  if (route.path.startsWith('/quirks'))  return '/quirks'
   return '/equipment'
 })
 const browseLabel = computed(() => {
-  if (currentPath.startsWith('/weapons')) return 'Weapons'
-  if (currentPath.startsWith('/quirks'))  return 'Quirks'
+  if (route.path.startsWith('/weapons')) return 'Weapons'
+  if (route.path.startsWith('/quirks'))  return 'Quirks'
   return 'Equipment'
 })
+
+const qualifier = computed(() => data.value ? gearQualifier(data.value.id, data.value.ui_name) : null)
+
+const mechsOpen = ref(false)
+const vehiclesOpen = ref(false)
 
 const componentTypeLabel = computed(() => {
   if (!data.value) return null
@@ -200,11 +233,6 @@ const componentTypeBadgeKey = computed(() => {
   return data.value.component_type ?? ''
 })
 
-function formatCost(c: number): string {
-  if (c >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ₵`
-  if (c >= 1_000) return `${Math.round(c / 1_000).toLocaleString()}K ₵`
-  return `${c.toLocaleString()} ₵`
-}
 </script>
 
 <style scoped>
@@ -275,6 +303,12 @@ function formatCost(c: number): string {
   margin: 0 0 10px;
 }
 
+.gear-qualifier {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
 .gear-badges {
   display: flex;
   gap: 6px;
@@ -307,6 +341,24 @@ function formatCost(c: number): string {
 .content-section {
   margin-bottom: 28px;
 }
+
+.section-title.collapsible {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-title.collapsible:hover { color: var(--accent-blue); }
+.collapse-chevron {
+  font-size: 14px;
+  color: var(--text-muted);
+  transform: rotate(0deg);
+  transition: transform 0.15s;
+  line-height: 1;
+  margin-left: auto;
+}
+.collapse-chevron.open { transform: rotate(90deg); }
 
 .section-title {
   font-size: 16px;
@@ -345,6 +397,21 @@ function formatCost(c: number): string {
   border-left: 3px solid var(--accent-blue);
   padding: 6px 10px;
   border-radius: 0 4px 4px 0;
+}
+
+.trait-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.trait-item {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
 }
 
 .stat-table {
@@ -417,6 +484,9 @@ function formatCost(c: number): string {
   text-align: right;
   padding: 6px 12px;
 }
+
+.ib-yes { color: #50c878; }
+.ib-no  { color: var(--text-muted); }
 
 @media (max-width: 700px) {
   .gear-layout { flex-direction: column; }

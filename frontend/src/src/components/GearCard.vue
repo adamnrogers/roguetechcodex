@@ -2,6 +2,7 @@
   <RouterLink :to="cardLink" class="gear-card-link">
     <div class="gear-card">
       <div class="gear-name">{{ ui_name }}</div>
+      <div v-if="qualifier" class="gear-qualifier">{{ qualifier }}</div>
       <div class="gear-badges">
         <span v-if="mode !== 'weapon'" class="ct-badge" :data-ct="badgeKey">{{ badgeLabel }}</span>
         <span v-if="weapon_category && mode !== 'quirk'" class="wcat-badge" :data-wcat="weapon_category">
@@ -29,6 +30,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { GearSummary } from '../composables/useGearList'
+import { gearQualifier } from '../utils/humanize'
 
 const props = defineProps<GearSummary & { mode: string }>()
 
@@ -51,6 +53,8 @@ const badgeLabel = computed(() => {
   if (props.mode === 'quirk') return 'Quirk'
   return props.component_type ? (CT_LABELS[props.component_type] ?? props.component_type) : ''
 })
+
+const qualifier = computed(() => gearQualifier(props.id, props.ui_name))
 
 const badgeKey = computed(() => {
   if (props.mode === 'quirk') return 'Quirk'
@@ -93,6 +97,12 @@ const badgeKey = computed(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.gear-qualifier {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -2px;
 }
 
 .gear-badges {

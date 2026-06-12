@@ -35,6 +35,7 @@ interface MechCardProps {
   icon: string | null
   variant_id: string
   variant_name: string | null
+  variant_ui_name?: string | null
 }
 
 const props = defineProps<MechCardProps>()
@@ -45,7 +46,11 @@ const portraitSrc = computed(() =>
   portraitError.value ? null : portraitUrl(props.icon)
 )
 
-const cardTitle = computed(() => `${props.ui_name} (${props.variant_name ?? props.variant_id})`)
+const cardTitle = computed(() =>
+  props.variant_ui_name
+    ? props.variant_ui_name
+    : `${props.ui_name} (${props.variant_name ?? props.variant_id})`
+)
 
 const cardLink = computed(() => {
   const variantParam = `?variant=${encodeURIComponent(props.variant_id)}`

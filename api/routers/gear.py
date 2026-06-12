@@ -19,24 +19,12 @@ _SORT_COLUMN_MAP: dict[str, str] = {
 }
 
 _USED_BY_SQL = """
-    SELECT DISTINCT c.ui_name, c.prefab_base
-    FROM chassis c
-    WHERE (
-        EXISTS (
-            SELECT 1 FROM loadout l
-            JOIN variant v ON l.variant_id = v.id
-            WHERE v.chassis_id = c.prefab_base
-            AND l.inventory_json LIKE ?
-        )
-        OR EXISTS (
-            SELECT 1 FROM variant vf
-            WHERE vf.chassis_id = c.prefab_base
-            AND vf.fixed_equipment_json LIKE ?
-        )
-    )
+    SELECT c.prefab_base, c.ui_name
+    FROM gear_usage gu
+    JOIN chassis c ON c.prefab_base = gu.chassis_id
+    WHERE gu.gear_id = ?
     AND c.unit_type {unit_type_cond}
     ORDER BY c.ui_name
-    LIMIT 100
 """
 
 
@@ -172,17 +160,15 @@ async def get_gear(
     if row is None:
         raise HTTPException(status_code=404, detail="Gear not found")
 
-    pattern = f'%"ComponentDefID": "{gear_id}"%'
-
     async with db.execute(
         _USED_BY_SQL.format(unit_type_cond="= 'mech'"),
-        (pattern, pattern),
+        (gear_id,),
     ) as cur:
         mech_rows = await cur.fetchall()
 
     async with db.execute(
         _USED_BY_SQL.format(unit_type_cond="IN ('vehicle', 'vtol')"),
-        (pattern, pattern),
+        (gear_id,),
     ) as cur:
         vehicle_rows = await cur.fetchall()
 
@@ -190,6 +176,20 @@ async def get_gear(
         component_tags = json.loads(row["component_tags"] or "[]")
     except (json.JSONDecodeError, TypeError):
         component_tags = []
+
+    try:
+        bonus_descriptions = json.loads(row["bonus_descriptions"] or "[]")
+        if not isinstance(bonus_descriptions, list):
+            bonus_descriptions = []
+    except (json.JSONDecodeError, TypeError):
+        bonus_descriptions = []
+
+    try:
+        modes = json.loads(row["modes_json"] or "[]")
+        if not isinstance(modes, list):
+            modes = []
+    except (json.JSONDecodeError, TypeError):
+        modes = []
 
     # For quirk items, fetch affinities that reference this quirk ID
     related_affinities: list[AffinityEntry] = []
@@ -218,6 +218,8 @@ async def get_gear(
                     AffinityEntry(id=arow["id"], affinity_type="Quirk", quirk_name=gear_id, levels=levels)
                 )
 
+    indirect = row["indirect_fire_capable"]
+
     return GearDetail(
         id=row["id"],
         ui_name=row["ui_name"],
@@ -237,6 +239,8 @@ async def get_gear(
         allowed_locations=row["allowed_locations"],
         disallowed_locations=row["disallowed_locations"],
         component_tags=component_tags if isinstance(component_tags, list) else [],
+        weapon_type=row["weapon_type"],
+        weapon_subtype=row["weapon_subtype"],
         damage=row["damage"],
         heat_generated=row["heat_generated"],
         min_range=row["min_range"],
@@ -244,6 +248,21 @@ async def get_gear(
         ammo_category=row["ammo_category"],
         shots_when_fired=row["shots_when_fired"],
         battle_value=row["battle_value"],
+        instability=row["instability"],
+        heat_damage=row["heat_damage"],
+        accuracy_modifier=row["accuracy_modifier"],
+        evasion_pips_ignored=row["evasion_pips_ignored"],
+        attack_recoil=row["attack_recoil"],
+        projectiles_per_shot=row["projectiles_per_shot"],
+        crit_chance_mult=row["crit_chance_mult"],
+        ap_shards_mod=row["ap_shards_mod"],
+        ap_crit_chance_mult=row["ap_crit_chance_mult"],
+        range_short=row["range_short"],
+        range_medium=row["range_medium"],
+        range_long=row["range_long"],
+        indirect_fire_capable=bool(indirect) if indirect is not None else None,
+        bonus_descriptions=bonus_descriptions,
+        modes=modes,
         source_mod=row["source_mod"],
         used_by_mechs=[UsedByChassis(prefab_base=r["prefab_base"], ui_name=r["ui_name"]) for r in mech_rows],
         used_by_vehicles=[UsedByChassis(prefab_base=r["prefab_base"], ui_name=r["ui_name"]) for r in vehicle_rows],

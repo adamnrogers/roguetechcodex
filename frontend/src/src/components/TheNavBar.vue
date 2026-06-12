@@ -17,6 +17,7 @@
           type="text"
           placeholder="Search wiki..."
           v-model="rawQuery"
+          @keydown.enter="handleSearchEnter"
           @keydown.escape="closeSearch"
         />
         <GlobalSearchResults
@@ -44,6 +45,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUIScale } from '../composables/useUIScale'
 import { useGlobalSearch } from '../composables/useGlobalSearch'
 import GlobalSearchResults from './GlobalSearchResults.vue'
@@ -51,7 +53,11 @@ import GlobalSearchResults from './GlobalSearchResults.vue'
 defineProps<{ theme: string }>()
 defineEmits(['toggleTheme'])
 
+const route = useRoute()
+const router = useRouter()
+
 const { scale } = useUIScale()
+
 
 const rawQuery = ref('')
 const debouncedQuery = ref('')
@@ -66,13 +72,24 @@ watch(rawQuery, (val) => {
 const { data: searchData } = useGlobalSearch(debouncedQuery)
 
 const showResults = computed(
-  () => debouncedQuery.value.length >= 2 && searchData.value !== undefined
+  () => route.path !== '/search' && debouncedQuery.value.length >= 2 && searchData.value !== undefined
 )
 
 function closeSearch() {
   rawQuery.value = ''
   debouncedQuery.value = ''
 }
+
+function handleSearchEnter() {
+  if (rawQuery.value.length >= 2) {
+    router.push({ path: '/search', query: { q: rawQuery.value } })
+    closeSearch()
+  }
+}
+
+watch(() => route.path, (path, prev) => {
+  if (path === '/search' || prev === '/search') closeSearch()
+})
 </script>
 
 <style scoped>

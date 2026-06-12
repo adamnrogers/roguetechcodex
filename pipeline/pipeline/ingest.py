@@ -348,7 +348,9 @@ DROP TABLE IF EXISTS loadout;
 DROP TABLE IF EXISTS variant;
 DROP TABLE IF EXISTS chassis;
 DROP TABLE IF EXISTS gear;
+DROP TABLE IF EXISTS gear_usage;
 DROP TABLE IF EXISTS affinity;
+DROP TABLE IF EXISTS bonus_descriptions_lookup;
 DROP TABLE IF EXISTS pipeline_run;
 DROP TABLE IF EXISTS fts_entity;
 DROP TABLE IF EXISTS variant_equipment;
@@ -620,6 +622,42 @@ def _affinity_desc(container: dict) -> str:
     return " | ".join(parts)
 
 
+def insert_gear_usage(
+    con: sqlite3.Connection,
+    variant_data: dict,
+    loadout_data: dict,
+    variant_to_chassis: dict[str, str],
+) -> int:
+    """Populate gear_usage junction table for fast gear→chassis reverse lookups."""
+    pairs: set[tuple[str, str]] = set()
+
+    for entity_id, (data, _path) in variant_data.items():
+        chassis_id = variant_to_chassis.get(entity_id, "")
+        if not chassis_id:
+            continue
+        for item in data.get("FixedEquipment", []):
+            gid = item.get("ComponentDefID", "")
+            if gid:
+                pairs.add((gid, chassis_id))
+
+    for _entity_id, (data, _path) in loadout_data.items():
+        variant_id = data.get("ChassisID", "").strip()
+        chassis_id = variant_to_chassis.get(variant_id, "")
+        if not chassis_id:
+            continue
+        for item in data.get("inventory", []):
+            gid = item.get("ComponentDefID", "")
+            if gid:
+                pairs.add((gid, chassis_id))
+
+    con.executemany(
+        "INSERT OR IGNORE INTO gear_usage(gear_id, chassis_id) VALUES (?,?)",
+        pairs,
+    )
+    con.commit()
+    return len(pairs)
+
+
 def insert_affinities(con: sqlite3.Connection, affinity_data: dict) -> int:
     """Insert one affinity row per AffinityDef file."""
     rows = []
@@ -672,9 +710,173 @@ def insert_affinities(con: sqlite3.Connection, affinity_data: dict) -> int:
     return len(rows)
 
 
+def ingest_bonus_descriptions(con: sqlite3.Connection, rt_root: Path) -> int:
+    """Walk all BonusDescriptions_*.json files and populate bonus_descriptions_lookup."""
+    rows: list[tuple] = []
+    for path in sorted(rt_root.rglob("BonusDescriptions_*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for entry in data.get("Settings", []):
+            key = entry.get("Bonus", "").strip()
+            if not key:
+                continue
+            rows.append((
+                key,
+                entry.get("Short", ""),
+                entry.get("Long", ""),
+                entry.get("Full", ""),
+            ))
+    con.executemany(
+        "INSERT OR REPLACE INTO bonus_descriptions_lookup (key, short, long, full) VALUES (?,?,?,?)",
+        rows,
+    )
+    con.commit()
+    print(f"  bonus_descriptions entries : {len(rows):,}")
+    return len(rows)
+
+
+def _resolve_bonus_param(template: str, params: list[str]) -> str:
+    """Substitute {0}, {1}, ... placeholders in a template string."""
+    result = template
+    for i, p in enumerate(params):
+        result = result.replace(f"{{{i}}}", p.strip())
+    return result
+
+
+def resolve_bonus_descriptions(raw_list: list, lookup: dict[str, tuple]) -> list[str]:
+    """Resolve a BonusDescriptions array to human-readable Full strings.
+
+    lookup: {key: (short, long, full)} from bonus_descriptions_lookup.
+    Falls back to the raw string if no mapping found.
+    """
+    results: list[str] = []
+    for raw in raw_list:
+        if not isinstance(raw, str):
+            continue
+        raw = raw.strip()
+        if not raw:
+            continue
+        # Split "KeyName: param1/param2" → key + params
+        if ":" in raw:
+            key, params_str = raw.split(":", 1)
+            key = key.strip()
+            params = [p.strip() for p in params_str.strip().replace(",", "/").split("/") if p.strip()]
+        else:
+            key = raw
+            params = []
+        entry = lookup.get(key)
+        if entry:
+            _short, _long, full = entry
+            resolved = _resolve_bonus_param(full, params) if full else (_resolve_bonus_param(_long, params) or raw)
+            results.append(resolved.strip())
+        else:
+            results.append(raw)
+    return results
+
+
+def compute_modes(weapon_data: dict) -> list[dict]:
+    """Compute effective per-mode stats by merging base weapon stats with mode overrides.
+
+    Range fields in mode objects are DELTAS added to the base range values.
+    All other fields are ABSOLUTE overrides when present.
+    Returns a list of mode dicts ready for JSON storage.
+    """
+    base_min = weapon_data.get("MinRange") or 0
+    base_short = (weapon_data.get("RangeSplit") or [0])[0] if weapon_data.get("RangeSplit") else 0
+    base_medium = (weapon_data.get("RangeSplit") or [0, 0])[1] if len(weapon_data.get("RangeSplit") or []) > 1 else base_short
+    base_long = (weapon_data.get("RangeSplit") or [0, 0, 0])[2] if len(weapon_data.get("RangeSplit") or []) > 2 else base_medium
+    base_max = weapon_data.get("MaxRange") or 0
+
+    base = {
+        "damage": weapon_data.get("Damage"),
+        "heat_generated": weapon_data.get("HeatGenerated"),
+        "instability": weapon_data.get("Instability"),
+        "heat_damage": weapon_data.get("HeatDamage"),
+        "accuracy_modifier": weapon_data.get("AccuracyModifier"),
+        "evasion_pips_ignored": weapon_data.get("EvasivePipsIgnored"),
+        "attack_recoil": weapon_data.get("AttackRecoil"),
+        "shots_when_fired": weapon_data.get("ShotsWhenFired"),
+        "projectiles_per_shot": weapon_data.get("ProjectilesPerShot"),
+        "crit_chance_mult": weapon_data.get("CriticalChanceMultiplier"),
+        "ap_shards_mod": weapon_data.get("APArmorShardsMod"),
+        "ap_crit_chance_mult": weapon_data.get("APCriticalChanceMultiplier"),
+        "ammo_category": weapon_data.get("AmmoCategory"),
+        "indirect_fire_capable": weapon_data.get("IndirectFireCapable", False),
+        "min_range": base_min,
+        "range_short": base_short,
+        "range_medium": base_medium,
+        "range_long": base_long,
+        "max_range": base_max,
+    }
+
+    modes_raw = weapon_data.get("Modes", [])
+    if not modes_raw:
+        # No modes — return a single synthetic base entry
+        return [{
+            "mode_id": "base",
+            "mode_ui_name": "Base",
+            "mode_description": "",
+            "is_base_mode": True,
+            **base,
+        }]
+
+    result = []
+    for mode in modes_raw:
+        if not isinstance(mode, dict):
+            continue
+        m: dict = {
+            "mode_id": mode.get("Id", ""),
+            "mode_ui_name": mode.get("UIName", ""),
+            "mode_description": mode.get("Description", ""),
+            "is_base_mode": bool(mode.get("isBaseMode", False)),
+        }
+        # Numeric fields: mode values are deltas added on top of base
+        for src, dst in [
+            ("DamagePerShot",             "damage"),
+            ("HeatGenerated",             "heat_generated"),
+            ("Instability",               "instability"),
+            ("HeatDamage",                "heat_damage"),
+            ("AccuracyModifier",          "accuracy_modifier"),
+            ("EvasivePipsIgnored",        "evasion_pips_ignored"),
+            ("AttackRecoil",              "attack_recoil"),
+            ("ShotsWhenFired",            "shots_when_fired"),
+            ("ProjectilesPerShot",        "projectiles_per_shot"),
+            ("CriticalChanceMultiplier",  "crit_chance_mult"),
+            ("APArmorShardsMod",          "ap_shards_mod"),
+            ("APCriticalChanceMultiplier","ap_crit_chance_mult"),
+        ]:
+            if src in mode:
+                m[dst] = (base[dst] or 0) + mode[src]
+            else:
+                m[dst] = base[dst]
+        # Non-numeric fields: absolute override when present
+        for src, dst in [
+            ("AmmoCategory",       "ammo_category"),
+            ("IndirectFireCapable","indirect_fire_capable"),
+        ]:
+            m[dst] = mode[src] if src in mode else base[dst]
+        # Range deltas
+        m["min_range"] = base_min + (mode.get("MinRange") or 0)
+        m["range_short"] = base_short + (mode.get("ShortRange") or 0)
+        m["range_medium"] = base_medium + (mode.get("MediumRange") or 0)
+        m["range_long"] = base_long + (mode.get("LongRange") or 0)
+        m["max_range"] = base_max + (mode.get("MaxRange") or 0)
+        result.append(m)
+
+    return result
+
+
 def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
     """Insert one gear row per upgradedef_*.json or weapondef_*.json file."""
     GEAR_EXCLUDED_TAGS = frozenset({"BLACKLISTED"})
+
+    # Build in-memory lookup from bonus_descriptions_lookup table
+    bd_lookup: dict[str, tuple] = {}
+    for row in con.execute("SELECT key, short, long, full FROM bonus_descriptions_lookup"):
+        bd_lookup[row[0]] = (row[1], row[2], row[3])
+
     rows = []
     for entity_id, (data, path) in gear_data.items():
         if should_exclude(path):
@@ -685,7 +887,15 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
         tags = data.get("ComponentTags", {}).get("items", [])
         if any(t in GEAR_EXCLUDED_TAGS for t in tags if isinstance(t, str)):
             continue
+        raw_bonus_descs = data.get("Custom", {}).get("BonusDescriptions", [])
+        if "ROI" in raw_bonus_descs:
+            continue
         desc = data.get("Description", {})
+        is_weapon = ct == "Weapon"
+
+        resolved_bonus = resolve_bonus_descriptions(raw_bonus_descs, bd_lookup) if raw_bonus_descs else []
+        modes = compute_modes(data) if is_weapon else []
+
         rows.append((
             entity_id,
             desc.get("UIName") or desc.get("Name") or entity_id,
@@ -706,6 +916,8 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
             json.dumps([t for t in tags if isinstance(t, str)]),
             # Weapon-specific fields (None for non-weapons)
             data.get("Category"),
+            data.get("Type") if is_weapon else None,
+            data.get("WeaponSubType") if is_weapon else None,
             data.get("Damage"),
             data.get("HeatGenerated"),
             data.get("MinRange"),
@@ -713,6 +925,22 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
             data.get("AmmoCategory"),
             data.get("ShotsWhenFired"),
             data.get("BattleValue"),
+            # Extended weapon stats
+            data.get("Instability") if is_weapon else None,
+            data.get("HeatDamage") if is_weapon else None,
+            data.get("AccuracyModifier") if is_weapon else None,
+            data.get("EvasivePipsIgnored") if is_weapon else None,
+            data.get("AttackRecoil") if is_weapon else None,
+            data.get("ProjectilesPerShot") if is_weapon else None,
+            data.get("CriticalChanceMultiplier") if is_weapon else None,
+            data.get("APArmorShardsMod") if is_weapon else None,
+            data.get("APCriticalChanceMultiplier") if is_weapon else None,
+            (data.get("RangeSplit") or [None])[0] if is_weapon else None,
+            (data.get("RangeSplit") or [None, None])[1] if is_weapon and len(data.get("RangeSplit") or []) > 1 else None,
+            (data.get("RangeSplit") or [None, None, None])[2] if is_weapon and len(data.get("RangeSplit") or []) > 2 else None,
+            1 if (is_weapon and data.get("IndirectFireCapable")) else (0 if is_weapon else None),
+            json.dumps(resolved_bonus) if resolved_bonus else None,
+            json.dumps(modes) if modes else None,
             str(path.relative_to(rt_root)),
             source_mod(path, rt_root),
         ))
@@ -721,9 +949,15 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
            (id, ui_name, details, component_type, component_subtype, tonnage, slots,
             cost, rarity, purchasable, manufacturer, model, bonus_value_a, bonus_value_b,
             allowed_locations, disallowed_locations, component_tags,
-            weapon_category, damage, heat_generated, min_range, max_range,
-            ammo_category, shots_when_fired, battle_value, source_file, source_mod)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            weapon_category, weapon_type, weapon_subtype, damage, heat_generated, min_range, max_range,
+            ammo_category, shots_when_fired, battle_value,
+            instability, heat_damage, accuracy_modifier, evasion_pips_ignored,
+            attack_recoil, projectiles_per_shot, crit_chance_mult,
+            ap_shards_mod, ap_crit_chance_mult,
+            range_short, range_medium, range_long, indirect_fire_capable,
+            bonus_descriptions, modes_json,
+            source_file, source_mod)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows,
     )
     con.commit()
@@ -782,7 +1016,10 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     print(f"  loadout rows inserted : {inserted:,}")
     if skipped:
         print(f"  loadouts skipped (no matching variant) : {skipped:,}")
+    usage_pairs = insert_gear_usage(con, variant_data, loadout_data, variant_to_chassis)
+    print(f"  gear_usage pairs      : {usage_pairs:,}")
     insert_affinities(con, affinity_data)
+    ingest_bonus_descriptions(con, rt_root)
     insert_gear(con, gear_data, rt_root)
     print()
 

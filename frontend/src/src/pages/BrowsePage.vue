@@ -2,21 +2,17 @@
   <div class="browse-layout">
     <FilterPanel
       :mode="mode"
-      :modelValue="filters.weightClass"
+      :tonnage="filters.tonnage"
       :era="filters.era"
-      :minTonnage="filters.minTonnage"
-      :maxTonnage="filters.maxTonnage"
       :hasLowerArm="filters.hasLowerArm"
       :hasHand="filters.hasHand"
       :hardpoints="filters.hardpoints"
-      @update:modelValue="onWeightClassChange"
+      @update:tonnage="v => filters = { ...filters, tonnage: v, page: 1 }"
       @update:era="onEraChange"
-      @update:minTonnage="v => filters = { ...filters, minTonnage: v, page: 1 }"
-      @update:maxTonnage="v => filters = { ...filters, maxTonnage: v, page: 1 }"
       @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
       @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
       @update:hardpoints="v => filters = { ...filters, hardpoints: v, page: 1 }"
-      @clearAll="filters = { ...filters, weightClass: [], era: '', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), page: 1 }"
+      @clearAll="filters = { ...filters, tonnage: [], era: [], hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), page: 1 }"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -110,18 +106,17 @@ const searchPlaceholder = computed(() => {
 // Read initial filter state from URL params
 function readFiltersFromRoute(): MechFilters {
   const q = route.query.q as string ?? ''
-  const wc = route.query.wc
-  const weightClass = wc
-    ? (Array.isArray(wc) ? wc as string[] : [wc as string])
+  const tRaw = route.query.t
+  const tonnage = tRaw
+    ? (Array.isArray(tRaw) ? tRaw : [tRaw]).map(Number).filter(n => !isNaN(n))
     : []
-  const era = route.query.era as string ?? ''
+  const eraRaw = route.query.era
+  const era = Array.isArray(eraRaw) ? eraRaw as string[] : eraRaw ? [eraRaw as string] : []
   const faction = route.query.faction as string ?? ''
   const tag = route.query.tag as string ?? ''
   const page = parseInt(route.query.page as string ?? '1') || 1
   const sort = route.query.sort as string ?? 'name'
   const sortDir = route.query.dir as string ?? 'asc'
-  const minT = route.query.min_t ? parseFloat(route.query.min_t as string) : null
-  const maxT = route.query.max_t ? parseFloat(route.query.max_t as string) : null
   const hasLowerArm = route.query.la === '1' ? true : route.query.la === '0' ? false : null
   const hasHand = route.query.ha === '1' ? true : route.query.ha === '0' ? false : null
   const hardpoints = defaultHardpoints()
@@ -141,7 +136,7 @@ function readFiltersFromRoute(): MechFilters {
   hardpoints.handheld.loc    = route.query.hp_hh_loc as string ?? ''
   hardpoints.excludeOmni     = route.query.hp_excl_omni === '1'
   hardpoints.omniOnly        = route.query.hp_omni_only === '1'
-  return { q, weightClass, era, faction, tag, page, sort, sortDir, minTonnage: minT, maxTonnage: maxT, hasLowerArm, hasHand, hardpoints }
+  return { q, tonnage, era, faction, tag, page, sort, sortDir, hasLowerArm, hasHand, hardpoints }
 }
 
 function clearTag() {
@@ -160,11 +155,7 @@ function onSearchInput() {
   }, 300)
 }
 
-function onWeightClassChange(wc: string[]) {
-  filters.value = { ...filters.value, weightClass: wc, page: 1 }
-}
-
-function onEraChange(era: string) {
+function onEraChange(era: string[]) {
   filters.value = { ...filters.value, era, page: 1 }
 }
 
@@ -189,22 +180,20 @@ function nextPage() {
 watch(() => props.mode, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchInput.value = ''
-  filters.value = { q: '', weightClass: [], era: '', faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', minTonnage: null, maxTonnage: null, hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints() }
+  filters.value = { q: '', tonnage: [], era: [], faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints() }
 })
 
 // Sync filters to URL
 watch(filters, (f) => {
   const query: Record<string, any> = {}
   if (f.q) query.q = f.q
-  if (f.weightClass.length) query.wc = f.weightClass
-  if (f.era) query.era = f.era
+  if (f.tonnage.length) query.t = f.tonnage.map(String)
+  if (f.era.length) query.era = f.era
   if (f.faction) query.faction = f.faction
   if (f.tag) query.tag = f.tag
   if (f.page > 1) query.page = String(f.page)
   if (f.sort !== 'name') query.sort = f.sort
   if (f.sortDir !== 'asc') query.dir = f.sortDir
-  if (f.minTonnage !== null) query.min_t = String(f.minTonnage)
-  if (f.maxTonnage !== null) query.max_t = String(f.maxTonnage)
   if (f.hasLowerArm !== null) query.la = f.hasLowerArm ? '1' : '0'
   if (f.hasHand !== null) query.ha = f.hasHand ? '1' : '0'
   if (f.hardpoints.ballistic.count) { query.hp_b = String(f.hardpoints.ballistic.count); if (f.hardpoints.ballistic.loc) query.hp_b_loc = f.hardpoints.ballistic.loc }

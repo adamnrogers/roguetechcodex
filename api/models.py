@@ -111,6 +111,7 @@ class ChassisSummary(BaseModel):
     icon: Optional[str]
     variant_id: str
     variant_name: Optional[str]
+    variant_ui_name: Optional[str] = None
 
 
 class ChassisListResponse(BaseModel):
@@ -183,6 +184,8 @@ class GearDetail(BaseModel):
     allowed_locations: Optional[str]
     disallowed_locations: Optional[str]
     component_tags: list[str]
+    weapon_type: Optional[str]
+    weapon_subtype: Optional[str]
     damage: Optional[float]
     heat_generated: Optional[float]
     min_range: Optional[int]
@@ -190,6 +193,22 @@ class GearDetail(BaseModel):
     ammo_category: Optional[str]
     shots_when_fired: Optional[int]
     battle_value: Optional[int]
+    # Extended weapon stats
+    instability: Optional[float]
+    heat_damage: Optional[float]
+    accuracy_modifier: Optional[float]
+    evasion_pips_ignored: Optional[float]
+    attack_recoil: Optional[float]
+    projectiles_per_shot: Optional[int]
+    crit_chance_mult: Optional[float]
+    ap_shards_mod: Optional[float]
+    ap_crit_chance_mult: Optional[float]
+    range_short: Optional[int]
+    range_medium: Optional[int]
+    range_long: Optional[int]
+    indirect_fire_capable: Optional[bool]
+    bonus_descriptions: list[str]
+    modes: list[dict]
     source_mod: Optional[str]
     used_by_mechs: list[UsedByChassis]
     used_by_vehicles: list[UsedByChassis]
@@ -216,6 +235,7 @@ class SearchHit(BaseModel):
     name: str
     subtitle: str
     result_type: str   # mech | vehicle | vtol | battle_armor | equipment | weapon | quirk
+    variant_id: Optional[str] = None
 
 
 class SearchResponse(BaseModel):

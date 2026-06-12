@@ -194,17 +194,25 @@ import AffinityTable from '../components/AffinityTable.vue'
 
 const route = useRoute()
 const router = useRouter()
-const prefabBase = route.params.prefabBase as string
-const isVehicle     = route.path.startsWith('/vehicles/')
-const isVtol        = route.path.startsWith('/vtols/')
-const isBattleArmor = route.path.startsWith('/battle-armor/')
+const prefabBase    = computed(() => route.params.prefabBase as string)
+const isVehicle     = computed(() => route.path.startsWith('/vehicles/'))
+const isVtol        = computed(() => route.path.startsWith('/vtols/'))
+const isBattleArmor = computed(() => route.path.startsWith('/battle-armor/'))
 
-const { data, isLoading, isError } = useChassisDetail(prefabBase, isVehicle || isVtol, isBattleArmor)
+const { data, isLoading, isError } = useChassisDetail(
+  prefabBase,
+  computed(() => isVehicle.value || isVtol.value),
+  isBattleArmor,
+)
 
-const browsePath  = isVtol ? '/vtols' : isVehicle ? '/vehicles' : isBattleArmor ? '/battle-armor' : '/mechs'
-const browseLabel = isVtol ? 'VTOLs' : isVehicle ? 'Vehicles' : isBattleArmor ? 'Battle Armor' : 'Mechs'
+const browsePath  = computed(() =>
+  isVtol.value ? '/vtols' : isVehicle.value ? '/vehicles' : isBattleArmor.value ? '/battle-armor' : '/mechs'
+)
+const browseLabel = computed(() =>
+  isVtol.value ? 'VTOLs' : isVehicle.value ? 'Vehicles' : isBattleArmor.value ? 'Battle Armor' : 'Mechs'
+)
 const bayLabel = computed(() =>
-  isVtol ? 'VTOL Bay' : isVehicle ? 'Vehicle Bay' : isBattleArmor ? 'Battle Armor Bay' : 'Mech Bay'
+  isVtol.value ? 'VTOL Bay' : isVehicle.value ? 'Vehicle Bay' : isBattleArmor.value ? 'Battle Armor Bay' : 'Mech Bay'
 )
 
 const portraitImgError = ref(false)
@@ -214,6 +222,12 @@ const selectedVariantId = ref<string | null>(null)
 const queryVariantId = route.query.variant as string | undefined
 if (queryVariantId) selectedVariantId.value = queryVariantId
 watch(selectedVariantId, () => { window.scrollTo(0, 0) })
+
+// Reset variant selection and portrait error when navigating to a different chassis
+watch(prefabBase, () => {
+  portraitImgError.value = false
+  selectedVariantId.value = (route.query.variant as string | undefined) ?? null
+})
 
 const effectiveVariantId = computed(() =>
   selectedVariantId.value ?? data.value?.variants[0]?.id ?? null

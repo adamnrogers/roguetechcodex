@@ -40,6 +40,32 @@ export interface GearFilters {
   sortDir: string
 }
 
+export interface WeaponMode {
+  mode_id: string
+  mode_ui_name: string
+  mode_description: string
+  is_base_mode: boolean
+  damage: number | null
+  heat_generated: number | null
+  instability: number | null
+  heat_damage: number | null
+  accuracy_modifier: number | null
+  evasion_pips_ignored: number | null
+  attack_recoil: number | null
+  shots_when_fired: number | null
+  projectiles_per_shot: number | null
+  crit_chance_mult: number | null
+  ap_shards_mod: number | null
+  ap_crit_chance_mult: number | null
+  ammo_category: string | null
+  indirect_fire_capable: boolean | null
+  min_range: number
+  range_short: number
+  range_medium: number
+  range_long: number
+  max_range: number
+}
+
 export interface GearDetail {
   id: string
   ui_name: string
@@ -59,6 +85,8 @@ export interface GearDetail {
   allowed_locations: string | null
   disallowed_locations: string | null
   component_tags: string[]
+  weapon_type: string | null
+  weapon_subtype: string | null
   damage: number | null
   heat_generated: number | null
   min_range: number | null
@@ -66,6 +94,21 @@ export interface GearDetail {
   ammo_category: string | null
   shots_when_fired: number | null
   battle_value: number | null
+  instability: number | null
+  heat_damage: number | null
+  accuracy_modifier: number | null
+  evasion_pips_ignored: number | null
+  attack_recoil: number | null
+  projectiles_per_shot: number | null
+  crit_chance_mult: number | null
+  ap_shards_mod: number | null
+  ap_crit_chance_mult: number | null
+  range_short: number | null
+  range_medium: number | null
+  range_long: number | null
+  indirect_fire_capable: boolean | null
+  bonus_descriptions: string[]
+  modes: WeaponMode[]
   source_mod: string | null
   used_by_mechs: { prefab_base: string; ui_name: string }[]
   used_by_vehicles: { prefab_base: string; ui_name: string }[]
@@ -96,10 +139,11 @@ export function useGearList(filters: Ref<GearFilters>) {
   })
 }
 
-export function useGearDetail(gearId: string) {
+export function useGearDetail(gearId: Ref<string> | string) {
+  const id = typeof gearId === 'string' ? { value: gearId } : gearId
   return useQuery({
-    queryKey: ['gear', gearId],
-    queryFn: () => apiFetch<GearDetail>(`/api/v1/gear/${gearId}`),
+    queryKey: computed(() => ['gear', id.value]),
+    queryFn: () => apiFetch<GearDetail>(`/api/v1/gear/${id.value}`),
     staleTime: 10 * 60 * 1000,
   })
 }

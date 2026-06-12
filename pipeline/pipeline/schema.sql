@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS gear (
     disallowed_locations TEXT,
     component_tags       TEXT,   -- JSON array
     weapon_category      TEXT,   -- 'Ballistic'|'Energy'|'Missile'|'Melee'|'Support' (weapons only)
+    weapon_type          TEXT,   -- e.g. 'LRM', 'Autocannon', 'Laser'
+    weapon_subtype       TEXT,   -- e.g. 'LRM20', 'AC10'
     damage               REAL,
     heat_generated       REAL,
     min_range            INTEGER,
@@ -89,6 +91,22 @@ CREATE TABLE IF NOT EXISTS gear (
     ammo_category        TEXT,
     shots_when_fired     INTEGER,
     battle_value         INTEGER,
+    -- Extended weapon stats (weapons only)
+    instability          REAL,
+    heat_damage          REAL,
+    accuracy_modifier    REAL,
+    evasion_pips_ignored REAL,
+    attack_recoil        REAL,
+    projectiles_per_shot INTEGER,
+    crit_chance_mult     REAL,
+    ap_shards_mod        REAL,
+    ap_crit_chance_mult  REAL,
+    range_short          INTEGER,
+    range_medium         INTEGER,
+    range_long           INTEGER,
+    indirect_fire_capable INTEGER,
+    bonus_descriptions   TEXT,   -- JSON array of resolved human-readable trait strings
+    modes_json           TEXT,   -- JSON array of computed per-mode stat objects
     source_file          TEXT,
     source_mod           TEXT
 );
@@ -104,6 +122,22 @@ CREATE TABLE IF NOT EXISTS affinity (
     quirk_names   TEXT,               -- JSON array (Quirk type only)
     chassis_names TEXT,               -- JSON array of AssemblyVariant IDs (Chassis type only)
     levels_json   TEXT                -- JSON array of {missions_required, level_name, description}
+);
+
+CREATE TABLE IF NOT EXISTS gear_usage (
+    gear_id    TEXT NOT NULL,
+    chassis_id TEXT NOT NULL,
+    PRIMARY KEY (gear_id, chassis_id)
+);
+CREATE INDEX IF NOT EXISTS idx_gear_usage_gear    ON gear_usage(gear_id);
+CREATE INDEX IF NOT EXISTS idx_gear_usage_chassis ON gear_usage(chassis_id);
+
+-- BonusDescriptions localisation lookup — populated from BonusDescriptions_*.json files
+CREATE TABLE IF NOT EXISTS bonus_descriptions_lookup (
+    key   TEXT PRIMARY KEY,
+    short TEXT,
+    long  TEXT,
+    full  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS pipeline_run (
