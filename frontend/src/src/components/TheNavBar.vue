@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="logo-block">
       <RouterLink to="/" class="logo">RT</RouterLink>
-      <span class="logo-version">0.1.0-beta</span>
+      <span class="logo-version">{{ appVersion }}</span>
     </div>
     <div class="nav-tabs">
       <RouterLink to="/mechs"     class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
@@ -55,6 +55,8 @@ import GlobalSearchResults from './GlobalSearchResults.vue'
 
 defineProps<{ theme: string }>()
 defineEmits(['toggleTheme'])
+
+const appVersion = __APP_VERSION__
 
 const route = useRoute()
 const router = useRouter()
