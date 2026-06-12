@@ -259,9 +259,8 @@ const WEAPON_CATEGORY_GROUPS: WeaponCategoryGroup[] = [
       { id: 'w/m/l/nlrm',         label: 'Enhanced LRM' },
       { id: 'w/m/l/rlrm',         label: 'Rotary LRM' },
       { id: 'w/m/l/mrm',          label: 'MRM' },
-      { id: 'w/m/t/thunderbolt',  label: 'Thunderbolt' },
-      { id: 'w/m/t/arrowiv',      label: 'Arrow IV' },
-      { id: 'w/m/t/cruisemissile', label: 'Cruise Missile' },
+      { id: 'w/m/t/thunderbolt', label: 'Thunderbolt' },
+      { id: 'w/m/t/arrowiv',    label: 'Arrow IV' },
     ],
   },
   {
