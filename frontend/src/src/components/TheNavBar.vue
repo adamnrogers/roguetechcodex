@@ -107,7 +107,7 @@ watch(() => route.path, (path, prev) => {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  gap: 32px;
+  gap: var(--nav-gap, 32px);
   z-index: 1000;
 }
 .logo-block {
@@ -134,9 +134,10 @@ watch(() => route.path, (path, prev) => {
 .nav-tab {
   color: var(--text-muted);
   text-decoration: none;
-  padding: 0 16px;
+  padding: var(--nav-tab-padding, 0 16px);
   line-height: var(--nav-height);
   font-size: 14px;
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
 }
