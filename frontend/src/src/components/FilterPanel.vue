@@ -276,13 +276,13 @@ const emit = defineEmits<{
 }>()
 
 const HP_TYPES = [
-  { key: 'ballistic' as const, label: 'Ballistic',   color: '#58a6ff' },
-  { key: 'energy'    as const, label: 'Energy',      color: '#3fb950' },
-  { key: 'missile'   as const, label: 'Missile',     color: '#b482ff' },
-  { key: 'special'   as const, label: 'Special',     color: '#f0883e' },
-  { key: 'wing'      as const, label: 'WingMount',   color: '#8b96a3' },
-  { key: 'bomb'      as const, label: 'BombBay',     color: '#f85149' },
-  { key: 'handheld'  as const, label: 'HandHeld',    color: '#38bdc1' },
+  { key: 'ballistic' as const, label: 'Ballistic',   color: 'var(--hp-ballistic)' },
+  { key: 'energy'    as const, label: 'Energy',      color: 'var(--hp-energy)'    },
+  { key: 'missile'   as const, label: 'Missile',     color: 'var(--hp-missile)'   },
+  { key: 'special'   as const, label: 'Special',     color: 'var(--hp-special)'   },
+  { key: 'wing'      as const, label: 'WingMount',   color: 'var(--hp-wingmount)' },
+  { key: 'bomb'      as const, label: 'BombBay',     color: 'var(--hp-bombbay)'   },
+  { key: 'handheld'  as const, label: 'HandHeld',    color: 'var(--hp-handheld)'  },
 ]
 
 const HP_LOCS = [

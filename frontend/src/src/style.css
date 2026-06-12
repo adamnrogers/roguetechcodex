@@ -34,6 +34,16 @@
   --badge-assault-fg: #d0d7de;
   --badge-radius: 3px;
 
+  /* Hardpoint / weapon category colours */
+  --hp-ballistic: #58a6ff;
+  --hp-energy:    #3fb950;
+  --hp-missile:   #b482ff;
+  --hp-special:   #f0883e;
+  --hp-wingmount: #8b96a3;
+  --hp-bombbay:   #f85149;
+  --hp-handheld:  #38bdc1;
+  --hp-omni:      #e6b43c;
+
   /* UI scaling */
   --card-min-width: 200px;
   --filter-panel-width: 280px;
@@ -64,6 +74,16 @@
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --card-shadow-hover: 0 0 0 1px rgba(9, 105, 218, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
   --nav-blur: blur(12px);
+
+  /* Hardpoint / weapon category colours — darker for light backgrounds */
+  --hp-ballistic: #0969da;
+  --hp-energy:    #1a7f37;
+  --hp-missile:   #6e40c9;
+  --hp-special:   #bc4c00;
+  --hp-wingmount: #57606a;
+  --hp-bombbay:   #cf222e;
+  --hp-handheld:  #0e7490;
+  --hp-omni:      #7d4e00;
 
   /* Weight class badges */
   --badge-light-bg:   rgba(31, 136, 61, 0.12);

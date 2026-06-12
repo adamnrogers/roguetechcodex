@@ -166,15 +166,15 @@ const colHeaders = computed(() =>
   isVehicle.value ? ['Right', 'Turret/Center', 'Left / Rear'] : ['Right', 'Center', 'Left']
 )
 
-const HP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  Omni:              { label: 'O',  bg: 'rgba(230,180,60,0.2)',   color: '#e6b43c' },
-  Ballistic:         { label: 'B',  bg: 'rgba(88,166,255,0.2)',   color: '#58a6ff' },
-  Energy:            { label: 'E',  bg: 'rgba(63,185,80,0.2)',    color: '#3fb950' },
-  Missile:           { label: 'M',  bg: 'rgba(180,130,255,0.2)',  color: '#b482ff' },
-  Special:           { label: 'S',  bg: 'rgba(240,136,62,0.2)',   color: '#f0883e' },
-  WingMountedWeapon: { label: 'WM', bg: 'rgba(128,128,128,0.15)', color: '#8b96a3' },
-  InternalBombBay:   { label: 'IB', bg: 'rgba(248,81,73,0.15)',   color: '#f85149' },
-  SpecialHandHeld:   { label: 'SH', bg: 'rgba(56,189,193,0.15)',  color: '#38bdc1' },
+const HP_STYLES: Record<string, { label: string; bgVar: string; colorVar: string }> = {
+  Omni:              { label: 'O',  bgVar: '--hp-omni',      colorVar: '--hp-omni'      },
+  Ballistic:         { label: 'B',  bgVar: '--hp-ballistic', colorVar: '--hp-ballistic' },
+  Energy:            { label: 'E',  bgVar: '--hp-energy',    colorVar: '--hp-energy'    },
+  Missile:           { label: 'M',  bgVar: '--hp-missile',   colorVar: '--hp-missile'   },
+  Special:           { label: 'S',  bgVar: '--hp-special',   colorVar: '--hp-special'   },
+  WingMountedWeapon: { label: 'WM', bgVar: '--hp-wingmount', colorVar: '--hp-wingmount' },
+  InternalBombBay:   { label: 'IB', bgVar: '--hp-bombbay',   colorVar: '--hp-bombbay'   },
+  SpecialHandHeld:   { label: 'SH', bgVar: '--hp-handheld',  colorVar: '--hp-handheld'  },
 }
 
 // Index variant locations by name
@@ -225,11 +225,11 @@ const invByLoc = computed(() => {
 })
 
 const WEAPON_CAT_COLOURS: Record<string, string> = {
-  Ballistic: '#58a6ff',
-  Energy:    '#3fb950',
-  Missile:   '#b482ff',
-  Melee:     '#ff5555',
-  Support:   '#f0883e',
+  Ballistic: 'var(--hp-ballistic)',
+  Energy:    'var(--hp-energy)',
+  Missile:   'var(--hp-missile)',
+  Melee:     'var(--hp-bombbay)',
+  Support:   'var(--hp-special)',
 }
 
 interface HpBadge { label: string; style: Record<string, string> }
@@ -342,8 +342,8 @@ function buildCell(locName: string | null, subrow: string): CellData | null {
         return {
           label: s?.label ?? hp.weapon_mount_id.slice(0, 1),
           style: s
-            ? { background: s.bg, color: s.color }
-            : { background: 'rgba(128,128,128,0.15)', color: '#8b96a3' },
+            ? { background: `color-mix(in srgb, var(${s.bgVar}) 20%, transparent)`, color: `var(${s.colorVar})` }
+            : { background: 'rgba(128,128,128,0.15)', color: 'var(--hp-wingmount)' },
         }
       })
     return { hps }
