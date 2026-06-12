@@ -262,27 +262,43 @@ function gearRoute(id: string, defType: string): string | null {
   return null
 }
 
-function aggregateItems(rawItems: { component_def_id: string; component_def_type: string; weapon_category?: string | null }[]): CellItem[] {
-  // Track first-seen defType and weapon_category per id so aggregated items carry the right data
+function aggregateItems(rawItems: { component_def_id: string; component_def_type: string; weapon_category?: string | null; ui_name?: string | null }[]): CellItem[] {
+  // Track first-seen defType, weapon_category, and ui_name per id
   const counts = new Map<string, number>()
   const defTypes = new Map<string, string>()
   const weaponCategories = new Map<string, string | null>()
+  const uiNames = new Map<string, string | null>()
   for (const item of rawItems) {
     counts.set(item.component_def_id, (counts.get(item.component_def_id) ?? 0) + 1)
     if (!defTypes.has(item.component_def_id)) defTypes.set(item.component_def_id, item.component_def_type)
     if (!weaponCategories.has(item.component_def_id)) weaponCategories.set(item.component_def_id, item.weapon_category ?? null)
+    if (!uiNames.has(item.component_def_id)) uiNames.set(item.component_def_id, item.ui_name ?? null)
   }
-  return [...counts.entries()].map(([id, count]) => ({
-    text: count > 1 ? `${count}x ${formatName(id)}` : formatName(id),
-    type: componentType(id),
-    route: gearRoute(id, defTypes.get(id) ?? ''),
-    weaponCategory: weaponCategories.get(id) ?? null,
-  }))
+  return [...counts.entries()].map(([id, count]) => {
+    const displayName = uiNames.get(id) || formatName(id)
+    return {
+      text: count > 1 ? `${count}x ${displayName}` : displayName,
+      type: componentType(id),
+      route: gearRoute(id, defTypes.get(id) ?? ''),
+      weaponCategory: weaponCategories.get(id) ?? null,
+    }
+  })
 }
 
 const _PREFIX_RE = /^(Weapon|Ammo|Gear|Linked|emod|Quirk|Default|VehicleTrait|Unique|BoltOn)_/
 
+// Display name overrides for known IDs that format poorly from their ComponentDefID
+const _DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  'Default_Armor_Standard':       'Armor',
+  'Default_Structure_Standard':   'Structure',
+  'Default_HeatSinkKit_Single':   'Cooling',
+  'Default_Gyro_Standard':        'Gyro',
+  'Gear_Engine_Standard':         'Engine',
+  'Default_EnginePart_Heatsinks': 'Engine HS',
+}
+
 function formatName(id: string): string {
+  if (_DISPLAY_NAME_OVERRIDES[id]) return _DISPLAY_NAME_OVERRIDES[id]
   // Strip up to two chained prefixes (e.g. BoltOn_Weapon_AMS_Flare → AMS_Flare)
   let s = id.replace(_PREFIX_RE, '')
   if (_PREFIX_RE.test(s)) s = s.replace(_PREFIX_RE, '')
@@ -290,7 +306,7 @@ function formatName(id: string): string {
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]{2,})([A-Z][a-z])/g, '$1 $2')
-    .replace(/([a-zA-Z])(\d)/g, '$1 $2')
+    .replace(/([a-zA-Z])(\d{2,})/g, '$1 $2')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -337,7 +353,7 @@ function buildCell(locName: string | null, subrow: string): CellData | null {
     return { items: aggregateItems(fixedByLoc.value[locName] ?? []) }
   }
 
-  // Dynamic
+  // Dynamic: mechdef loadout inventory
   return { items: aggregateItems(invByLoc.value[locName] ?? []) }
 }
 

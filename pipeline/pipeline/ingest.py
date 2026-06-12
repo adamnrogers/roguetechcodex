@@ -184,12 +184,23 @@ def filter_chassis_tags(items: list) -> list:
 
 # ── Structural defaults (Cockpit, actuators, etc.) ────────────────────────────
 
-# CenterTorso category defaults collide with chassisdef FixedEquipment overrides
-# (e.g. EndoSteel overrides Default_Structure_Standard). Skipped to avoid double-display.
+# MechEngineer CT category IDs — used to identify chassisdef FixedEquipment items that
+# are user-replaceable (ct_dynamic) and to build CT slot labels from structural defaults.
 _CT_CATEGORIES = frozenset([
     "Armor", "Structure", "Cooling", "Gyro",
     "EngineShield", "EngineHeatBlock", "EngineCore",
 ])
+
+# Structural default DefIDs that are internal placeholders and should not be surfaced.
+_EXCLUDED_STRUCTURAL_DEF_IDS = frozenset({"Gear_EngineCore_Dummy"})
+
+# Chassisdef FixedEquipment ComponentDefIDs that are passive markers / internal tags
+# and should not appear in the component layout (they have no meaningful slot display).
+_HIDDEN_FIXED_COMPONENT_IDS = frozenset({
+    "Quirk_Melee_Weapon",
+    "Quirk_Melee_Weapon_YLW",
+    "Quirk_Melee_Samurai",
+})
 
 # ── Hardpoint pre-aggregation ─────────────────────────────────────────────────
 
@@ -255,8 +266,6 @@ def load_mech_global_defaults(
     structural_categories: list[dict] = []
     for entry in me_data.get("Settings", []):
         cid = entry.get("CategoryID", "")
-        if cid in _CT_CATEGORIES:
-            continue
         defaults = [
             (d["Location"], d["DefID"], d.get("Type", "Upgrade"))
             for d in entry.get("Defaults", [])
@@ -300,20 +309,26 @@ def build_structural_defaults(
     unit_type: str,
     structural_categories: list[dict],
     actuator_exclusions: dict[str, dict[str, set[str]]],
+    skip_ct_categories: set[str] | None = None,
 ) -> list[dict]:
     """Return structural default items to prepend to a mech's fixed_equipment_json.
 
     Only applies to mechs (not vehicles, VTOLs, or battle armor).
     Applies unit-type overrides and actuator exclusions from the two config files.
+    skip_ct_categories: CT category IDs already covered by chassisdef FixedEquipment;
+        slot-label defaults for those categories are omitted to avoid redundancy.
     """
     if unit_type != "mech":
         return []
 
+    skip = skip_ct_categories or set()
     tag_set = set(chassis_tags)
     result: list[dict] = []
 
     for category in structural_categories:
         cid = category["CategoryID"]
+        if cid in skip:
+            continue
         effective = list(category["Defaults"])
 
         # Apply last matching unit-type override
@@ -328,6 +343,8 @@ def build_structural_defaults(
                 excluded.update(locs)
 
         for loc, def_id, comp_type in effective:
+            if def_id in _EXCLUDED_STRUCTURAL_DEF_IDS:
+                continue
             if "All" not in excluded and loc not in excluded:
                 result.append({
                     "MountedLocation": loc,
@@ -463,6 +480,7 @@ def insert_variants(
     variant_data: dict,
     rt_root: Path,
     gear_category_map: dict[str, str] | None = None,
+    ct_category_map: dict[str, str] | None = None,  # gear_id → CT CategoryID
 ) -> dict[str, str]:
     """Insert one variant row per chassisdef file.
     Returns {variant_id: prefab_base} map for loadout linkage.
@@ -470,6 +488,7 @@ def insert_variants(
     known_chassis = {r[0] for r in con.execute("SELECT prefab_base FROM chassis")}
     structural_categories, actuator_exclusions = load_mech_global_defaults(rt_root)
     cat_map = gear_category_map or {}
+    ct_map = ct_category_map or {}  # gear_id → CT CategoryID
     rows = []
     variant_to_chassis: dict[str, str] = {}
 
@@ -498,15 +517,24 @@ def insert_variants(
         raw_tags = data.get("ChassisTags", {}).get("items", [])
         unit_type = detect_unit_type(data)
 
-        # Structural defaults (cockpit, life support, actuators) are defined globally
-        # in Defaults_MechEngineer.json, not per-chassisdef. Prepend them so they appear
-        # at the start of the fixed equipment list, before the mech-specific items.
+        # Structural defaults (cockpit, life support, actuators, CT slot labels) are
+        # defined globally in Defaults_MechEngineer.json, not per-chassisdef.
+        # CT slot labels are skipped for categories already present in chassisdef
+        # FixedEquipment to avoid showing both the label and the actual item.
+        chassis_fixed_raw = [
+            item for item in data.get("FixedEquipment", [])
+            if item.get("ComponentDefID", "") not in _HIDDEN_FIXED_COMPONENT_IDS
+        ]
+        ct_categories_present = {
+            ct_map[item["ComponentDefID"]]
+            for item in chassis_fixed_raw
+            if ct_map.get(item.get("ComponentDefID", ""))
+        }
         structural = build_structural_defaults(
-            raw_tags, unit_type, structural_categories, actuator_exclusions
+            raw_tags, unit_type, structural_categories, actuator_exclusions,
+            skip_ct_categories=ct_categories_present,
         )
-        fixed_equipment = _enrich_category(
-            structural + data.get("FixedEquipment", []), cat_map
-        )
+        fixed_equipment = _enrich_category(structural + chassis_fixed_raw, cat_map)
 
         locations_raw = data.get("Locations", [])
         hardpoints_json_val = compute_hardpoints_json(locations_raw)
@@ -1021,10 +1049,18 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
         for eid, (data, _) in gear_data.items()
         if data.get("Category")
     }
+    # Map gear_id → MechEngineer CT CategoryID (Armor, Gyro, etc.) for ct_dynamic marking.
+    ct_category_map: dict[str, str] = {}
+    for eid, (data, _) in gear_data.items():
+        for cat in data.get("Custom", {}).get("Category", []):
+            cid = cat.get("CategoryID", "")
+            if cid in _CT_CATEGORIES:
+                ct_category_map[eid] = cid
+                break
 
     print("Phase 2 — writing to database...")
     insert_chassis(con, variant_data)
-    variant_to_chassis = insert_variants(con, variant_data, rt_root, gear_category_map)
+    variant_to_chassis = insert_variants(con, variant_data, rt_root, gear_category_map, ct_category_map)
     inserted, skipped = insert_loadouts(con, loadout_data, variant_to_chassis, rt_root, gear_category_map)
     print(f"  loadout rows inserted : {inserted:,}")
     if skipped:
