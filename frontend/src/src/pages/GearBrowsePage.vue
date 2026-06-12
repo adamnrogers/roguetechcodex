@@ -8,12 +8,24 @@
       :excludeCategories="filters.excludeCategories"
       :includeLocations="filters.includeLocations"
       :excludeLocations="filters.excludeLocations"
+      :weaponTypes="filters.weaponTypes"
+      :weaponSubtypes="filters.weaponSubtypes"
+      :minTonnage="filters.minTonnage"
+      :maxTonnage="filters.maxTonnage"
+      :minHeat="filters.minHeat"
+      :maxHeat="filters.maxHeat"
       @update:includeTypes="v => onFilterUpdate({ includeTypes: v })"
       @update:excludeTypes="v => onFilterUpdate({ excludeTypes: v })"
       @update:includeCategories="v => onFilterUpdate({ includeCategories: v })"
       @update:excludeCategories="v => onFilterUpdate({ excludeCategories: v })"
       @update:includeLocations="v => onFilterUpdate({ includeLocations: v })"
       @update:excludeLocations="v => onFilterUpdate({ excludeLocations: v })"
+      @update:weaponTypes="v => onFilterUpdate({ weaponTypes: v })"
+      @update:weaponSubtypes="v => onFilterUpdate({ weaponSubtypes: v })"
+      @update:minTonnage="v => onFilterUpdate({ minTonnage: v })"
+      @update:maxTonnage="v => onFilterUpdate({ maxTonnage: v })"
+      @update:minHeat="v => onFilterUpdate({ minHeat: v })"
+      @update:maxHeat="v => onFilterUpdate({ maxHeat: v })"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -123,6 +135,12 @@ function defaultFilters(): GearFilters {
     excludeCategories: [],
     includeLocations: [],
     excludeLocations: [],
+    weaponTypes: [],
+    weaponSubtypes: [],
+    minTonnage: null,
+    maxTonnage: null,
+    minHeat: null,
+    maxHeat: null,
     page: 1,
     sort: 'name',
     sortDir: 'asc',
@@ -142,6 +160,12 @@ function readFilters(): GearFilters {
   const excCatRaw   = (route.query.excc as string) ?? ''
   const incLocRaw   = (route.query.incl as string) ?? ''
   const excLocRaw   = (route.query.excl as string) ?? ''
+  const wtRaw    = (route.query.wt   as string) ?? ''
+  const wstRaw   = (route.query.wst  as string) ?? ''
+  const minT     = route.query.mint ? parseFloat(route.query.mint as string) : null
+  const maxT     = route.query.maxt ? parseFloat(route.query.maxt as string) : null
+  const minH     = route.query.minh ? parseFloat(route.query.minh as string) : null
+  const maxH     = route.query.maxh ? parseFloat(route.query.maxh as string) : null
   return {
     q,
     componentType: componentTypeParam.value,
@@ -151,6 +175,12 @@ function readFilters(): GearFilters {
     excludeCategories: excCatRaw ? excCatRaw.split(',').filter(Boolean) : [],
     includeLocations:  incLocRaw ? incLocRaw.split(',').filter(Boolean) : [],
     excludeLocations:  excLocRaw ? excLocRaw.split(',').filter(Boolean) : [],
+    weaponTypes:    wtRaw  ? wtRaw.split(',').filter(Boolean)  : [],
+    weaponSubtypes: wstRaw ? wstRaw.split(',').filter(Boolean) : [],
+    minTonnage: minT,
+    maxTonnage: maxT,
+    minHeat:    minH,
+    maxHeat:    maxH,
     page, sort, sortDir,
   }
 }
@@ -203,6 +233,12 @@ watch(filters, (f) => {
   if (f.excludeCategories.length) query.excc = f.excludeCategories.join(',')
   if (f.includeLocations.length)  query.incl = f.includeLocations.join(',')
   if (f.excludeLocations.length)  query.excl = f.excludeLocations.join(',')
+  if (f.weaponTypes.length)    query.wt   = f.weaponTypes.join(',')
+  if (f.weaponSubtypes.length) query.wst  = f.weaponSubtypes.join(',')
+  if (f.minTonnage !== null)   query.mint = String(f.minTonnage)
+  if (f.maxTonnage !== null)   query.maxt = String(f.maxTonnage)
+  if (f.minHeat !== null)      query.minh = String(f.minHeat)
+  if (f.maxHeat !== null)      query.maxh = String(f.maxHeat)
   if (f.page > 1)                 query.page = String(f.page)
   if (f.sort !== defaultSort) query.sort = f.sort
   if (f.sortDir !== defaultDir) query.dir = f.sortDir
