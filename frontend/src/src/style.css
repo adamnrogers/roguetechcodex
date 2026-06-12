@@ -41,39 +41,39 @@
   --gear-max-width: 1100px;
 }
 
-/* ── V2: Modern dark theme ───────────────────────────────────────────────── */
+/* ── Light theme ─────────────────────────────────────────────────────────── */
 [data-theme="v2"] {
-  --bg-primary: #0d1117;    /* main pane — deep dark */
-  --bg-card: #1a2235;       /* cards — float above the page */
-  --bg-sidebar: #111827;    /* sidebar — ~10 units above main, perceivable on all monitors */
-  --bg-card-hover: #232e4a; /* clearly distinct from resting card */
-  --bg-infobox: #1a2235;
-  --bg-nav: rgba(13, 17, 23, 0.90);
-  --bg-select: #1a2235;
-  --accent-blue: #58a6ff;
-  --accent-orange: #f0883e;
-  --text-primary: #c9d1d9;  /* soft off-white — warm enough to reduce eye strain */
-  --text-muted: #8b96a3;
-  --border-color: rgba(48, 54, 61, 0.9);
-  --border-default: 1px solid rgba(48, 54, 61, 0.9);
-  --border-hover: 1px solid rgba(88, 166, 255, 0.6);
-  --sortbar-divider: rgba(88, 166, 255, 0.15);
-  --viewbtn-active: rgba(88, 166, 255, 0.2);
-  --viewbtn-hover: rgba(88, 166, 255, 0.1);
+  --bg-primary: #f6f8fa;
+  --bg-card: #ffffff;
+  --bg-sidebar: #eaeef2;
+  --bg-card-hover: #f0f4f8;
+  --bg-infobox: #ffffff;
+  --bg-nav: rgba(246, 248, 250, 0.95);
+  --bg-select: #ffffff;
+  --accent-blue: #0969da;
+  --accent-orange: #bc4c00;
+  --text-primary: #24292f;
+  --text-muted: #57606a;
+  --border-color: #d0d7de;
+  --border-default: 1px solid #d0d7de;
+  --border-hover: 1px solid #0969da;
+  --sortbar-divider: rgba(9, 105, 218, 0.2);
+  --viewbtn-active: rgba(9, 105, 218, 0.12);
+  --viewbtn-hover: rgba(9, 105, 218, 0.07);
   --card-radius: 10px;
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --card-shadow-hover: 0 0 0 1px rgba(88, 166, 255, 0.35), 0 6px 20px rgba(0, 0, 0, 0.5);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 0 0 1px rgba(9, 105, 218, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
   --nav-blur: blur(12px);
 
-  /* Weight class badges — pill shape, transparent bg with colored text */
-  --badge-light-bg:   rgba(63, 185, 80, 0.15);
-  --badge-light-fg:   #3fb950;
-  --badge-medium-bg:  rgba(210, 153, 34, 0.15);
-  --badge-medium-fg:  #d29922;
-  --badge-heavy-bg:   rgba(241, 141, 51, 0.18);
-  --badge-heavy-fg:   #f0883e;
-  --badge-assault-bg: rgba(248, 81, 73, 0.15);
-  --badge-assault-fg: #f85149;
+  /* Weight class badges */
+  --badge-light-bg:   rgba(31, 136, 61, 0.12);
+  --badge-light-fg:   #1a7f37;
+  --badge-medium-bg:  rgba(154, 103, 0, 0.12);
+  --badge-medium-fg:  #7d4e00;
+  --badge-heavy-bg:   rgba(188, 76, 0, 0.12);
+  --badge-heavy-fg:   #bc4c00;
+  --badge-assault-bg: rgba(207, 34, 46, 0.12);
+  --badge-assault-fg: #cf222e;
   --badge-radius: 12px;
 }
 
