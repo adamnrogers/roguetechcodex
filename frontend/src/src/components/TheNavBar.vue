@@ -1,6 +1,9 @@
 <template>
   <nav class="navbar">
-    <RouterLink to="/" class="logo">RT</RouterLink>
+    <div class="logo-block">
+      <RouterLink to="/" class="logo">RT</RouterLink>
+      <span class="logo-version">0.1.0-beta</span>
+    </div>
     <div class="nav-tabs">
       <RouterLink to="/mechs"     class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
       <RouterLink to="/vehicles"  class="nav-tab" active-class="nav-tab--active">Vehicles</RouterLink>
@@ -36,8 +39,8 @@
           @click="scale = s"
         >{{ s === 'normal' ? 'A' : s === 'large' ? 'A+' : 'A++' }}</button>
       </div>
-      <button class="theme-toggle" @click="$emit('toggleTheme')" :title="theme === 'v1' ? 'Switch to V2 (Modern)' : 'Switch to V1 (Fandom)'">
-        {{ theme === 'v1' ? 'V2 ↗' : 'V1 ↗' }}
+      <button class="theme-toggle" @click="$emit('toggleTheme')" :title="theme === 'v1' ? 'Switch to Dark mode' : 'Switch to Light mode'">
+        {{ theme === 'v1' ? '☀ Light' : '☾ Dark' }}
       </button>
     </div>
   </nav>
@@ -107,12 +110,25 @@ watch(() => route.path, (path, prev) => {
   gap: 32px;
   z-index: 1000;
 }
+.logo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  gap: 2px;
+}
 .logo {
   color: var(--text-primary) !important;
   font-weight: bold;
   font-size: 18px;
   letter-spacing: 1px;
   text-decoration: none !important;
+}
+.logo-version {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
 }
 .nav-tabs { display: flex; flex: 1; }
 .nav-tab {
