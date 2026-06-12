@@ -19,6 +19,7 @@ a = Analysis(
     datas=[
         (os.path.join(ROOT, "frontend", "src", "dist"), "dist"),
         (os.path.join(ROOT, "roguetech.db"), "."),
+        (os.path.join(ROOT, "portraits"), "portraits"),
         *uvicorn_datas,
     ],
     hiddenimports=[

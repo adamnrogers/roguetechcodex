@@ -84,7 +84,7 @@ copy-db: ## Copy rebuilt DB from the db_data volume to ./roguetech.db (run after
 
 portraits: ## Convert DDS portraits for dev/Docker → frontend/src/public/portraits/
 	pip3 install -r pipeline/requirements.txt -q
-	python3 pipeline/portraits.py
+	python3 pipeline/portraits.py --output-dir portraits
 
 portraits-zip: ## Build portraits.zip for standalone release
 	rm -rf portraits-staging
