@@ -113,6 +113,10 @@ CREATE TABLE IF NOT EXISTS gear (
 
 CREATE INDEX IF NOT EXISTS idx_gear_component_type  ON gear(component_type);
 CREATE INDEX IF NOT EXISTS idx_gear_weapon_category ON gear(weapon_category);
+CREATE INDEX IF NOT EXISTS idx_gear_weapon_type     ON gear(weapon_type);
+CREATE INDEX IF NOT EXISTS idx_gear_weapon_subtype  ON gear(weapon_subtype);
+CREATE INDEX IF NOT EXISTS idx_gear_tonnage         ON gear(tonnage);
+CREATE INDEX IF NOT EXISTS idx_gear_heat            ON gear(heat_generated);
 CREATE INDEX IF NOT EXISTS idx_gear_source_mod      ON gear(source_mod);
 
 -- Affinities — one row per AffinityDef_*.json
