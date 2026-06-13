@@ -119,8 +119,8 @@ export interface GearDetail {
   bonus_descriptions: string[]
   modes: WeaponMode[]
   source_mod: string | null
-  used_by_mechs: { prefab_base: string; ui_name: string }[]
-  used_by_vehicles: { prefab_base: string; ui_name: string }[]
+  used_by_mechs: { prefab_base: string; ui_name: string; unit_type: string | null; variant_id: string; variant_name: string | null }[]
+  used_by_vehicles: { prefab_base: string; ui_name: string; unit_type: string | null; variant_id: string; variant_name: string | null }[]
   related_affinities: AffinityEntry[]
 }
 

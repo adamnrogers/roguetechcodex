@@ -166,6 +166,9 @@ class GearListResponse(BaseModel):
 class UsedByChassis(BaseModel):
     prefab_base: str
     ui_name: str
+    unit_type: Optional[str] = None
+    variant_id: str
+    variant_name: Optional[str] = None
 
 
 class GearDetail(BaseModel):

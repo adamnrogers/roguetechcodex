@@ -103,10 +103,10 @@
             <div v-if="mechsOpen" class="used-by-grid">
               <RouterLink
                 v-for="m in data.used_by_mechs"
-                :key="m.prefab_base"
-                :to="`/mechs/${m.prefab_base}`"
+                :key="m.variant_id"
+                :to="`/mechs/${m.prefab_base}?variant=${m.variant_id}`"
                 class="used-by-link"
-              >{{ m.ui_name }}</RouterLink>
+              >{{ m.ui_name }} {{ m.variant_name }}</RouterLink>
             </div>
           </section>
 
@@ -119,10 +119,10 @@
             <div v-if="vehiclesOpen" class="used-by-grid">
               <RouterLink
                 v-for="v in data.used_by_vehicles"
-                :key="v.prefab_base"
-                :to="`/vehicles/${v.prefab_base}`"
+                :key="v.variant_id"
+                :to="`/${v.unit_type === 'vtol' ? 'vtols' : 'vehicles'}/${v.prefab_base}?variant=${v.variant_id}`"
                 class="used-by-link"
-              >{{ v.ui_name }}</RouterLink>
+              >{{ v.ui_name }} {{ v.variant_name }}</RouterLink>
             </div>
           </section>
         </main>
@@ -433,25 +433,30 @@ const componentTypeBadgeKey = computed(() => {
 }
 
 .used-by-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 6px;
 }
 
 .used-by-link {
   font-size: 12px;
-  color: var(--accent-blue);
+  color: #8ab4f8;
   text-decoration: none;
   background: rgba(88, 166, 255, 0.08);
   border: 1px solid rgba(88, 166, 255, 0.2);
   border-radius: 3px;
   padding: 3px 8px;
   transition: background 0.15s, border-color 0.15s;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .used-by-link:hover {
-  background: rgba(88, 166, 255, 0.15);
-  border-color: rgba(88, 166, 255, 0.4);
+  background: rgba(88, 166, 255, 0.18);
+  border-color: rgba(88, 166, 255, 0.5);
+  color: #c0d8ff;
 }
 
 /* Infobox */
