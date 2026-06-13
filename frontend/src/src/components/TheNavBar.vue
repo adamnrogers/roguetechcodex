@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="logo-block">
-      <RouterLink to="/" class="logo">RT</RouterLink>
+      <RouterLink to="/" class="logo">RTC</RouterLink>
       <span class="logo-version">{{ appVersion }}</span>
     </div>
     <div class="nav-tabs">
