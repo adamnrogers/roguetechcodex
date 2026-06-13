@@ -10,10 +10,10 @@ Trunk-based deployment: all work merges to `main`; a version tag on `main` trigg
 |---|---|---|
 | Frontend (JS/CSS) | ✅ | Pure code — no mod files needed |
 | `roguetech.db` | ❌ | Built from mod files at `RT_ROOT`, not in repo |
-| `portraits.zip` | ❌ | Converted from mod DDS files at `RT_ROOT`, not in repo |
-| `RogueTech-Codex.exe` | ⚠️ Partially | Windows runner can run PyInstaller, but the exe bundles `roguetech.db` which CI doesn't have |
+| `portraits/` | ❌ | Converted from mod DDS files at `RT_ROOT`, not in repo |
+| `RogueTech-Codex.exe` | ⚠️ Partially | Windows runner can run PyInstaller, but the exe bundles `roguetech.db` and portraits which CI doesn't have |
 
-**Practical conclusion:** use CI to create the release and generate notes; upload the built artifacts manually.
+**Practical conclusion:** use CI to create the release and generate notes; upload the built artifact manually.
 
 ---
 
@@ -95,7 +95,7 @@ The release is created as a **draft**. After you upload your artifacts (see belo
 After building locally (see `docs/building-locally.md`), upload with the `gh` CLI:
 
 ```bash
-gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip portraits.zip
+gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip
 ```
 
 Then publish the draft:
@@ -139,7 +139,7 @@ git push
 
 # 3. Build artifacts locally (see docs/building-locally.md)
 #    - make dev-pipeline && make copy-db   (WSL)
-#    - make portraits-zip                  (WSL)
+#    - make portraits                      (WSL)
 #    - cd frontend/src && npm run build    (WSL)
 #    - pyinstaller standalone/roguetech.spec  (PowerShell)
 #    - Compress-Archive dist\RogueTech-Codex RogueTech-Codex-v1.0.0.zip  (PowerShell)
@@ -148,8 +148,8 @@ git push
 git tag v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 
-# 5. Upload artifacts to the draft release
-gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip portraits.zip
+# 5. Upload artifact to the draft release
+gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip
 
 # 6. Publish
 gh release edit v1.0.0 --draft=false
@@ -220,4 +220,4 @@ gh release upload data-latest roguetech.db --clobber
             "RogueTech-Codex-${{ github.ref_name }}.zip"
 ```
 
-`portraits.zip` still needs to be uploaded manually — it requires the mod DDS files.
+Note: this workflow still requires `roguetech.db` and the `portraits/` directory to be available (downloaded from the data release). Portraits are bundled into the exe by PyInstaller — no separate upload needed.

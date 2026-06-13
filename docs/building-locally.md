@@ -1,11 +1,12 @@
 # Building Locally
 
-Produces two release artifacts:
+Produces one release artifact:
 
 | Artifact | Contents | Built on |
 |---|---|---|
-| `RogueTech-Codex-vX.Y.Z.zip` | Standalone exe + DB + frontend | Windows (PowerShell) |
-| `portraits.zip` | Converted portrait images | WSL |
+| `RogueTech-Codex-vX.Y.Z.zip` | Standalone exe + DB + frontend + portraits | Windows (PowerShell) |
+
+Portraits are bundled inside the exe package — no separate zip needed.
 
 ---
 
@@ -31,15 +32,15 @@ make copy-db        # copy DB from volume to ./roguetech.db
 
 ---
 
-## Step 2 — Build portraits.zip (WSL)
+## Step 2 — Build portraits (WSL)
 
 Requires `RT_ROOT` to be set in `.env`.
 
 ```bash
-make portraits-zip
+make portraits
 ```
 
-Output: `portraits.zip` at the repo root. This is uploaded as a separate release artifact.
+Output: `portraits/` directory at the repo root. PyInstaller bundles this into the exe in step 4.
 
 ---
 
@@ -74,7 +75,7 @@ pip install -r api/requirements.txt
 pyinstaller standalone/roguetech.spec
 ```
 
-Output: `dist\RogueTech-Codex\` — a folder containing the exe and all bundled files.
+Output: `dist\RogueTech-Codex\` — a folder containing the exe and all bundled files (including portraits in `_internal\portraits\`).
 
 ---
 
@@ -91,14 +92,19 @@ Compress-Archive -Path dist\RogueTech-Codex -DestinationPath "RogueTech-Codex-$v
 
 ## Step 6 — Upload to GitHub Release
 
-Two files to upload:
+One file to upload:
 
 ```
 RogueTech-Codex-v1.0.0.zip
-portraits.zip
 ```
 
-Either upload manually via the GitHub Releases UI, or add them to the workflow in `.github/workflows/release.yml` (see `docs/github-release-setup.md`).
+Either upload manually via the GitHub Releases UI, or with the `gh` CLI:
+
+```bash
+gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip
+```
+
+See `docs/github-release-setup.md` for the full release workflow.
 
 ---
 
@@ -119,6 +125,6 @@ This is what appears in the navbar of the built app.
 | Task | Command | Shell |
 |---|---|---|
 | Rebuild DB | `make dev-pipeline && make copy-db` | WSL |
-| Build portraits | `make portraits-zip` | WSL |
+| Build portraits | `make portraits` | WSL |
 | Build frontend | `cd frontend/src && npm run build` | WSL |
 | Build exe | `pyinstaller standalone/roguetech.spec` | PowerShell |

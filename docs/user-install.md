@@ -7,16 +7,13 @@ It runs entirely on your machine — no internet connection required after insta
 
 ## Download
 
-Go to the [Releases page](../../releases) and download both files from the latest release:
+Go to the [Releases page](../../releases) and download the latest release:
 
-- `RogueTech-Codex-vX.Y.Z.zip` — the application
-- `portraits.zip` — mech portrait images (optional but recommended)
+- `RogueTech-Codex-vX.Y.Z.zip` — the application (includes portraits)
 
 ---
 
 ## Install
-
-### 1. Extract the application
 
 Extract `RogueTech-Codex-vX.Y.Z.zip` to a folder of your choice, for example:
 
@@ -24,23 +21,7 @@ Extract `RogueTech-Codex-vX.Y.Z.zip` to a folder of your choice, for example:
 C:\Tools\RogueTech-Codex\
 ```
 
-You should see a `RogueTech-Codex.exe` inside.
-
-### 2. Add portraits (optional)
-
-Extract `portraits.zip` into the **same folder** as the exe.  
-After extraction the folder structure should look like this:
-
-```
-RogueTech-Codex\
-  RogueTech-Codex.exe
-  portraits\
-    <portrait files>
-  roguetech.db
-  ...
-```
-
-If you skip this step the app works fine — mech cards will show placeholder images instead of portraits.
+You should see `RogueTech-Codex.exe` inside.
 
 ---
 
@@ -70,6 +51,3 @@ Click **More info → Run anyway**. This appears because the exe is not code-sig
 
 **Port 8765 already in use**  
 Another application is using that port. Close it and try again.
-
-**Portraits not showing**  
-Check that the `portraits\` folder is in the same directory as `RogueTech-Codex.exe` (not inside a sub-folder created by the zip extractor).
