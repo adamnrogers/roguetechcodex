@@ -21,8 +21,8 @@ _SORT_COLUMN_MAP: dict[str, str] = {
 _USED_BY_SQL = """
     SELECT c.prefab_base, c.ui_name, c.unit_type, v.id AS variant_id, v.variant_name
     FROM gear_usage gu
-    JOIN chassis c ON c.prefab_base = gu.chassis_id
-    JOIN variant v ON v.chassis_id = c.prefab_base
+    JOIN variant v ON v.id = gu.variant_id
+    JOIN chassis c ON c.prefab_base = v.chassis_id
     WHERE gu.gear_id = ?
     AND c.unit_type {unit_type_cond}
     ORDER BY c.ui_name, v.variant_name

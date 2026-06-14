@@ -1,7 +1,7 @@
 -- RogueTech Codex SQLite schema
 -- Applied by ingest.py at startup (CREATE TABLE IF NOT EXISTS)
 
--- True chassis — one row per PrefabBase (e.g. "adder")
+-- True chassis - one row per PrefabBase (e.g. "adder")
 CREATE TABLE IF NOT EXISTS chassis (
     prefab_base     TEXT PRIMARY KEY,   -- "adder"
     ui_name         TEXT NOT NULL,      -- "Adder"
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS chassis (
     icon            TEXT
 );
 
--- Variants — one row per chassisdef_*.json file
+-- Variants - one row per chassisdef_*.json file
 CREATE TABLE IF NOT EXISTS variant (
     id                      TEXT PRIMARY KEY,   -- "chassisdef_adder_ADR-Prime"
     chassis_id              TEXT NOT NULL REFERENCES chassis(prefab_base) ON DELETE CASCADE,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS variant (
     max_jumpjets            INTEGER,
     drop_cost_modifier      REAL,               -- Custom.DropCostFactor.DropModifier
     chassis_tags            TEXT,               -- JSON array (mr-resize-* excluded)
-    locations_json          TEXT,               -- Locations[] — hardpoints, max armor, structure
+    locations_json          TEXT,               -- Locations[] - hardpoints, max armor, structure
     fixed_equipment_json    TEXT,               -- FixedEquipment[]
     chassis_defaults_json   TEXT,               -- Custom.ChassisDefaults
     multi_defaults_json     TEXT,               -- Custom.MultiDefaults
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS variant (
     hardpoints_json         TEXT                -- pre-aggregated counts: {loc: {type: count, Omni: count}}
 );
 
--- Loadouts — one row per mechdef_*.json file
+-- Loadouts - one row per mechdef_*.json file
 CREATE TABLE IF NOT EXISTS loadout (
     id                      TEXT PRIMARY KEY,   -- "mechdef_adder_ADR-Prime"
     variant_id              TEXT NOT NULL REFERENCES variant(id) ON DELETE CASCADE,
@@ -62,7 +62,7 @@ CREATE INDEX IF NOT EXISTS idx_variant_source       ON variant(source_mod);
 CREATE INDEX IF NOT EXISTS idx_loadout_variant      ON loadout(variant_id);
 CREATE INDEX IF NOT EXISTS idx_loadout_chassis      ON loadout(chassis_id);
 
--- Gear — one row per upgradedef_*.json or weapondef_*.json
+-- Gear - one row per upgradedef_*.json or weapondef_*.json
 CREATE TABLE IF NOT EXISTS gear (
     id                   TEXT PRIMARY KEY,
     ui_name              TEXT NOT NULL,
@@ -121,7 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_gear_tonnage         ON gear(tonnage);
 CREATE INDEX IF NOT EXISTS idx_gear_heat            ON gear(heat_generated);
 CREATE INDEX IF NOT EXISTS idx_gear_source_mod      ON gear(source_mod);
 
--- Affinities — one row per AffinityDef_*.json
+-- Affinities - one row per AffinityDef_*.json
 CREATE TABLE IF NOT EXISTS affinity (
     id            TEXT PRIMARY KEY,   -- "AffinityDef_quirk_Barrage"
     affinity_type TEXT,               -- "Global"|"Chassis"|"Quirk"|"Tag"
@@ -132,13 +132,13 @@ CREATE TABLE IF NOT EXISTS affinity (
 
 CREATE TABLE IF NOT EXISTS gear_usage (
     gear_id    TEXT NOT NULL,
-    chassis_id TEXT NOT NULL,
-    PRIMARY KEY (gear_id, chassis_id)
+    variant_id TEXT NOT NULL,
+    PRIMARY KEY (gear_id, variant_id)
 );
 CREATE INDEX IF NOT EXISTS idx_gear_usage_gear    ON gear_usage(gear_id);
-CREATE INDEX IF NOT EXISTS idx_gear_usage_chassis ON gear_usage(chassis_id);
+CREATE INDEX IF NOT EXISTS idx_gear_usage_variant ON gear_usage(variant_id);
 
--- BonusDescriptions localisation lookup — populated from BonusDescriptions_*.json files
+-- BonusDescriptions localisation lookup - populated from BonusDescriptions_*.json files
 CREATE TABLE IF NOT EXISTS bonus_descriptions_lookup (
     key   TEXT PRIMARY KEY,
     short TEXT,

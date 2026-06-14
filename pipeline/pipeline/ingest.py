@@ -1,5 +1,5 @@
 """
-RogueTech Codex — data ingestion pipeline
+RogueTech Codex - data ingestion pipeline
 
 Three-tier hierarchy:
   chassis  (PrefabBase grouping)
@@ -8,7 +8,7 @@ Three-tier hierarchy:
 
 Two-phase load:
   Phase 1: Walk all JSON files under RT_ROOT, classify by filename prefix.
-  Phase 2: Write to SQLite — chassis first, then variants, then loadouts.
+  Phase 2: Write to SQLite - chassis first, then variants, then loadouts.
 """
 
 import argparse
@@ -31,7 +31,7 @@ VEHICLE_LOADOUT_PREFIXES = ("vehicledef_",)
 
 AFFINITY_PREFIXES = ("AffinityDef_",)
 
-# Case-insensitive prefixes — gear files are named Gear_*.json, Weapon_*.json, etc.
+# Case-insensitive prefixes - gear files are named Gear_*.json, Weapon_*.json, etc.
 # (not upgradedef_* as originally assumed)
 GEAR_PREFIXES_LOWER = (
     "gear_", "weapon_", "special_", "ammo_", "ammunitionbox_",
@@ -184,7 +184,7 @@ def filter_chassis_tags(items: list) -> list:
 
 # ── Structural defaults (Cockpit, actuators, etc.) ────────────────────────────
 
-# MechEngineer CT category IDs — used to identify chassisdef FixedEquipment items that
+# MechEngineer CT category IDs - used to identify chassisdef FixedEquipment items that
 # are user-replaceable (ct_dynamic) and to build CT slot labels from structural defaults.
 _CT_CATEGORIES = frozenset([
     "Armor", "Structure", "Cooling", "Gyro",
@@ -656,30 +656,30 @@ def insert_gear_usage(
     loadout_data: dict,
     variant_to_chassis: dict[str, str],
 ) -> int:
-    """Populate gear_usage junction table for fast gear→chassis reverse lookups."""
+    """Populate gear_usage junction table for fast gear→variant reverse lookups."""
     pairs: set[tuple[str, str]] = set()
 
+    # FixedEquipment is defined per chassisdef file; entity_id IS that variant's id
     for entity_id, (data, _path) in variant_data.items():
-        chassis_id = variant_to_chassis.get(entity_id, "")
-        if not chassis_id:
+        if entity_id not in variant_to_chassis:
             continue
         for item in data.get("FixedEquipment", []):
             gid = item.get("ComponentDefID", "")
             if gid:
-                pairs.add((gid, chassis_id))
+                pairs.add((gid, entity_id))
 
+    # inventory on a mechdef belongs to the single variant named by ChassisID
     for _entity_id, (data, _path) in loadout_data.items():
         variant_id = data.get("ChassisID", "").strip()
-        chassis_id = variant_to_chassis.get(variant_id, "")
-        if not chassis_id:
+        if not variant_id:
             continue
         for item in data.get("inventory", []):
             gid = item.get("ComponentDefID", "")
             if gid:
-                pairs.add((gid, chassis_id))
+                pairs.add((gid, variant_id))
 
     con.executemany(
-        "INSERT OR IGNORE INTO gear_usage(gear_id, chassis_id) VALUES (?,?)",
+        "INSERT OR IGNORE INTO gear_usage(gear_id, variant_id) VALUES (?,?)",
         pairs,
     )
     con.commit()
@@ -841,7 +841,7 @@ def compute_modes(weapon_data: dict) -> list[dict]:
 
     modes_raw = weapon_data.get("Modes", [])
     if not modes_raw:
-        # No modes — return a single synthetic base entry
+        # No modes - return a single synthetic base entry
         return [{
             "mode_id": "base",
             "mode_ui_name": "Base",
@@ -1027,7 +1027,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     schema_sql = SCHEMA_PATH.read_text(encoding="utf-8")
     con.executescript(schema_sql)
 
-    print("Phase 1 — scanning JSON files...")
+    print("Phase 1 - scanning JSON files...")
     variant_data, loadout_data, affinity_data, gear_data, files_scanned = scan(rt_root)
     mech_variants = sum(1 for k in variant_data if k.startswith("chassisdef_"))
     vehicle_variants = sum(1 for k in variant_data if k.startswith("vehiclechassisdef_"))
@@ -1058,7 +1058,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
                 ct_category_map[eid] = cid
                 break
 
-    print("Phase 2 — writing to database...")
+    print("Phase 2 - writing to database...")
     insert_chassis(con, variant_data)
     variant_to_chassis = insert_variants(con, variant_data, rt_root, gear_category_map, ct_category_map)
     inserted, skipped = insert_loadouts(con, loadout_data, variant_to_chassis, rt_root, gear_category_map)
@@ -1097,7 +1097,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     con.close()
 
     db_size_mb = db_path.stat().st_size / (1024 * 1024)
-    print(f"Done in {duration:.1f}s  —  DB size: {db_size_mb:.1f} MB")
+    print(f"Done in {duration:.1f}s  -  DB size: {db_size_mb:.1f} MB")
     print(f"  chassis    : {chassis_count:,}")
     print(f"  variants   : {variant_count:,}")
     print(f"  loadouts   : {inserted:,}")
