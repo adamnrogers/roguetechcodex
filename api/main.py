@@ -9,6 +9,7 @@ from db import get_db
 from routers import mechs as mechs_router
 from routers import gear as gear_router
 from routers import search as search_router
+from routers import star_systems as star_systems_router
 
 
 app = FastAPI(
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(mechs_router.router)
 app.include_router(gear_router.router)
 app.include_router(search_router.router)
+app.include_router(star_systems_router.router)
 
 
 # ---------------------------------------------------------------------------
