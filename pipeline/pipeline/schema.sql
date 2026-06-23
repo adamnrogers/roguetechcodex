@@ -122,6 +122,28 @@ CREATE INDEX IF NOT EXISTS idx_gear_heat            ON gear(heat_generated);
 CREATE INDEX IF NOT EXISTS idx_gear_source_mod      ON gear(source_mod);
 
 -- Affinities - one row per AffinityDef_*.json
+-- Star systems - one row per starsystemdef_*.json
+CREATE TABLE IF NOT EXISTS star_system (
+    id               TEXT PRIMARY KEY,   -- "starsystemdef_Meadowvale"
+    ui_name          TEXT NOT NULL,      -- Description.Name
+    details          TEXT,               -- Description.Details (lore)
+    difficulty       INTEGER,            -- DefaultDifficulty
+    star_type        TEXT,               -- StarType
+    owner_id         TEXT,               -- ownerID
+    jump_distance    INTEGER,            -- JumpDistance
+    fueling_station  INTEGER DEFAULT 0,  -- FuelingStation (bool)
+    population       TEXT,               -- 'none'|'small'|'medium'|'large' from planet_pop_*
+    size             TEXT,               -- 'small'|'medium'|'large' from planet_size_*
+    biomes_json      TEXT,               -- JSON array: SupportedBiomes + planet_biome_* tags, deduped
+    filter_tags_json TEXT,               -- JSON array: climate/industry/civ/feature/size tags only
+    tags_json        TEXT,               -- JSON array: full raw Tags.items, for detail page
+    source_file      TEXT,
+    source_mod       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_star_system_difficulty ON star_system(difficulty);
+CREATE INDEX IF NOT EXISTS idx_star_system_population ON star_system(population);
+
 CREATE TABLE IF NOT EXISTS affinity (
     id            TEXT PRIMARY KEY,   -- "AffinityDef_quirk_Barrage"
     affinity_type TEXT,               -- "Global"|"Chassis"|"Quirk"|"Tag"

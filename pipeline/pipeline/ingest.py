@@ -374,6 +374,7 @@ DROP TABLE IF EXISTS variant_equipment;
 DROP TABLE IF EXISTS variant_weapon;
 DROP TABLE IF EXISTS equipment;
 DROP TABLE IF EXISTS weapon;
+DROP TABLE IF EXISTS star_system;
 """
 
 # ── Phase 1: scan & classify ──────────────────────────────────────────────────
@@ -1006,6 +1007,102 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
     return len(rows)
 
 
+# ── Star systems ──────────────────────────────────────────────────────────────
+
+_POP_TAG_PREFIX = "planet_pop_"
+_SIZE_TAG_PREFIX = "planet_size_"
+_BIOME_TAG_PREFIX = "planet_biome_"
+_STAR_SYSTEM_FILTER_TAG_PREFIXES = (
+    "planet_climate_", "planet_industry_", "planet_civ_",
+    "planet_feature_", "planet_size_",
+)
+
+
+def parse_star_system(data: dict) -> dict:
+    """Extract star_system row fields from a starsystemdef_*.json dict."""
+    desc = data.get("Description", {})
+    tag_items = data.get("Tags", {}).get("items", [])
+    tags = [t for t in tag_items if isinstance(t, str)]
+
+    population: str | None = None
+    size: str | None = None
+    biomes: list[str] = list(data.get("SupportedBiomes", []))
+    filter_tags: list[str] = []
+
+    for t in tags:
+        if t.startswith(_POP_TAG_PREFIX):
+            population = t[len(_POP_TAG_PREFIX):]
+        elif t.startswith(_SIZE_TAG_PREFIX):
+            size = t[len(_SIZE_TAG_PREFIX):]
+        if t.startswith(_BIOME_TAG_PREFIX):
+            biomes.append(t[len(_BIOME_TAG_PREFIX):])
+        if t.startswith(_STAR_SYSTEM_FILTER_TAG_PREFIXES):
+            filter_tags.append(t)
+
+    return {
+        "ui_name": desc.get("Name") or "",
+        "details": desc.get("Details"),
+        "difficulty": data.get("DefaultDifficulty"),
+        "star_type": data.get("StarType"),
+        "owner_id": data.get("ownerID"),
+        "jump_distance": data.get("JumpDistance"),
+        "fueling_station": 1 if data.get("FuelingStation") else 0,
+        "population": population,
+        "size": size,
+        "biomes_json": json.dumps(sorted(set(biomes))),
+        "filter_tags_json": json.dumps(filter_tags),
+        "tags_json": json.dumps(tags),
+    }
+
+
+def insert_star_systems(con: sqlite3.Connection, rt_root: Path) -> int:
+    """Insert one star_system row per starsystemdef_*.json file."""
+    rows = []
+    for path in sorted(rt_root.rglob("starsystemdef_*.json")):
+        if should_exclude(path):
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        entity_id = data.get("Description", {}).get("Id", "").strip()
+        if not entity_id:
+            continue
+
+        fields = parse_star_system(data)
+        rows.append((
+            entity_id,
+            fields["ui_name"],
+            fields["details"],
+            fields["difficulty"],
+            fields["star_type"],
+            fields["owner_id"],
+            fields["jump_distance"],
+            fields["fueling_station"],
+            fields["population"],
+            fields["size"],
+            fields["biomes_json"],
+            fields["filter_tags_json"],
+            fields["tags_json"],
+            str(path.relative_to(rt_root)),
+            source_mod(path, rt_root),
+        ))
+
+    con.executemany(
+        """INSERT OR REPLACE INTO star_system
+           (id, ui_name, details, difficulty, star_type, owner_id, jump_distance,
+            fueling_station, population, size, biomes_json, filter_tags_json, tags_json,
+            source_file, source_mod)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        rows,
+    )
+    con.commit()
+    print(f"  star_system rows inserted : {len(rows):,}")
+    return len(rows)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
@@ -1070,6 +1167,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     insert_affinities(con, affinity_data)
     ingest_bonus_descriptions(con, rt_root)
     insert_gear(con, gear_data, rt_root)
+    star_system_count = insert_star_systems(con, rt_root)
     print()
 
     chassis_count = con.execute("SELECT COUNT(*) FROM chassis").fetchone()[0]
@@ -1098,11 +1196,12 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
 
     db_size_mb = db_path.stat().st_size / (1024 * 1024)
     print(f"Done in {duration:.1f}s  -  DB size: {db_size_mb:.1f} MB")
-    print(f"  chassis    : {chassis_count:,}")
-    print(f"  variants   : {variant_count:,}")
-    print(f"  loadouts   : {inserted:,}")
-    print(f"  affinities : {affinity_count:,}")
-    print(f"  gear       : {gear_count:,}")
+    print(f"  chassis      : {chassis_count:,}")
+    print(f"  variants     : {variant_count:,}")
+    print(f"  loadouts     : {inserted:,}")
+    print(f"  affinities   : {affinity_count:,}")
+    print(f"  gear         : {gear_count:,}")
+    print(f"  star systems : {star_system_count:,}")
 
 
 def main() -> None:
