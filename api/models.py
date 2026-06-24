@@ -255,3 +255,38 @@ class SearchPageResponse(BaseModel):
     page: int
     page_size: int
     results: list[SearchHit]
+
+
+# ---------------------------------------------------------------------------
+# Star systems
+# ---------------------------------------------------------------------------
+
+class StarSystemSummary(BaseModel):
+    id: str
+    ui_name: str
+    difficulty: Optional[int]
+    population: Optional[str]
+    biomes: list[str]
+
+
+class StarSystemListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    results: list[StarSystemSummary]
+
+
+class StarSystemDetail(BaseModel):
+    id: str
+    ui_name: str
+    details: Optional[str]
+    difficulty: Optional[int]
+    star_type: Optional[str]
+    owner_id: Optional[str]
+    jump_distance: Optional[int]
+    fueling_station: bool
+    population: Optional[str]
+    size: Optional[str]
+    biomes: list[str]
+    tags: list[str]
+    source_mod: Optional[str]

@@ -12,6 +12,7 @@
       <RouterLink to="/equipment" class="nav-tab" active-class="nav-tab--active">Equipment</RouterLink>
       <RouterLink to="/weapons"   class="nav-tab" active-class="nav-tab--active">Weapons</RouterLink>
       <RouterLink to="/quirks"    class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>
+      <RouterLink to="/star-systems" class="nav-tab" active-class="nav-tab--active">Star Systems</RouterLink>
     </div>
     <div class="nav-right">
       <div class="search-wrapper">
