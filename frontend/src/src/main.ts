@@ -9,6 +9,7 @@ import GearBrowsePage from './pages/GearBrowsePage.vue'
 import GearPage from './pages/GearPage.vue'
 import SearchPage from './pages/SearchPage.vue'
 import StarSystemBrowsePage from './pages/StarSystemBrowsePage.vue'
+import StarSystemPage from './pages/StarSystemPage.vue'
 import './style.css'
 
 const router = createRouter({
@@ -31,6 +32,7 @@ const router = createRouter({
     { path: '/quirks/:gearId', component: GearPage },
     { path: '/search', component: SearchPage },
     { path: '/star-systems', component: StarSystemBrowsePage },
+    { path: '/star-systems/:systemId', component: StarSystemPage },
   ]
 })
 
