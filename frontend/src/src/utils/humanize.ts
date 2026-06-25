@@ -46,7 +46,7 @@ export function humanizeBiomeTag(tag: string): string {
 
 /**
  * Maps raw faction tags to canonical display names.
- * All keys are lowercase — canonicalizeFaction uses case-insensitive lookup,
+ * All keys are lowercase - canonicalizeFaction uses case-insensitive lookup,
  * so both "clanwolf" and "ClanWolf" resolve correctly.
  *
  * Era suffixes (3025, 3031, 3050, 3150, etc.) are stripped at lookup time so
@@ -242,7 +242,7 @@ const SYSTEM_TAGS = new Set([
   'this damn thing is at it\'s armor limit of 900 points',
 ])
 
-// Derived at module load — avoids per-call Object.entries overhead.
+// Derived at module load - avoids per-call Object.entries overhead.
 const FACTION_MAP_LOWER: Record<string, string> = Object.fromEntries(
   Object.entries(FACTION_MAP).map(([k, v]) => [k.toLowerCase(), v])
 )

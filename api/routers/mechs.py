@@ -82,7 +82,7 @@ def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Opt
     jj = max_jumpjets or 0
     if jj:
         parts.append(f"{jj}JJ")
-    return " ".join(parts) if parts else "—"
+    return " ".join(parts) if parts else "-"
 
 
 def _compute_health_summary(
@@ -115,7 +115,7 @@ def _compute_health_summary(
 
     s = int(total_structure)
     if max_armor == 0 and s == 0:
-        return "—"
+        return "-"
     return f"A={current_armor}/{max_armor} S={s}"
 
 
@@ -296,7 +296,7 @@ def _build_affinity_context(
     """Return (chassis_level_affinities, quirk_map).
 
     chassis_level_affinities: Global + Chassis entries pre-matched to this chassis.
-      Same across all variants — include for every variant.
+      Same across all variants - include for every variant.
     quirk_map: quirk_id → [AffinityEntry] for per-variant Quirk matching.
     """
     chassis_affinities: list[AffinityEntry] = []
@@ -437,7 +437,7 @@ async def get_stats(db: aiosqlite.Connection = Depends(get_db)) -> StatsResponse
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/mechs  — browse (one row per true chassis)
+# GET /api/v1/mechs  - browse (one row per true chassis)
 # ---------------------------------------------------------------------------
 
 _MECH_ENDPOINT_UNIT_TYPES = {"mech", "battle_armor"}
@@ -596,7 +596,7 @@ async def list_mechs(
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/mechs/{prefab_base}  — chassis detail
+# GET /api/v1/mechs/{prefab_base}  - chassis detail
 # ---------------------------------------------------------------------------
 
 @router.get("/mechs/{prefab_base}", response_model=ChassisDetail)
@@ -674,7 +674,7 @@ async def get_mech(
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/battle-armor/{prefab_base}  — battle armor detail
+# GET /api/v1/battle-armor/{prefab_base}  - battle armor detail
 # ---------------------------------------------------------------------------
 
 @router.get("/battle-armor/{prefab_base}", response_model=ChassisDetail)
@@ -748,7 +748,7 @@ async def get_battle_armor(
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/vehicles  — vehicle browse
+# GET /api/v1/vehicles  - vehicle browse
 # ---------------------------------------------------------------------------
 
 @router.get("/vehicles", response_model=ChassisListResponse)
@@ -833,7 +833,7 @@ async def list_vehicles(
 
 
 # ---------------------------------------------------------------------------
-# GET /api/v1/vehicles/{prefab_base}  — vehicle detail
+# GET /api/v1/vehicles/{prefab_base}  - vehicle detail
 # ---------------------------------------------------------------------------
 
 @router.get("/vehicles/{prefab_base}", response_model=ChassisDetail)

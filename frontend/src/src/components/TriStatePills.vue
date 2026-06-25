@@ -97,7 +97,7 @@ function cycle(v: string) {
   line-height: 1;
 }
 
-/* Include — colored by value */
+/* Include - colored by value */
 .tsp-pill.include { color: #fff; border-color: transparent; }
 
 /* Fallback include color (used when no matching data-pill rule applies) */

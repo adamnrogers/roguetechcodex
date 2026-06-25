@@ -28,7 +28,7 @@ if getattr(sys, "frozen", False):
     DIST_DIR = os.path.join(BASE_DIR, "dist")
     PORTRAITS_DIR: Path | None = Path(BASE_DIR) / "portraits"
     if not PORTRAITS_DIR.is_dir():
-        print(f"[warn] portraits directory not found: {PORTRAITS_DIR} — portrait images will not be served")
+        print(f"[warn] portraits directory not found: {PORTRAITS_DIR} - portrait images will not be served")
         PORTRAITS_DIR = None
 else:
     DIST_DIR = os.path.join(BASE_DIR, "frontend", "src", "dist")

@@ -25,7 +25,7 @@
               </template>
               <template v-else-if="row.subrow === 'HardPoints'">
                 <span v-for="(hp, i) in row.right.hps" :key="i" class="hp-badge" :style="hp.style">{{ hp.label }}</span>
-                <span v-if="!row.right.hps?.length" class="cell-empty">—</span>
+                <span v-if="!row.right.hps?.length" class="cell-empty">-</span>
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.right.items" :key="i" class="cell-item" :data-itype="item.type">
@@ -36,21 +36,21 @@
                     <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
                   </template>
                 </div>
-                <span v-if="!row.right.items?.length" class="cell-empty">—</span>
+                <span v-if="!row.right.items?.length" class="cell-empty">-</span>
               </template>
             </td>
 
             <!-- Col 1 (Center / Turret) -->
             <td class="data-cell">
               <template v-if="!row.center">
-                <span class="cell-empty">—</span>
+                <span class="cell-empty">-</span>
               </template>
               <template v-else-if="row.subrow === 'Health'">
                 <div v-for="(line, i) in row.center.healthLines" :key="i" class="health-line">{{ line }}</div>
               </template>
               <template v-else-if="row.subrow === 'HardPoints'">
                 <span v-for="(hp, i) in row.center.hps" :key="i" class="hp-badge" :style="hp.style">{{ hp.label }}</span>
-                <span v-if="!row.center.hps?.length" class="cell-empty">—</span>
+                <span v-if="!row.center.hps?.length" class="cell-empty">-</span>
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.center.items" :key="i" class="cell-item" :data-itype="item.type">
@@ -61,7 +61,7 @@
                     <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
                   </template>
                 </div>
-                <span v-if="!row.center.items?.length" class="cell-empty">—</span>
+                <span v-if="!row.center.items?.length" class="cell-empty">-</span>
               </template>
             </td>
 
@@ -72,7 +72,7 @@
               </template>
               <template v-else-if="row.subrow === 'HardPoints'">
                 <span v-for="(hp, i) in row.left.hps" :key="i" class="hp-badge" :style="hp.style">{{ hp.label }}</span>
-                <span v-if="!row.left.hps?.length" class="cell-empty">—</span>
+                <span v-if="!row.left.hps?.length" class="cell-empty">-</span>
               </template>
               <template v-else>
                 <div v-for="(item, i) in row.left.items" :key="i" class="cell-item" :data-itype="item.type">
@@ -83,7 +83,7 @@
                     <span :style="item.weaponCategory ? { color: WEAPON_CAT_COLOURS[item.weaponCategory] } : {}">{{ item.text }}</span>
                   </template>
                 </div>
-                <span v-if="!row.left.items?.length" class="cell-empty">—</span>
+                <span v-if="!row.left.items?.length" class="cell-empty">-</span>
               </template>
             </td>
           </tr>
@@ -105,7 +105,7 @@
                   </template>
                 </div>
               </template>
-              <span v-else class="cell-empty">—</span>
+              <span v-else class="cell-empty">-</span>
             </td>
           </tr>
           <tr class="row-dynamic">
@@ -121,7 +121,7 @@
                   </template>
                 </div>
               </template>
-              <span v-else class="cell-empty">—</span>
+              <span v-else class="cell-empty">-</span>
             </td>
           </tr>
         </template>
@@ -316,7 +316,7 @@ function buildCell(locName: string | null, subrow: string): CellData | null {
   const loc = locMap.value[locName]
 
   if (subrow === 'Health') {
-    if (!loc) return { healthLines: ['—'] }
+    if (!loc) return { healthLines: ['-'] }
     const ll = loadoutLocMap.value[locName]
     const structure = Math.round(loc.internal_structure)
     const lines: string[] = []
@@ -397,7 +397,7 @@ const unlocatedDynamic = computed<CellItem[]>(() => {
 })
 
 function _emptyCell(subrow: string): CellData {
-  if (subrow === 'Health') return { healthLines: ['—'] }
+  if (subrow === 'Health') return { healthLines: ['-'] }
   if (subrow === 'HardPoints') return { hps: [] }
   return { items: [] }
 }

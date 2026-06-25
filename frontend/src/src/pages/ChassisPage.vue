@@ -119,7 +119,7 @@
                         <span class="hp-count">{{ hp.count }}</span><span class="hp-badge" :style="{ background: hp.style.bg, color: hp.style.color }">{{ hp.cat }}</span>
                       </span>
                     </span>
-                    <span v-else class="id-muted">—</span>
+                    <span v-else class="id-muted">-</span>
                   </td>
                 </tr>
                 <tr v-if="selectedVariant">
@@ -284,7 +284,7 @@ const HP_BADGE_STYLES: Record<string, { bg: string; color: string }> = {
 
 const parsedHardpoints = computed(() => {
   const summary = selectedVariant.value?.hardpoints_summary
-  if (!summary || summary === '—') return []
+  if (!summary || summary === '-') return []
   return summary.split(' ').flatMap(token => {
     const m = token.match(/^(\d+)(.+)$/)
     if (!m) return []

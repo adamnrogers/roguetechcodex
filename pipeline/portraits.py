@@ -98,9 +98,9 @@ def main() -> None:
         ]
         print(f"  {len(icons):,} distinct icon values in DB")
     except sqlite3.OperationalError:
-        # icon column not yet in schema (DB predates this feature) — convert everything found
+        # icon column not yet in schema (DB predates this feature) - convert everything found
         icons = list(portrait_map.keys())
-        print(f"  icon column not in DB yet — converting all {len(icons):,} discovered portrait files")
+        print(f"  icon column not in DB yet - converting all {len(icons):,} discovered portrait files")
     con.close()
 
     converted = skipped = missing = errors = 0
@@ -121,7 +121,7 @@ def main() -> None:
             print(f"  ERROR: {icon} ({src}): {exc}")
             errors += 1
 
-    print(f"Done — {converted} converted, {skipped} skipped (up-to-date), {missing} missing, {errors} errors")
+    print(f"Done - {converted} converted, {skipped} skipped (up-to-date), {missing} missing, {errors} errors")
 
 
 if __name__ == "__main__":

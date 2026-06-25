@@ -1,8 +1,8 @@
 /* ── V1: Fandom-faithful dark theme ──────────────────────────────────────── */
 :root {
   --bg-primary: #2e3644;
-  --bg-card: #1a2030;       /* cards/panels — darker than page (recedes) */
-  --bg-sidebar: #1a2030;    /* filter sidebar — same darker tone */
+  --bg-card: #1a2030;       /* cards/panels - darker than page (recedes) */
+  --bg-sidebar: #1a2030;    /* filter sidebar - same darker tone */
   --bg-card-hover: #1e2538;
   --bg-infobox: #1e2738;
   --bg-nav: #1a2030;
@@ -23,7 +23,7 @@
   --nav-blur: none;
   --nav-height: 56px;
 
-  /* Weight class badges — solid bg, soft off-white text */
+  /* Weight class badges - solid bg, soft off-white text */
   --badge-light-bg:   #468254;
   --badge-light-fg:   #d0d7de;
   --badge-medium-bg:  #b8860b;
@@ -75,7 +75,7 @@
   --card-shadow-hover: 0 0 0 1px rgba(9, 105, 218, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
   --nav-blur: blur(12px);
 
-  /* Hardpoint / weapon category colours — darker for light backgrounds */
+  /* Hardpoint / weapon category colours - darker for light backgrounds */
   --hp-ballistic: #0969da;
   --hp-energy:    #1a7f37;
   --hp-missile:   #6e40c9;

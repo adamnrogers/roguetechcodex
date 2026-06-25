@@ -60,15 +60,15 @@ make up
 
 ```
 RT_ROOT (mod JSON files)
-  → pipeline   Python 3.11 — classifies and ingests JSON into SQLite
+  → pipeline   Python 3.11 - classifies and ingests JSON into SQLite
   → roguetech.db
-  → api        FastAPI + aiosqlite — REST endpoints
-  → frontend   Vue 3 SPA — browsable grid + detail views
+  → api        FastAPI + aiosqlite - REST endpoints
+  → frontend   Vue 3 SPA - browsable grid + detail views
 ```
 
 | Layer    | Technology                    | Port |
 |----------|-------------------------------|------|
-| Pipeline | Python 3.11 + SQLite          | —    |
+| Pipeline | Python 3.11 + SQLite          | -    |
 | API      | FastAPI + aiosqlite           | 8000 |
 | Frontend | Vue 3 + Vite, served by nginx | 80   |
 
@@ -84,7 +84,7 @@ In production nginx serves the built frontend on port 80 and reverse-proxies `/a
 
 ## Development
 
-Hot reload — no image rebuild needed when editing Python or Vue files:
+Hot reload - no image rebuild needed when editing Python or Vue files:
 
 ```sh
 make dev           # start API + frontend

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi.responses import FileResponse, Response
 
-from main import app  # noqa: E402 — flat import, api/ on sys.path
+from main import app  # noqa: E402 - flat import, api/ on sys.path
 
 
 def build_app(dist_dir: str, portraits_dir: Path | None = None):

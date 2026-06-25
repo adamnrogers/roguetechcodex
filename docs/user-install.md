@@ -1,7 +1,7 @@
-# RogueTech Codex — Install Guide
+# RogueTech Codex - Install Guide
 
 RogueTech Codex is a standalone offline wiki for the RogueTech BattleTech mod.  
-It runs entirely on your machine — no internet connection required after installation.
+It runs entirely on your machine - no internet connection required after installation.
 
 ---
 
@@ -9,7 +9,7 @@ It runs entirely on your machine — no internet connection required after insta
 
 Go to the [Releases page](../../releases) and download the latest release:
 
-- `RogueTech-Codex-vX.Y.Z.zip` — the application (includes portraits)
+- `RogueTech-Codex-vX.Y.Z.zip` - the application (includes portraits)
 
 ---
 
@@ -35,7 +35,7 @@ A terminal window will open briefly, then your default browser will open automat
 http://localhost:8765
 ```
 
-**Leave the terminal window open** while using the app — closing it stops the server.
+**Leave the terminal window open** while using the app - closing it stops the server.
 
 To stop the app, close the terminal window or press `Ctrl+C` in it.
 

@@ -1,4 +1,4 @@
-# roguetech.spec — PyInstaller build spec for standalone distribution
+# roguetech.spec - PyInstaller build spec for standalone distribution
 # Run from anywhere: pyinstaller standalone/roguetech.spec
 
 import os
@@ -23,7 +23,7 @@ a = Analysis(
         *uvicorn_datas,
     ],
     hiddenimports=[
-        # uvicorn — dynamic imports PyInstaller cannot trace statically
+        # uvicorn - dynamic imports PyInstaller cannot trace statically
         "uvicorn.loops",
         "uvicorn.loops.auto",
         "uvicorn.loops.asyncio",

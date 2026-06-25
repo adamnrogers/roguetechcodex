@@ -20,7 +20,7 @@
               :style="hpStyle(hp.weapon_mount_id)"
               :title="hp.weapon_mount_id + (hp.omni ? ' (Omni)' : '')"
             >{{ hpLabel(hp.weapon_mount_id) }}</span>
-            <span v-if="!loc.hardpoints.length" class="none-text">—</span>
+            <span v-if="!loc.hardpoints.length" class="none-text">-</span>
           </td>
           <td class="col-armor">{{ formatArmor(loc.max_armor, loc.max_rear_armor) }}</td>
           <td class="col-structure">{{ loc.internal_structure }}</td>
@@ -108,7 +108,7 @@ function formatArmor(max: number, rear: number): string {
   align-items: center;
 }
 
-/* flex on td doesn't work in all browsers — use a wrapper div approach via CSS grid trick */
+/* flex on td doesn't work in all browsers - use a wrapper div approach via CSS grid trick */
 td.col-hardpoints {
   display: table-cell;
 }

@@ -1,4 +1,4 @@
-# Portraits — Design Spec
+# Portraits - Design Spec
 
 **Date:** 2026-06-08  
 **Status:** Approved
@@ -23,13 +23,13 @@ Add one nullable column to the `chassis` table:
 ALTER TABLE chassis ADD COLUMN icon TEXT;
 ```
 
-The pipeline drops and recreates all tables on every run (`DROP TABLE IF EXISTS` + `CREATE TABLE IF NOT EXISTS`), so adding the column to `schema.sql` is sufficient — no migration guard needed.
+The pipeline drops and recreates all tables on every run (`DROP TABLE IF EXISTS` + `CREATE TABLE IF NOT EXISTS`), so adding the column to `schema.sql` is sufficient - no migration guard needed.
 
 ### 1.2 Pipeline ingestion
 
-In `insert_chassis()` (called for every chassisdef), read `data["Description"]["Icon"]` (may be absent or empty string). Store raw value as-is — it is the stem used to locate the portrait file. Examples: `"adder"`, `"uixTxrIcon_atlas"`, `"AtlasOS"`.
+In `insert_chassis()` (called for every chassisdef), read `data["Description"]["Icon"]` (may be absent or empty string). Store raw value as-is - it is the stem used to locate the portrait file. Examples: `"adder"`, `"uixTxrIcon_atlas"`, `"AtlasOS"`.
 
-The `icon` column on the `chassis` table is written once per `prefab_base`. Where multiple variants share a chassis, any non-null/non-empty icon value from the first variant processed wins (current `INSERT OR IGNORE` behaviour already handles this — add icon to the INSERT).
+The `icon` column on the `chassis` table is written once per `prefab_base`. Where multiple variants share a chassis, any non-null/non-empty icon value from the first variant processed wins (current `INSERT OR IGNORE` behaviour already handles this - add icon to the INSERT).
 
 ### 1.3 API
 
@@ -45,12 +45,12 @@ In `mechs.py`, add `c.icon` to the `SELECT` in `list_mechs`, `list_vehicles`, `g
 
 **File:** `pipeline/portraits.py`  
 **Purpose:** Convert DDS portraits from RT_ROOT → PNG files in `frontend/src/public/portraits/`  
-**Trigger:** `make portraits` — independent of `make dev-pipeline`. Run once on initial setup, and again only if RT_ROOT portrait files change. Portraits change far less frequently than the data DB.
+**Trigger:** `make portraits` - independent of `make dev-pipeline`. Run once on initial setup, and again only if RT_ROOT portrait files change. Portraits change far less frequently than the data DB.
 
 ### 2.1 Inputs
 
 - `RT_ROOT` env var (same as pipeline; read from `.env` if present)
-- `DB_PATH` env var (default `roguetech.db` in project root) — used to fetch all distinct `icon` values
+- `DB_PATH` env var (default `roguetech.db` in project root) - used to fetch all distinct `icon` values
 
 ### 2.2 Discovery
 
@@ -65,9 +65,9 @@ Build a case-insensitive lookup: `stem.lower() → absolute_path`.
 For each distinct `icon` value in the DB:
 1. Look up `icon.lower()` in the discovery map.
 2. If `.dds`: open with Pillow, flip vertically (`ImageOps.flip`), save as PNG.
-3. If `.png`: copy directly (no flip needed — already correct orientation).
+3. If `.png`: copy directly (no flip needed - already correct orientation).
 4. Output path: `{FRONTEND_PUBLIC}/portraits/{icon}.png` (lowercase filename, `.png` extension).
-5. If no match: log a warning line `MISSING: {icon}` — skip silently, no error.
+5. If no match: log a warning line `MISSING: {icon}` - skip silently, no error.
 
 Skip files that already exist and are newer than the source (modification time check) so re-runs are fast.
 
@@ -77,7 +77,7 @@ Pillow reads DDS via its built-in DDS decoder (added in Pillow 9.1). The pipelin
 
 ### 2.5 Output location
 
-`frontend/src/public/portraits/` — served as static assets by Vite dev server and Nginx in production.
+`frontend/src/public/portraits/` - served as static assets by Vite dev server and Nginx in production.
 
 Add to `.gitignore`:
 
@@ -114,14 +114,14 @@ export function portraitUrl(icon: string | null | undefined): string | null {
 Add a portrait image in the card header area. Layout: portrait on the left (fixed ~80×80px), existing text content on the right.
 
 - Source: `portraitUrl(item.icon)`
-- If `icon` is null/empty, or the image 404s (`@error` handler sets `src` to `null`/hides the `<img>`): show no image — card layout adjusts gracefully (portrait area collapses).
+- If `icon` is null/empty, or the image 404s (`@error` handler sets `src` to `null`/hides the `<img>`): show no image - card layout adjusts gracefully (portrait area collapses).
 - No placeholder image: absence of portrait is acceptable.
 
 ### 3.3 ChassisPage.vue
 
 Add a portrait in the page header (alongside the chassis name and breadcrumb), sized ~120×120px.
 
-- Source: `portraitUrl(data.icon)` — `data` is `ChassisDetail`.
+- Source: `portraitUrl(data.icon)` - `data` is `ChassisDetail`.
 - Same error/null handling as MechCard.
 
 ---
