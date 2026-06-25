@@ -14,11 +14,11 @@ services:
     command: ["python", "-m", "pipeline.ingest", "--full-rebuild"]
 
   api:
-    build: ./api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     container_name: rt-api
     restart: unless-stopped
-    volumes:
-      - db_data:/data/db
     environment:
       - DB_PATH=/data/db/roguetech.db
     ports:
@@ -43,6 +43,3 @@ services:
       api:
         condition: service_healthy
 
-volumes:
-  db_data:
-    driver: local

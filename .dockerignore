@@ -1,0 +1,19 @@
+# Keep build context lean for the API image (context is repo root)
+frontend/
+pipeline/
+standalone/
+docs/
+scripts/
+releases/
+portraits/
+portraits-staging/
+portraits.zip
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.git/
+tmp/
+.claude/

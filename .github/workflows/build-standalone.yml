@@ -34,26 +34,17 @@ jobs:
           npm ci
           npm run build
 
-      # roguetech.db (102 MB) is not committed to git — it must be provided.
-      # Option A: Upload it as a GitHub Actions artifact named "roguetech-db"
-      #           in a separate job, then uncomment the download step below.
-      # Option B: Build the exe locally using `make standalone-build` on Windows
-      #           (or via `py -3.11` in WSL2 targeting the Windows Python install).
-      #
-      # Uncomment to download a pre-uploaded database artifact:
-      # - uses: actions/download-artifact@v4
-      #   with:
-      #     name: roguetech-db
-      #     path: .
-
-      - name: Check database present
+      - name: Download RogueTech DB
+        env:
+          GH_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
         shell: pwsh
         run: |
+          gh release download roguetech-db --repo adamrogers/roguetechcodex-data --pattern "roguetech.db" --output roguetech.db
           if (-not (Test-Path "roguetech.db")) {
-            Write-Error "roguetech.db not found at repo root. See workflow comments for how to supply it."
+            Write-Error "roguetech.db not found. Upload it first: gh release upload roguetech-db roguetech.db --clobber"
             exit 1
           }
-          Write-Host "Database found: $((Get-Item roguetech.db).Length / 1MB) MB"
+          Write-Host "Database: $([math]::Round((Get-Item roguetech.db).Length / 1MB, 1)) MB"
 
       - name: Build exe
         run: pyinstaller standalone/roguetech.spec

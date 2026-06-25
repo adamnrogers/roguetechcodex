@@ -27,10 +27,12 @@ down: ## Stop all services
 	$(COMPOSE) down
 
 pipeline: ## Run data ingestion pipeline (rebuilds roguetech.db)
-	$(COMPOSE) --profile pipeline run --rm pipeline python -m pipeline.ingest --full-rebuild
+	$(COMPOSE_DEV) --profile pipeline run --rm pipeline python -m pipeline.ingest --full-rebuild
 
-fresh: ## Full rebuild: re-ingest data then start services
-	$(COMPOSE) --profile pipeline run --rm pipeline python -m pipeline.ingest --full-rebuild
+fresh: ## Full rebuild: re-ingest data, bake DB into image, then start services
+	$(COMPOSE_DEV) --profile pipeline run --rm pipeline python -m pipeline.ingest --full-rebuild
+	make copy-db
+	$(COMPOSE) build api
 	$(COMPOSE) up api frontend
 
 logs: ## Tail logs for all running services
@@ -50,7 +52,7 @@ ps: ## Show running containers
 
 # ── Development (source-mounted, hot reload) ──────────────────────────────────
 
-dev: ## Start dev servers with hot reload — no image rebuild needed for code changes
+dev: ## Start dev servers with hot reload - no image rebuild needed for code changes
 	$(COMPOSE_DEV) up api frontend
 
 dev-down: ## Stop dev services
@@ -67,7 +69,7 @@ dev-logs: ## Tail dev logs
 
 # ── Standalone ────────────────────────────────────────────────────────────────
 
-standalone-run: ## Run standalone mode locally — no exe, builds frontend then serves API + SPA
+standalone-run: ## Run standalone mode locally - no exe, builds frontend then serves API + SPA
 	cd frontend/src && npm run build
 	PYTHONPATH=. python3 -m standalone
 
@@ -78,7 +80,7 @@ standalone-build: ## Build standalone exe with PyInstaller (requires roguetech.d
 	pyinstaller standalone/roguetech.spec
 
 copy-db: ## Copy rebuilt DB from the db_data volume to ./roguetech.db (run after make pipeline or make dev-pipeline)
-	$(COMPOSE) --profile pipeline run --rm --no-deps \
+	$(COMPOSE_DEV) --profile pipeline run --rm --no-deps \
 		-v "$(CURDIR)":/out \
 		--entrypoint cp pipeline /data/db/roguetech.db /out/roguetech.db
 

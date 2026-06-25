@@ -6,7 +6,7 @@ Produces one release artifact:
 |---|---|---|
 | `RogueTech-Codex-vX.Y.Z.zip` | Standalone exe + DB + frontend + portraits | Windows (PowerShell) |
 
-Portraits are bundled inside the exe package — no separate zip needed.
+Portraits are bundled inside the exe package - no separate zip needed.
 
 ---
 
@@ -19,7 +19,7 @@ Portraits are bundled inside the exe package — no separate zip needed.
 
 ---
 
-## Step 1 — Build the database
+## Step 1 - Build the database
 
 Run in WSL from the repo root:
 
@@ -32,7 +32,7 @@ make copy-db        # copy DB from volume to ./roguetech.db
 
 ---
 
-## Step 2 — Build portraits (WSL)
+## Step 2 - Build portraits (WSL)
 
 Requires `RT_ROOT` to be set in `.env`.
 
@@ -44,7 +44,7 @@ Output: `portraits/` directory at the repo root. PyInstaller bundles this into t
 
 ---
 
-## Step 3 — Build the frontend (WSL)
+## Step 3 - Build the frontend (WSL)
 
 ```bash
 cd frontend/src
@@ -53,11 +53,11 @@ npm run build
 cd ../..
 ```
 
-Output: `frontend/src/dist/` — bundled into the exe in the next step.
+Output: `frontend/src/dist/` - bundled into the exe in the next step.
 
 ---
 
-## Step 4 — Build the standalone exe (PowerShell)
+## Step 4 - Build the standalone exe (PowerShell)
 
 PyInstaller must run on Windows to produce a Windows executable.
 
@@ -75,11 +75,11 @@ pip install -r api/requirements.txt
 pyinstaller standalone/roguetech.spec
 ```
 
-Output: `dist\RogueTech-Codex\` — a folder containing the exe and all bundled files (including portraits in `_internal\portraits\`).
+Output: `dist\RogueTech-Codex\` - a folder containing the exe and all bundled files (including portraits in `_internal\portraits\`).
 
 ---
 
-## Step 5 — Package the exe
+## Step 5 - Package the exe
 
 In PowerShell, zip the output folder:
 
@@ -90,7 +90,7 @@ Compress-Archive -Path dist\RogueTech-Codex -DestinationPath "RogueTech-Codex-$v
 
 ---
 
-## Step 6 — Upload to GitHub Release
+## Step 6 - Upload to GitHub Release
 
 One file to upload:
 

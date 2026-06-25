@@ -6,39 +6,75 @@ Trunk-based deployment: all work merges to `main`; a version tag on `main` trigg
 
 ## What CI can and cannot build
 
-| Artifact | CI can build? | Reason |
+| Artifact | CI can build? | Notes |
 |---|---|---|
 | Frontend (JS/CSS) | ✅ | Pure code — no mod files needed |
-| `roguetech.db` | ❌ | Built from mod files at `RT_ROOT`, not in repo |
-| `portraits/` | ❌ | Converted from mod DDS files at `RT_ROOT`, not in repo |
-| `RogueTech-Codex.exe` | ⚠️ Partially | Windows runner can run PyInstaller, but the exe bundles `roguetech.db` and portraits which CI doesn't have |
-
-**Practical conclusion:** use CI to create the release and generate notes; upload the built artifact manually.
+| `RogueTech-Codex.exe` | ✅ | Windows runner downloads `roguetech.db` from data repo |
+| `roguetech.db` | ❌ | Built from mod files at `RT_ROOT`, uploaded manually |
+| `portraits/` | ❌ | Converted from mod DDS files at `RT_ROOT`, bundled locally |
 
 ---
 
-## 1. Repository Prerequisites
+## Repositories
 
-### Enable GitHub Actions
+| Repo | Purpose |
+|---|---|
+| `adamrogers/RogueTech-Codex` | Main code repo |
+| `adamrogers/roguetechcodex-data` | Hosts `roguetech.db` as a release asset for CI |
+
+The data repo exists only to serve the db to CI builds. It has no code. The `roguetech-db` release tag is updated in place on each mod update; the release title shows the build date.
+
+---
+
+## One-time setup
+
+### 1. Create a PAT for cross-repo db access
+
+The build workflow runs in `RogueTech-Codex` but downloads from `roguetechcodex-data`. `GITHUB_TOKEN` cannot cross repos, so a Personal Access Token is required.
+
+1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Create a token scoped to `roguetechcodex-data` with **Contents: Read**
+3. In `RogueTech-Codex` repo → **Settings → Secrets and variables → Actions**
+4. Add secret named `DATA_REPO_TOKEN` with the PAT value
+
+### 2. Update the build workflow to use the PAT
+
+In `.github/workflows/build-standalone.yml`, the db download step uses `GH_TOKEN`. Change it to use the PAT secret:
+
+```yaml
+      - name: Download RogueTech DB
+        env:
+          GH_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release download roguetech-db --repo adamrogers/roguetechcodex-data \
+            --pattern "roguetech.db" --output roguetech.db
+```
+
+### 3. Enable GitHub Actions
+
 **Settings → Actions → General → Allow all actions**.
 
-### Protect `main` (optional but recommended)
+### 4. Protect `main` (optional but recommended)
+
 **Settings → Branches → Add rule → `main`**:
 - Require pull request before merging
 - Require status checks to pass
 
 ---
 
-## 2. Tagging Convention
+## Tagging convention
 
 Use [Semantic Versioning](https://semver.org/): `v<MAJOR>.<MINOR>.<PATCH>`
+
+Tags containing a hyphen (e.g. `v1.0.0-beta`) are automatically marked as pre-releases.
 
 ```bash
 git tag v1.2.0 -m "Release v1.2.0"
 git push origin v1.2.0
 ```
 
-Tag must be on `main`. To delete a tag before a release is created:
+To delete a tag before a release is created:
 
 ```bash
 git tag -d v1.2.0
@@ -47,9 +83,11 @@ git push origin :refs/tags/v1.2.0
 
 ---
 
-## 3. Workflow File — CI creates the release, you upload artifacts
+## Release workflow
 
-Create `.github/workflows/release.yml`:
+`.github/workflows/release.yml` fires on version tags and creates a draft release with auto-generated notes. The `build-standalone.yml` workflow builds the exe and uploads it.
+
+### `release.yml`
 
 ```yaml
 name: Release
@@ -86,138 +124,63 @@ jobs:
             $PRERELEASE_FLAG
 ```
 
-The release is created as a **draft**. After you upload your artifacts (see below), publish it manually via the GitHub UI.
+---
+
+## Version in the UI
+
+The navbar version label is read at build time from `frontend/src/package.json` via a Vite `define` constant (`__APP_VERSION__`). Bump the `version` field before tagging.
 
 ---
 
-## 4. Uploading artifacts to the release
-
-After building locally (see `docs/building-locally.md`), upload with the `gh` CLI:
-
-```bash
-gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip
-```
-
-Then publish the draft:
-
-```bash
-gh release edit v1.0.0 --draft=false
-```
-
-Or publish via the GitHub UI: go to **Releases**, open the draft, click **Publish release**.
-
----
-
-## 5. What `--generate-notes` does
-
-GitHub auto-generates release notes from PR titles and commit messages since the previous tag. The result can be edited before publishing. For clean notes, use conventional commit messages (`feat:`, `fix:`, `chore:` etc.).
-
----
-
-## 6. Pre-releases
-
-Tags containing a hyphen (e.g. `v1.0.0-beta`, `v1.0.0-rc1`) are automatically marked as pre-releases by the workflow above.
-
----
-
-## 7. Version in the UI
-
-The navbar version label is read at build time from `frontend/src/package.json` via a Vite `define` constant (`__APP_VERSION__`). Bump the `version` field before tagging — the built app shows it automatically.
-
----
-
-## 8. Typical Release Flow
+## Typical release flow
 
 ```bash
 # 1. Ensure main is up to date
 git checkout main && git pull
 
-# 2. Bump version in frontend/src/package.json (e.g. "1.0.0")
+# 2. Bump version in frontend/src/package.json (e.g. "1.2.0")
 git add frontend/src/package.json
-git commit -m "chore: bump version to v1.0.0"
+git commit -m "chore: bump version to v1.2.0"
 git push
 
-# 3. Build artifacts locally (see docs/building-locally.md)
-#    - make dev-pipeline && make copy-db   (WSL)
-#    - make portraits                      (WSL)
-#    - cd frontend/src && npm run build    (WSL)
-#    - pyinstaller standalone/roguetech.spec  (PowerShell)
-#    - Compress-Archive dist\RogueTech-Codex RogueTech-Codex-v1.0.0.zip  (PowerShell)
+# 3. Tag — triggers release.yml which creates a draft release
+git tag v1.2.0 -m "Release v1.2.0"
+git push origin v1.2.0
 
-# 4. Tag and push — triggers the workflow which creates a draft release
-git tag v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
+# 4. Trigger the exe build
+gh workflow run build-standalone.yml -f version=v1.2.0
 
-# 5. Upload artifact to the draft release
-gh release upload v1.0.0 RogueTech-Codex-v1.0.0.zip
+# 5. Download the built exe artifact from the Actions run, attach to the draft release
+gh release upload v1.2.0 RogueTech-Codex-v1.2.0.zip
 
 # 6. Publish
-gh release edit v1.0.0 --draft=false
+gh release edit v1.2.0 --draft=false
 ```
 
 ---
 
-## 9. Advanced: CI builds the exe (optional)
+## Updating the database
 
-If you want CI to build the exe, it needs `roguetech.db`. One way: maintain a `data-latest` release tag containing only the DB, updated whenever the mod changes.
-
-**Upload the DB to a data release (run locally after each mod update):**
+Run after each RogueTech mod update. No RTC release required.
 
 ```bash
-# First time
-gh release create data-latest --title "Data (DB)" roguetech.db
+# Rebuild the database
+cd /path/to/RogueTech-Codex
+make dev-pipeline
 
-# Subsequent updates
-gh release upload data-latest roguetech.db --clobber
+# Copy to data repo and publish
+cp pipeline/roguetech.db ../roguetechcodex-data/roguetech.db
+cd ../roguetechcodex-data
+gh release edit roguetech-db --title "RogueTech DB $(date +%Y-%m-%d)"
+gh release upload roguetech-db roguetech.db --clobber
 ```
 
-**Workflow job on `windows-latest` that downloads the DB and builds the exe:**
+First time only (creates the `roguetech-db` release):
 
-```yaml
-  build-exe:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download DB from data release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release download data-latest --pattern roguetech.db
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build frontend
-        working-directory: frontend/src
-        run: |
-          npm ci
-          npm run build
-
-      - name: Build exe
-        run: |
-          pip install pyinstaller
-          pip install -r api/requirements.txt
-          pyinstaller standalone/roguetech.spec
-
-      - name: Package
-        run: |
-          Compress-Archive -Path dist\RogueTech-Codex `
-            -DestinationPath "RogueTech-Codex-${{ github.ref_name }}.zip"
-
-      - name: Upload to release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ github.ref_name }} `
-            "RogueTech-Codex-${{ github.ref_name }}.zip"
+```bash
+cd ../roguetechcodex-data
+gh release create roguetech-db roguetech.db \
+  --title "RogueTech DB $(date +%Y-%m-%d)" \
+  --prerelease \
+  --notes "Pipeline-generated database for RogueTech Codex CI builds"
 ```
-
-Note: this workflow still requires `roguetech.db` and the `portraits/` directory to be available (downloaded from the data release). Portraits are bundled into the exe by PyInstaller — no separate upload needed.
