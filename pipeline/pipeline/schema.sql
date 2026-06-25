@@ -144,6 +144,25 @@ CREATE TABLE IF NOT EXISTS star_system (
 CREATE INDEX IF NOT EXISTS idx_star_system_difficulty ON star_system(difficulty);
 CREATE INDEX IF NOT EXISTS idx_star_system_population ON star_system(population);
 
+-- RTO Legend pilots - one row per pilot_*.json whose PilotTags.items contains "pilot_rtolegend"
+CREATE TABLE IF NOT EXISTS rto_pilot (
+    id                TEXT PRIMARY KEY,   -- "pilot_TobiasRieper"
+    ui_name           TEXT NOT NULL,      -- Description.Name
+    first_name        TEXT,
+    last_name         TEXT,
+    callsign          TEXT,
+    gender            TEXT,
+    faction           TEXT,               -- raw Description.Faction
+    age               INTEGER,
+    details           TEXT,               -- bio
+    icon              TEXT,
+    can_pilot_json    TEXT,               -- JSON array of can_pilot_* tags
+    tags_json         TEXT,               -- JSON array of [{tag, label, description}]
+    requirements_json TEXT,               -- JSON object (see build_requirements_payload), or NULL
+    source_file       TEXT,
+    source_mod        TEXT
+);
+
 CREATE TABLE IF NOT EXISTS affinity (
     id            TEXT PRIMARY KEY,   -- "AffinityDef_quirk_Barrage"
     affinity_type TEXT,               -- "Global"|"Chassis"|"Quirk"|"Tag"

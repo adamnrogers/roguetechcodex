@@ -12,7 +12,8 @@
       <RouterLink to="/equipment" class="nav-tab" active-class="nav-tab--active">Equipment</RouterLink>
       <RouterLink to="/weapons"   class="nav-tab" active-class="nav-tab--active">Weapons</RouterLink>
       <RouterLink to="/quirks"    class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>
-      <RouterLink to="/star-systems" class="nav-tab" active-class="nav-tab--active">Star Systems</RouterLink>
+      <RouterLink to="/star-systems" class="nav-tab" active-class="nav-tab--active">Systems</RouterLink>
+      <RouterLink to="/rto-pilots" class="nav-tab" active-class="nav-tab--active">RTO Pilots</RouterLink>
     </div>
     <div class="nav-right">
       <div class="search-wrapper">
@@ -30,18 +31,13 @@
           @close="closeSearch"
         />
       </div>
-      <div class="scale-btns">
-        <button
-          v-for="s in (['normal', 'large', 'xl'] as const)"
-          :key="s"
-          class="scale-btn"
-          :class="{ active: scale === s }"
-          :title="s === 'normal' ? 'Normal size' : s === 'large' ? 'Large size' : 'Extra large size'"
-          @click="scale = s"
-        >{{ s === 'normal' ? 'A' : s === 'large' ? 'A+' : 'A++' }}</button>
-      </div>
+      <select v-model="scale" class="scale-select" title="Text size">
+        <option value="normal">A</option>
+        <option value="large">A+</option>
+        <option value="xl">A++</option>
+      </select>
       <button class="theme-toggle" @click="$emit('toggleTheme')" :title="theme === 'v1' ? 'Switch to Dark mode' : 'Switch to Light mode'">
-        {{ theme === 'v1' ? '☀ Light' : '☾ Dark' }}
+        {{ theme === 'v1' ? '☀' : '☾' }}
       </button>
     </div>
   </nav>
@@ -134,7 +130,14 @@ watch(() => route.path, (path, prev) => {
   letter-spacing: 0.5px;
   opacity: 0.7;
 }
-.nav-tabs { display: flex; flex: 1; }
+.nav-tabs {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
 .nav-tab {
   color: var(--text-muted);
   text-decoration: none;
@@ -173,34 +176,35 @@ watch(() => route.path, (path, prev) => {
   border: var(--border-default);
   color: var(--text-muted);
   border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 4px 6px;
+  font-size: 13px;
   cursor: pointer;
-  letter-spacing: 0.5px;
   transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-  width: 72px;
+  width: 28px;
+  height: 26px;
   text-align: center;
+  line-height: 1;
 }
 .theme-toggle:hover {
   color: var(--accent-blue);
   border-color: var(--accent-blue);
 }
-.scale-btns { display: flex; gap: 4px; }
-.scale-btn {
+.scale-select {
   background: transparent;
   border: var(--border-default);
   color: var(--text-muted);
   border-radius: 4px;
-  padding: 5px 8px;
+  padding: 3px 4px;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  letter-spacing: 0.5px;
+  height: 26px;
+  width: 48px;
   transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
 }
-.scale-btn:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
-.scale-btn.active { color: var(--accent-blue); border-color: var(--accent-blue); }
+.scale-select:hover, .scale-select:focus {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  outline: none;
+}
 </style>

@@ -375,6 +375,7 @@ DROP TABLE IF EXISTS variant_weapon;
 DROP TABLE IF EXISTS equipment;
 DROP TABLE IF EXISTS weapon;
 DROP TABLE IF EXISTS star_system;
+DROP TABLE IF EXISTS rto_pilot;
 """
 
 # ── Phase 1: scan & classify ──────────────────────────────────────────────────
@@ -1103,6 +1104,223 @@ def insert_star_systems(con: sqlite3.Connection, rt_root: Path) -> int:
     return len(rows)
 
 
+# ── RTO Legend pilots ────────────────────────────────────────────────────────
+
+RTO_LEGEND_TAG = "pilot_rtolegend"
+EXCLUDED_PILOT_TAG_PREFIXES = ("stat_on_", "name_", "can_pilot_")
+EXCLUDED_PILOT_TAGS = frozenset({"pilot_backer", RTO_LEGEND_TAG})
+
+QUIRK_DEF_DIRS = (
+    "Core/MechAffinity/QuirkDefs",
+    "Core/MechAffinity/RtoQuirkDefs",
+    "Core/MechAffinity/RtoSharedQuirkDefs",
+    "Core/MechAffinity/CrewQuirkDefs",
+    "Core/MechAffinity/CrewSharedQuirkDefs",
+    "Core/MechAffinity/TravelQuirkDefs",
+    "Core/MechAffinity/testQuirkDefs",
+    "Core/PutMeInCoach/QuirkDefs",
+    "Optionals/RogueTribes/Base/TribeQuirkDefs",
+)
+REQUIREMENTS_DEF_DIRS = (
+    "Core/MechAffinity/RtoRequirements",
+    "Core/MechAffinity/PilotRequirements",
+    "Core/MechAffinity/RtCrewRequirements",
+)
+
+_REQ_OP_SYMBOLS = {
+    "GreaterThanOrEqual": ">=",
+    "GreaterThan": ">",
+    "LessThanOrEqual": "<=",
+    "LessThan": "<",
+    "Equal": "==",
+}
+_REQ_OBJ_LABELS = {
+    "DCE-CurrentDifficulty": "Difficulty",
+    "MissionsComplete": "Missions Complete",
+}
+
+
+def _read_json_lenient(path: Path) -> dict | None:
+    """Like the other JSON readers, but BOM-safe (some pilot requirement defs
+    are saved as UTF-8 with BOM, which breaks json.loads under errors='replace')."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig", errors="replace"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def build_quirk_def_lookup(rt_root: Path) -> dict[str, tuple[str, str]]:
+    """tag -> (quirkName, description) from pilotQuirkDef_*.json across all quirk dirs."""
+    lookup: dict[str, tuple[str, str]] = {}
+    for rel_dir in QUIRK_DEF_DIRS:
+        for path in sorted((rt_root / rel_dir).glob("pilotQuirkDef_*.json")):
+            if should_exclude(path):
+                continue
+            data = _read_json_lenient(path)
+            if not data:
+                continue
+            tag = data.get("tag")
+            if not tag:
+                continue
+            lookup[tag] = (data.get("quirkName") or "", data.get("description") or "")
+    return lookup
+
+
+def build_requirements_def_lookup(rt_root: Path) -> dict[str, dict]:
+    """TagId -> raw pilotRequirementsDef_*.json dict, across all requirements dirs."""
+    lookup: dict[str, dict] = {}
+    for rel_dir in REQUIREMENTS_DEF_DIRS:
+        for path in sorted((rt_root / rel_dir).glob("pilotRequirementsDef_*.json")):
+            if should_exclude(path):
+                continue
+            data = _read_json_lenient(path)
+            if not data:
+                continue
+            tag_id = data.get("TagId")
+            if not tag_id:
+                continue
+            lookup[tag_id] = data
+    return lookup
+
+
+def parse_rto_pilot_tags(
+    items: list[str], quirk_lookup: dict[str, tuple[str, str]]
+) -> tuple[list[str], list[dict]]:
+    """Split PilotTags.items into (can_pilot tags, displayable tag dicts)."""
+    can_pilot: list[str] = []
+    tag_dicts: list[dict] = []
+    for tag in items:
+        if not isinstance(tag, str):
+            continue
+        if tag.startswith("can_pilot_"):
+            can_pilot.append(tag)
+            continue
+        if tag.startswith(EXCLUDED_PILOT_TAG_PREFIXES) or tag in EXCLUDED_PILOT_TAGS:
+            continue
+        quirk_name, description = quirk_lookup.get(tag, ("", ""))
+        tag_dicts.append({
+            "tag": tag,
+            "label": quirk_name or None,
+            "description": description or None,
+        })
+    return can_pilot, tag_dicts
+
+
+def _humanize_requirement_comparison(obj: str, op: str, val) -> str:
+    # Unrecognized objs are per-pilot CompanyTags counters driven by that pilot's
+    # own event chain (e.g. "Bearing", "HireBanacek") rather than a real game stat.
+    obj_label = _REQ_OBJ_LABELS.get(obj) or f"Event Flag: {obj}"
+    op_symbol = _REQ_OP_SYMBOLS.get(op, op)
+    return f"{obj_label} {op_symbol} {val}"
+
+
+def build_requirements_payload(raw_def: dict, id_to_name: dict[str, str]) -> dict:
+    """Resolve a raw pilotRequirementsDef dict into the display-ready structure
+    stored in rto_pilot.requirements_json."""
+
+    def resolve_pilot_ref(pilot_id: str) -> dict:
+        return {"id": pilot_id, "name": id_to_name.get(pilot_id)}
+
+    hiring_requirements: list[str] = []
+    for req in raw_def.get("HiringRequirements", []) or []:
+        scope = req.get("Scope", "")
+        for cmp in req.get("RequirementComparisons", []) or []:
+            text = _humanize_requirement_comparison(cmp.get("obj", ""), cmp.get("op", ""), cmp.get("val"))
+            hiring_requirements.append(f"{scope}: {text}".strip(": "))
+
+    hiring_visibility_requirements: list[str] = []
+    for req in raw_def.get("HiringVisibilityRequirements", []) or []:
+        scope = req.get("Scope", "")
+        for cmp in req.get("RequirementComparisons", []) or []:
+            text = _humanize_requirement_comparison(cmp.get("obj", ""), cmp.get("op", ""), cmp.get("val"))
+            hiring_visibility_requirements.append(f"{scope}: {text}".strip(": "))
+        for rt in req.get("RequirementTags", {}).get("items", []) or []:
+            if isinstance(rt, str) and rt.startswith("hasPilot_"):
+                ref_id = rt[len("hasPilot_"):]
+                name = id_to_name.get(ref_id)
+                hiring_visibility_requirements.append(f"Has Pilot: {name or ref_id}")
+
+    return {
+        "hiring_requirements": hiring_requirements,
+        "hiring_visibility_requirements": hiring_visibility_requirements,
+        "required_system_owner": list(raw_def.get("RequiredSystemOwner", []) or []),
+        "required_system_core_ids": list(raw_def.get("RequiredSystemCoreIds", []) or []),
+        "required_pilot_ids": [resolve_pilot_ref(p) for p in raw_def.get("RequiredPilotIds", []) or []],
+        "conflicting_pilot_ids": [resolve_pilot_ref(p) for p in raw_def.get("ConflictingPilotIds", []) or []],
+    }
+
+
+def insert_rto_pilots(con: sqlite3.Connection, rt_root: Path) -> int:
+    """Insert one rto_pilot row per pilot_*.json whose PilotTags.items contains
+    "pilot_rtolegend". Two-pass: first collect all matching pilots and build an
+    id -> display name map, then resolve quirk/requirement cross-references."""
+
+    # Pass 1: collect RTO legend pilots + build id -> name map
+    legends: list[tuple[Path, dict]] = []
+    id_to_name: dict[str, str] = {}
+    for path in sorted(rt_root.rglob("pilot_*.json")):
+        if should_exclude(path):
+            continue
+        data = _read_json_lenient(path)
+        if not data:
+            continue
+        items = data.get("PilotTags", {}).get("items", [])
+        if not isinstance(items, list) or RTO_LEGEND_TAG not in items:
+            continue
+        entity_id = data.get("Description", {}).get("Id", "").strip()
+        if not entity_id:
+            continue
+        legends.append((path, data))
+        id_to_name[entity_id] = data.get("Description", {}).get("Name") or entity_id
+
+    # Pass 2: build lookups, resolve each pilot's tags/requirements
+    quirk_lookup = build_quirk_def_lookup(rt_root)
+    req_lookup = build_requirements_def_lookup(rt_root)
+
+    rows = []
+    for path, data in legends:
+        desc = data.get("Description", {})
+        entity_id = desc.get("Id", "").strip()
+        items = [t for t in data.get("PilotTags", {}).get("items", []) if isinstance(t, str)]
+
+        can_pilot, tag_dicts = parse_rto_pilot_tags(items, quirk_lookup)
+
+        name_tag = next((t for t in items if t.startswith("name_")), None)
+        raw_req = req_lookup.get(name_tag) if name_tag else None
+        requirements = build_requirements_payload(raw_req, id_to_name) if raw_req else None
+
+        rows.append((
+            entity_id,
+            desc.get("Name") or entity_id,
+            desc.get("FirstName"),
+            desc.get("LastName"),
+            desc.get("Callsign"),
+            desc.get("Gender"),
+            desc.get("Faction"),
+            desc.get("Age"),
+            desc.get("Details"),
+            desc.get("Icon"),
+            json.dumps(can_pilot),
+            json.dumps(tag_dicts),
+            json.dumps(requirements) if requirements is not None else None,
+            str(path.relative_to(rt_root)),
+            source_mod(path, rt_root),
+        ))
+
+    con.executemany(
+        """INSERT OR REPLACE INTO rto_pilot
+           (id, ui_name, first_name, last_name, callsign, gender, faction, age,
+            details, icon, can_pilot_json, tags_json, requirements_json,
+            source_file, source_mod)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        rows,
+    )
+    con.commit()
+    print(f"  rto_pilot rows inserted : {len(rows):,}")
+    return len(rows)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
@@ -1168,6 +1386,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     ingest_bonus_descriptions(con, rt_root)
     insert_gear(con, gear_data, rt_root)
     star_system_count = insert_star_systems(con, rt_root)
+    rto_pilot_count = insert_rto_pilots(con, rt_root)
     print()
 
     chassis_count = con.execute("SELECT COUNT(*) FROM chassis").fetchone()[0]
@@ -1202,6 +1421,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     print(f"  affinities   : {affinity_count:,}")
     print(f"  gear         : {gear_count:,}")
     print(f"  star systems : {star_system_count:,}")
+    print(f"  rto pilots   : {rto_pilot_count:,}")
 
 
 def main() -> None:

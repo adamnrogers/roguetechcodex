@@ -69,7 +69,7 @@ class EquipmentItem(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Variant detail — chassisdef + embedded loadout
+# Variant detail - chassisdef + embedded loadout
 # ---------------------------------------------------------------------------
 
 class VariantDetail(BaseModel):
@@ -102,7 +102,7 @@ class VariantDetail(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Chassis summary — browse page (one per prefab_base)
+# Chassis summary - browse page (one per prefab_base)
 # ---------------------------------------------------------------------------
 
 class ChassisSummary(BaseModel):
@@ -125,7 +125,7 @@ class ChassisListResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Chassis detail — full page (GET /api/v1/mechs/{prefab_base})
+# Chassis detail - full page (GET /api/v1/mechs/{prefab_base})
 # ---------------------------------------------------------------------------
 
 class ChassisDetail(BaseModel):
@@ -139,7 +139,7 @@ class ChassisDetail(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Gear — equipment, weapons, jump jets, heat sinks, ammo
+# Gear - equipment, weapons, jump jets, heat sinks, ammo
 # ---------------------------------------------------------------------------
 
 class GearSummary(BaseModel):
@@ -289,4 +289,45 @@ class StarSystemDetail(BaseModel):
     size: Optional[str]
     biomes: list[str]
     tags: list[str]
+    source_mod: Optional[str]
+
+
+# ---------------------------------------------------------------------------
+# RTO Pilots
+# ---------------------------------------------------------------------------
+
+class RtoPilotTag(BaseModel):
+    tag: str
+    label: Optional[str]
+    description: Optional[str]
+
+
+class RtoPilotRef(BaseModel):
+    id: str
+    name: Optional[str]
+
+
+class RtoPilotRequirements(BaseModel):
+    hiring_requirements: list[str]
+    hiring_visibility_requirements: list[str]
+    required_system_owner: list[str]
+    required_system_core_ids: list[str]
+    required_pilot_ids: list[RtoPilotRef]
+    conflicting_pilot_ids: list[RtoPilotRef]
+
+
+class RtoPilotDetail(BaseModel):
+    id: str
+    ui_name: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    callsign: Optional[str]
+    gender: Optional[str]
+    faction: Optional[str]
+    age: Optional[int]
+    details: Optional[str]
+    icon: Optional[str]
+    can_pilot: list[str]
+    tags: list[RtoPilotTag]
+    requirements: Optional[RtoPilotRequirements]
     source_mod: Optional[str]

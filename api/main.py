@@ -10,6 +10,7 @@ from routers import mechs as mechs_router
 from routers import gear as gear_router
 from routers import search as search_router
 from routers import star_systems as star_systems_router
+from routers import rto_pilots as rto_pilots_router
 
 
 app = FastAPI(
@@ -19,7 +20,7 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS — wide-open for local home-server wiki use
+# CORS - wide-open for local home-server wiki use
 # ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +37,7 @@ app.include_router(mechs_router.router)
 app.include_router(gear_router.router)
 app.include_router(search_router.router)
 app.include_router(star_systems_router.router)
+app.include_router(rto_pilots_router.router)
 
 
 # ---------------------------------------------------------------------------
