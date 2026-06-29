@@ -164,11 +164,12 @@ CREATE TABLE IF NOT EXISTS rto_pilot (
 );
 
 CREATE TABLE IF NOT EXISTS affinity (
-    id            TEXT PRIMARY KEY,   -- "AffinityDef_quirk_Barrage"
-    affinity_type TEXT,               -- "Global"|"Chassis"|"Quirk"|"Tag"
-    quirk_names   TEXT,               -- JSON array (Quirk type only)
-    chassis_names TEXT,               -- JSON array of AssemblyVariant IDs (Chassis type only)
-    levels_json   TEXT                -- JSON array of {missions_required, level_name, description}
+    id               TEXT PRIMARY KEY,   -- "AffinityDef_quirk_Barrage"
+    affinity_type    TEXT,               -- "Global"|"Chassis"|"Quirk"|"Tag"
+    quirk_names      TEXT,               -- JSON array (Quirk type only)
+    chassis_names    TEXT,               -- JSON array of AssemblyVariant IDs (Chassis type only)
+    alt_chassis_ids  TEXT,               -- JSON array of specific variant def IDs from altMaps (Chassis type only)
+    levels_json      TEXT                -- JSON array of {missions_required, level_name, description}
 );
 
 CREATE TABLE IF NOT EXISTS gear_usage (

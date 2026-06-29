@@ -718,21 +718,26 @@ def insert_affinities(con: sqlite3.Connection, affinity_data: dict) -> int:
             # (e.g. "annihilatoriic_100"). Strip the trailing _NNN and lowercase to match
             # our chassis.prefab_base values.
             chassis_names = []
+            alt_chassis_ids: list = []
             if aff_type == "Chassis":
                 chassis_names = [
                     re.sub(r"_\d+$", "", n).lower()
                     for n in aff_data.get("chassisNames", [])
                 ]
+                for alt in aff_data.get("altMaps", []):
+                    if alt.get("idType") == "ChassisId":
+                        alt_chassis_ids.extend(alt.get("chassisIds", []))
 
         rows.append((
             entity_id,
             aff_type,
             json.dumps(quirk_names),
             json.dumps(chassis_names),
+            json.dumps(alt_chassis_ids),
             json.dumps(levels),
         ))
     con.executemany(
-        "INSERT OR REPLACE INTO affinity (id, affinity_type, quirk_names, chassis_names, levels_json) VALUES (?,?,?,?,?)",
+        "INSERT OR REPLACE INTO affinity (id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json) VALUES (?,?,?,?,?,?)",
         rows,
     )
     con.commit()
@@ -900,8 +905,6 @@ def compute_modes(weapon_data: dict) -> list[dict]:
 
 def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
     """Insert one gear row per upgradedef_*.json or weapondef_*.json file."""
-    GEAR_EXCLUDED_TAGS = frozenset({"BLACKLISTED"})
-
     # Build in-memory lookup from bonus_descriptions_lookup table
     bd_lookup: dict[str, tuple] = {}
     for row in con.execute("SELECT key, short, long, full FROM bonus_descriptions_lookup"):
@@ -917,8 +920,6 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
         if ct not in GEAR_COMPONENT_TYPES:
             continue  # skip non-gear files that matched a gear prefix (e.g. turret AI files)
         tags = data.get("ComponentTags", {}).get("items", [])
-        if any(t in GEAR_EXCLUDED_TAGS for t in tags if isinstance(t, str)):
-            continue
         raw_bonus_descs = data.get("Custom", {}).get("BonusDescriptions", [])
         if "ROI" in raw_bonus_descs:
             continue

@@ -292,15 +292,18 @@ def _build_affinity_context(
     affinity_rows: list,
     chassis_prefab: str,
     gear_ui_map: Optional[dict[str, str]] = None,
-) -> tuple[list[AffinityEntry], dict[str, list[AffinityEntry]]]:
-    """Return (chassis_level_affinities, quirk_map).
+) -> tuple[list[AffinityEntry], dict[str, list[AffinityEntry]], dict[str, list[AffinityEntry]]]:
+    """Return (chassis_level_affinities, quirk_map, alt_variant_map).
 
-    chassis_level_affinities: Global + Chassis entries pre-matched to this chassis.
-      Same across all variants - include for every variant.
+    chassis_level_affinities: Global + Chassis entries pre-matched to this chassis via
+      chassisNames (AssemblyVariant). Same across all variants not covered by alt_variant_map.
     quirk_map: quirk_id → [AffinityEntry] for per-variant Quirk matching.
+    alt_variant_map: variant_id → [AffinityEntry] for altMaps overrides. Takes precedence
+      over chassisNames matches for the specific variants listed.
     """
     chassis_affinities: list[AffinityEntry] = []
     quirk_map: dict[str, list[AffinityEntry]] = {}
+    alt_variant_map: dict[str, list[AffinityEntry]] = {}
 
     for arow in affinity_rows:
         aff_type = arow["affinity_type"] or ""
@@ -323,6 +326,15 @@ def _build_affinity_context(
                     AffinityEntry(id=arow["id"], affinity_type="Chassis", quirk_name="", levels=levels)
                 )
 
+            try:
+                alt_ids: list[str] = json.loads(arow["alt_chassis_ids"] or "[]")
+            except (json.JSONDecodeError, TypeError):
+                alt_ids = []
+            if alt_ids:
+                entry = AffinityEntry(id=arow["id"], affinity_type="Chassis", quirk_name="", levels=levels)
+                for vid in alt_ids:
+                    alt_variant_map.setdefault(vid, []).append(entry)
+
         elif aff_type == "Quirk":
             try:
                 quirk_names: list[str] = json.loads(arow["quirk_names"] or "[]")
@@ -333,7 +345,7 @@ def _build_affinity_context(
                 entry = AffinityEntry(id=arow["id"], affinity_type="Quirk", quirk_name=qname, quirk_ui_name=quirk_ui_name, levels=levels)
                 quirk_map.setdefault(qname, []).append(entry)
 
-    return chassis_affinities, quirk_map
+    return chassis_affinities, quirk_map, alt_variant_map
 
 
 def _build_variant_detail(
@@ -342,6 +354,7 @@ def _build_variant_detail(
     chassis_affinities: Optional[list[AffinityEntry]] = None,
     quirk_map: Optional[dict[str, list[AffinityEntry]]] = None,
     gear_ui_map: Optional[dict[str, str]] = None,
+    alt_variant_map: Optional[dict[str, list[AffinityEntry]]] = None,
 ) -> VariantDetail:
     loadout_id = lrow["id"] if lrow else None
     era_tags = _split_csv(lrow["era_tags"] if lrow else None)
@@ -358,9 +371,29 @@ def _build_variant_detail(
         lrow["locations_json"] if lrow else None,
     )
 
-    # Build per-variant affinity list: global+chassis (pre-matched) + quirk-matched
-    affinities: list[AffinityEntry] = list(chassis_affinities or [])
+    # Build per-variant affinity list applying the resolution rule:
+    # 1. Global affinities always apply.
+    # 2. If this variant's def ID is in altMaps, that affinity wins over chassisNames.
+    # 3. Otherwise, chassisNames-matched Chassis affinity applies.
+    # 4. Quirk affinities are always added independently.
+    global_affinities = [a for a in (chassis_affinities or []) if a.affinity_type == "Global"]
+    chassis_name_affinities = [a for a in (chassis_affinities or []) if a.affinity_type == "Chassis"]
+
+    affinities: list[AffinityEntry] = list(global_affinities)
     seen: set[str] = {e.id for e in affinities}
+
+    variant_id = vrow["id"]
+    if alt_variant_map and variant_id in alt_variant_map:
+        for entry in alt_variant_map[variant_id]:
+            if entry.id not in seen:
+                affinities.append(entry)
+                seen.add(entry.id)
+    else:
+        for entry in chassis_name_affinities:
+            if entry.id not in seen:
+                affinities.append(entry)
+                seen.add(entry.id)
+
     if quirk_map:
         for qid in _extract_quirk_ids(vrow["fixed_equipment_json"]):
             for entry in quirk_map.get(qid, []):
@@ -650,15 +683,15 @@ async def get_mech(
     # Fetch all affinities once; resolve Global+Chassis pre-matched + quirk map for per-variant
     try:
         async with db.execute(
-            "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
+            "SELECT id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
+        chassis_affs, quirk_map, alt_variant_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
-        chassis_affs, quirk_map = [], {}
+        chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
         for vrow in variant_rows
     ]
 
@@ -725,15 +758,15 @@ async def get_battle_armor(
 
     try:
         async with db.execute(
-            "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
+            "SELECT id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
+        chassis_affs, quirk_map, alt_variant_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
-        chassis_affs, quirk_map = [], {}
+        chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
         for vrow in variant_rows
     ]
 
@@ -881,15 +914,15 @@ async def get_vehicle(
 
     try:
         async with db.execute(
-            "SELECT id, affinity_type, quirk_names, chassis_names, levels_json FROM affinity"
+            "SELECT id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json FROM affinity"
         ) as cur:
             affinity_rows = await cur.fetchall()
-        chassis_affs, quirk_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
+        chassis_affs, quirk_map, alt_variant_map = _build_affinity_context(affinity_rows, prefab_base, gear_ui_map)
     except Exception:
-        chassis_affs, quirk_map = [], {}
+        chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
         for vrow in variant_rows
     ]
 
