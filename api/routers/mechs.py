@@ -207,7 +207,11 @@ def _parse_loadout_locations(raw: Optional[str]) -> list[LoadoutLocation]:
     ]
 
 
-def _parse_inventory(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] = None) -> list[InventoryItem]:
+def _parse_inventory(
+    raw: Optional[str],
+    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_blacklist: Optional[set[str]] = None,
+) -> list[InventoryItem]:
     if not raw:
         return []
     try:
@@ -222,12 +226,17 @@ def _parse_inventory(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] =
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
             weapon_category=item.get("weapon_category"),
             ui_name=gear_ui_map.get(item.get("ComponentDefID", "")) if gear_ui_map else None,
+            blacklisted=item.get("ComponentDefID", "") in gear_blacklist if gear_blacklist else False,
         )
         for item in items
     ]
 
 
-def _parse_equipment(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] = None) -> list[EquipmentItem]:
+def _parse_equipment(
+    raw: Optional[str],
+    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_blacklist: Optional[set[str]] = None,
+) -> list[EquipmentItem]:
     if not raw:
         return []
     try:
@@ -242,6 +251,7 @@ def _parse_equipment(raw: Optional[str], gear_ui_map: Optional[dict[str, str]] =
             hardpoint_slot=int(item.get("HardpointSlot", 0)),
             weapon_category=item.get("weapon_category"),
             ui_name=gear_ui_map.get(item.get("ComponentDefID", "")) if gear_ui_map else None,
+            blacklisted=item.get("ComponentDefID", "") in gear_blacklist if gear_blacklist else False,
         )
         for item in items
     ]
@@ -355,12 +365,13 @@ def _build_variant_detail(
     quirk_map: Optional[dict[str, list[AffinityEntry]]] = None,
     gear_ui_map: Optional[dict[str, str]] = None,
     alt_variant_map: Optional[dict[str, list[AffinityEntry]]] = None,
+    gear_blacklist: Optional[set[str]] = None,
 ) -> VariantDetail:
     loadout_id = lrow["id"] if lrow else None
     era_tags = _split_csv(lrow["era_tags"] if lrow else None)
     faction_tags = _split_csv(lrow["faction_tags"] if lrow else None)
     loadout_locations = _parse_loadout_locations(lrow["locations_json"] if lrow else None)
-    inventory = _parse_inventory(lrow["inventory_json"] if lrow else None, gear_ui_map)
+    inventory = _parse_inventory(lrow["inventory_json"] if lrow else None, gear_ui_map, gear_blacklist)
     spawn_tags = _parse_json_list(lrow["required_to_spawn_tags"] if lrow else None)
 
     hardpoints_summary = _compute_hardpoints_summary(
@@ -413,7 +424,7 @@ def _build_variant_detail(
         drop_cost_modifier=vrow["drop_cost_modifier"],
         chassis_tags=_parse_json_list(vrow["chassis_tags"]),
         locations=_parse_variant_locations(vrow["locations_json"]),
-        fixed_equipment=_parse_equipment(vrow["fixed_equipment_json"], gear_ui_map),
+        fixed_equipment=_parse_equipment(vrow["fixed_equipment_json"], gear_ui_map, gear_blacklist),
         chassis_defaults=_parse_json_list(vrow["chassis_defaults_json"]),
         multi_defaults=_parse_json_list(vrow["multi_defaults_json"]),
         lootable_unique_mech=bool(vrow["lootable_unique_mech"]),
@@ -434,6 +445,14 @@ async def _fetch_gear_ui_map(db: aiosqlite.Connection) -> dict[str, str]:
     async with db.execute("SELECT id, ui_name FROM gear WHERE ui_name IS NOT NULL") as cur:
         rows = await cur.fetchall()
     return {row["id"]: row["ui_name"] for row in rows}
+
+
+async def _fetch_gear_blacklist_set(db: aiosqlite.Connection) -> set[str]:
+    async with db.execute(
+        "SELECT id FROM gear WHERE component_tags LIKE '%\"BLACKLISTED\"%'"
+    ) as cur:
+        rows = await cur.fetchall()
+    return {row["id"] for row in rows}
 
 
 # ---------------------------------------------------------------------------
@@ -679,6 +698,7 @@ async def get_mech(
     }
 
     gear_ui_map = await _fetch_gear_ui_map(db)
+    gear_blacklist = await _fetch_gear_blacklist_set(db)
 
     # Fetch all affinities once; resolve Global+Chassis pre-matched + quirk map for per-variant
     try:
@@ -691,7 +711,7 @@ async def get_mech(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
         for vrow in variant_rows
     ]
 
@@ -755,6 +775,7 @@ async def get_battle_armor(
     }
 
     gear_ui_map = await _fetch_gear_ui_map(db)
+    gear_blacklist = await _fetch_gear_blacklist_set(db)
 
     try:
         async with db.execute(
@@ -766,7 +787,7 @@ async def get_battle_armor(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
         for vrow in variant_rows
     ]
 
@@ -911,6 +932,7 @@ async def get_vehicle(
     loadout_by_variant = {row["variant_id"]: row for row in loadout_rows}
 
     gear_ui_map = await _fetch_gear_ui_map(db)
+    gear_blacklist = await _fetch_gear_blacklist_set(db)
 
     try:
         async with db.execute(
@@ -922,7 +944,7 @@ async def get_vehicle(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
         for vrow in variant_rows
     ]
 

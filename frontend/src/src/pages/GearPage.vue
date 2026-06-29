@@ -11,6 +11,20 @@
       <RouterLink :to="browsePath" class="back-link">← Back to {{ browseLabel }}</RouterLink>
     </div>
 
+    <div v-else-if="isClassified" class="classified-page">
+      <div class="classified-header">
+        <span class="classified-warning">Warning</span>
+        <span class="classified-subtitle">You are attempting to access classified information</span>
+      </div>
+      <div class="classified-body">
+        <img src="/classified.png" alt="CLASSIFIED" class="classified-img" />
+        <div class="classified-text">
+          <p>This item or unit has been marked as restricted (not directly for player use) or spoiler by the Developers.</p>
+          <p>If you feel this was done in error, open a ticket on <a href="https://discord.gg/93kxWQZ" target="_blank" rel="noopener" class="classified-link">Discuss</a>.</p>
+        </div>
+      </div>
+    </div>
+
     <template v-else>
       <div class="gear-layout">
         <main class="main-col">
@@ -197,6 +211,11 @@ const gearId = computed(() => route.params.gearId as string)
 
 const { data, isLoading, isError } = useGearDetail(gearId)
 
+const hideBlacklisted = import.meta.env.VITE_HIDE_BLACKLISTED === 'true'
+const isClassified = computed(() =>
+  hideBlacklisted && !!data.value?.component_tags.includes('BLACKLISTED')
+)
+
 // Infer browse mode from current URL prefix
 const browsePath = computed(() => {
   if (route.path.startsWith('/weapons')) return '/weapons'
@@ -268,6 +287,68 @@ const componentTypeBadgeKey = computed(() => {
 .not-found-msg { color: var(--text-muted); font-size: 16px; }
 .back-link { color: var(--accent-blue); text-decoration: none; font-size: 14px; }
 .back-link:hover { text-decoration: underline; }
+
+.classified-page {
+  max-width: 700px;
+  margin: 48px auto;
+  padding: 0 16px;
+}
+
+.classified-header {
+  border: 1px solid rgba(200, 50, 50, 0.4);
+  background: rgba(200, 50, 50, 0.08);
+  border-radius: 4px;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.classified-warning {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e05050;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.classified-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.classified-body {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.classified-img {
+  width: 260px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.classified-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.classified-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+.classified-link:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .classified-body { flex-direction: column; }
+  .classified-img { width: 100%; }
+}
 
 .gear-layout {
   display: flex;

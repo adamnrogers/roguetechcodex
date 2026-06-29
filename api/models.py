@@ -57,6 +57,7 @@ class InventoryItem(BaseModel):
     hardpoint_slot: int
     weapon_category: Optional[str] = None
     ui_name: Optional[str] = None
+    blacklisted: bool = False
 
 
 class EquipmentItem(BaseModel):
@@ -66,6 +67,7 @@ class EquipmentItem(BaseModel):
     hardpoint_slot: int
     weapon_category: Optional[str] = None
     ui_name: Optional[str] = None
+    blacklisted: bool = False
 
 
 # ---------------------------------------------------------------------------

@@ -44,6 +44,7 @@ export interface InventoryItem {
   hardpoint_slot: number
   weapon_category: string | null
   ui_name?: string | null
+  blacklisted?: boolean
 }
 
 export interface EquipmentItem {
@@ -53,6 +54,7 @@ export interface EquipmentItem {
   hardpoint_slot: number
   weapon_category: string | null
   ui_name?: string | null
+  blacklisted?: boolean
 }
 
 export interface VariantDetail {

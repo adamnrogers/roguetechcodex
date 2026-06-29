@@ -29,10 +29,10 @@ if [[ ! -d portraits ]]; then
 fi
 echo "    portraits/: $(find portraits -type f | wc -l) files"
 
-echo "==> [3/3] Building frontend"
+echo "==> [3/3] Building frontend (standalone: BLACKLISTED items hidden)"
 cd frontend/src
 npm ci
-npm run build
+VITE_HIDE_BLACKLISTED=true npm run build
 cd "$REPO_ROOT"
 
 if [[ ! -d frontend/src/dist ]]; then

@@ -151,6 +151,7 @@ export function useGearList(filters: Ref<GearFilters>) {
       if (filters.value.maxHeat !== null) params.max_heat = filters.value.maxHeat
       if (filters.value.minSlots !== null) params.min_slots = filters.value.minSlots
       if (filters.value.maxSlots !== null) params.max_slots = filters.value.maxSlots
+      if (import.meta.env.VITE_HIDE_BLACKLISTED === 'true') params.hide_blacklisted = true
       return apiFetch<GearListResponse>('/api/v1/gear', params)
     },
     staleTime: 5 * 60 * 1000,

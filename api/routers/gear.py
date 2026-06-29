@@ -51,6 +51,7 @@ async def list_gear(
     include_locations: Optional[list[str]] = Query(default=None),
     exclude_locations: Optional[list[str]] = Query(default=None),
     source_mod: Optional[str] = Query(default=None),
+    hide_blacklisted: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=60, ge=1, le=200),
     sort: str = Query(default="name"),
@@ -176,6 +177,9 @@ async def list_gear(
     if source_mod:
         conditions.append("g.source_mod = ?")
         params.append(source_mod)
+
+    if hide_blacklisted:
+        conditions.append("(g.component_tags NOT LIKE '%\"BLACKLISTED\"%' OR g.component_tags IS NULL)")
 
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
