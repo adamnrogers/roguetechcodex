@@ -436,6 +436,21 @@ def _chassis_group_key(entity_id: str, data: dict) -> str:
     return chassis_key(entity_id, data)
 
 
+# Chassis whose chassisdef Description.Name names the base mech they were derived from
+# rather than their own identity. Keyed on lowercased PrefabID (the chassis_key).
+_OMNI_DISPLAY_NAMES: dict[str, str] = {
+    "omnikgc":         "Proteus",
+    "anand":           "Anand",
+    "badbcatha":       "Badb Catha",
+    "hammertime":      "Hephaistos",
+    "mhacha":          "Mhacha",
+    "omniblackknight": "Conquistador",
+    "aswang":          "Aswang",
+    "gojira":          "Mekagojira",
+    "madcatlam":       "Mad Cat LAM",
+}
+
+
 def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
     """Derive and insert one chassis row per unique chassis_key."""
     chassis: dict[str, dict] = {}
@@ -444,7 +459,7 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
         if key not in chassis:
             desc = data.get("Description", {})
             v_prefab = data.get("Custom", {}).get("VAssemblyVariant", {}).get("PrefabID", "")
-            ui_name = v_prefab or desc.get("UIName") or desc.get("Name") or key
+            ui_name = _OMNI_DISPLAY_NAMES.get(key) or v_prefab or desc.get("UIName") or desc.get("Name") or key
             raw_icon = desc.get("Icon", "")
             chassis[key] = {
                 "prefab_base": key,
@@ -511,6 +526,11 @@ def insert_variants(
             variant_name = ui_parts[1] if len(ui_parts) > 1 else vehicle_variant_name(entity_id)
         else:
             variant_name = data.get("VariantName") or ""
+
+        # Override ui_name for chassis whose Description.Name is a different mech entirely.
+        # Produces e.g. "Proteus PT-OB" instead of "King Crab".
+        if prefab_base in _OMNI_DISPLAY_NAMES and variant_name:
+            ui_name = f"{_OMNI_DISPLAY_NAMES[prefab_base]} {variant_name}"
 
         drop_cost = custom.get("DropCostFactor", {}).get("DropModifier")
         lootable_block = custom.get("LootableUniqueMech", {}).get("BlockAssembly", False)
