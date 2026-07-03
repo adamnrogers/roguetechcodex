@@ -396,7 +396,10 @@ def scan(rt_root: Path) -> tuple[dict, dict, dict, dict, int]:
         if should_exclude(path):
             continue
         kind = classify(path.stem)
-        if not kind:
+        stem_lower = path.stem.lower()
+        is_handheld_candidate = not kind and "handheld" in stem_lower
+        is_default_candidate = not kind and not is_handheld_candidate and stem_lower.startswith("default_")
+        if not kind and not is_handheld_candidate and not is_default_candidate:
             continue
 
         try:
@@ -406,6 +409,24 @@ def scan(rt_root: Path) -> tuple[dict, dict, dict, dict, int]:
 
         if not isinstance(data, dict):
             continue
+
+        # Classify HandHeld gear that uses non-standard file prefixes (Default_, Lootable_, etc.)
+        if is_handheld_candidate:
+            ct = data.get("ComponentType")
+            cats = data.get("Custom", {}).get("Category", [])
+            cat_ids = {c.get("CategoryID", "") for c in cats if isinstance(c, dict)}
+            if ct in GEAR_COMPONENT_TYPES and "HandHeld" in cat_ids:
+                kind = "gear"
+            else:
+                continue
+        # Classify chassis-default component files (Default_Armor_*, Default_FCS_*, etc.)
+        # referenced only via Custom.ChassisDefaults/MultiDefaults, never by filename prefix.
+        elif is_default_candidate:
+            ct = data.get("ComponentType")
+            if ct in GEAR_COMPONENT_TYPES:
+                kind = "gear"
+            else:
+                continue
 
         if kind == "affinity":
             entity_id = data.get("id", "").strip()
@@ -542,7 +563,9 @@ def insert_variants(
         # Structural defaults (cockpit, life support, actuators, CT slot labels) are
         # defined globally in Defaults_MechEngineer.json, not per-chassisdef.
         # CT slot labels are skipped for categories already present in chassisdef
-        # FixedEquipment to avoid showing both the label and the actual item.
+        # FixedEquipment, or overridden per-chassis via Custom.ChassisDefaults (e.g.
+        # ARC-2RF's CockpitFCS override), to avoid showing both the global default
+        # and the actual overriding item.
         chassis_fixed_raw = [
             item for item in data.get("FixedEquipment", [])
             if item.get("ComponentDefID", "") not in _HIDDEN_FIXED_COMPONENT_IDS
@@ -552,9 +575,12 @@ def insert_variants(
             for item in chassis_fixed_raw
             if ct_map.get(item.get("ComponentDefID", ""))
         }
+        chassis_defaults_categories = {
+            entry["CategoryID"] for entry in chassis_defaults if entry.get("CategoryID")
+        }
         structural = build_structural_defaults(
             raw_tags, unit_type, structural_categories, actuator_exclusions,
-            skip_ct_categories=ct_categories_present,
+            skip_ct_categories=ct_categories_present | chassis_defaults_categories,
         )
         fixed_equipment = _enrich_category(structural + chassis_fixed_raw, cat_map)
 

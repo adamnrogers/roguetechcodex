@@ -257,6 +257,43 @@ def _parse_equipment(
     ]
 
 
+def _resolve_chassis_defaults(
+    raw: Optional[str],
+    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_blacklist: Optional[set[str]] = None,
+) -> list[InventoryItem]:
+    """Flatten Custom.ChassisDefaults (nested by CategoryID) into InventoryItem rows."""
+    flattened = [
+        {
+            "MountedLocation": d.get("Location", ""),
+            "ComponentDefID": d.get("DefID", ""),
+            "ComponentDefType": d.get("Type", "Upgrade"),
+            "HardpointSlot": -1,
+        }
+        for entry in _parse_json_list(raw)
+        for d in entry.get("Defaults", [])
+    ]
+    return _parse_inventory(json.dumps(flattened), gear_ui_map, gear_blacklist)
+
+
+def _resolve_multi_defaults(
+    raw: Optional[str],
+    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_blacklist: Optional[set[str]] = None,
+) -> list[InventoryItem]:
+    """Flatten Custom.MultiDefaults (flat list) into InventoryItem rows."""
+    flattened = [
+        {
+            "MountedLocation": e.get("Location", ""),
+            "ComponentDefID": e.get("DefID", ""),
+            "ComponentDefType": e.get("ComponentType", "Upgrade"),
+            "HardpointSlot": -1,
+        }
+        for e in _parse_json_list(raw)
+    ]
+    return _parse_inventory(json.dumps(flattened), gear_ui_map, gear_blacklist)
+
+
 def _split_csv(raw: Optional[str]) -> list[str]:
     if not raw:
         return []
@@ -372,6 +409,8 @@ def _build_variant_detail(
     faction_tags = _split_csv(lrow["faction_tags"] if lrow else None)
     loadout_locations = _parse_loadout_locations(lrow["locations_json"] if lrow else None)
     inventory = _parse_inventory(lrow["inventory_json"] if lrow else None, gear_ui_map, gear_blacklist)
+    inventory += _resolve_chassis_defaults(vrow["chassis_defaults_json"], gear_ui_map, gear_blacklist)
+    inventory += _resolve_multi_defaults(vrow["multi_defaults_json"], gear_ui_map, gear_blacklist)
     spawn_tags = _parse_json_list(lrow["required_to_spawn_tags"] if lrow else None)
 
     hardpoints_summary = _compute_hardpoints_summary(
