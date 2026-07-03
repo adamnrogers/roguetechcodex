@@ -156,11 +156,11 @@
           <div class="sidebar-section">
             <div class="sidebar-section-header">Factions</div>
             <ul class="sidebar-list">
-              <li v-for="faction in allFactions" :key="faction">
+              <li v-for="faction in allFactions" :key="faction.name">
                 <RouterLink
-                  :to="{ path: browsePath, query: { faction } }"
+                  :to="{ path: browsePath, query: { faction: faction.name } }"
                   class="sidebar-link"
-                >{{ faction }}</RouterLink>
+                >{{ faction.display }}</RouterLink>
               </li>
               <li v-if="!allFactions.length" class="sidebar-empty">None</li>
             </ul>
@@ -187,7 +187,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChassisDetail } from '../composables/useChassisDetail'
 import { renderRichText } from '../utils/richText'
-import { humanizeMod, canonicalizeFaction, humanizeBiomeTag } from '../utils/humanize'
+import { humanizeMod, canonicalizeFactionWithYear, humanizeBiomeTag } from '../utils/humanize'
 import { portraitUrl } from '../utils/portrait'
 import ComponentLayoutTable from '../components/ComponentLayoutTable.vue'
 import AffinityTable from '../components/AffinityTable.vue'
@@ -243,16 +243,24 @@ const selectedVariant = computed(() => {
 
 const allFactions = computed(() => {
   if (!data.value) return []
-  const seen = new Map<string, string>() // canonical name → first canonical name (dedup)
+  const years = new Map<string, Set<string>>() // canonical name → years seen
+  const hasBase = new Set<string>() // canonical name → seen a year-less tag
   for (const v of data.value.variants) {
     for (const raw of v.faction_tags) {
-      const canonical = canonicalizeFaction(raw)
-      if (canonical !== null && !seen.has(canonical)) {
-        seen.set(canonical, canonical)
-      }
+      const { name, year } = canonicalizeFactionWithYear(raw)
+      if (name === null) continue
+      if (!years.has(name)) years.set(name, new Set())
+      if (year) years.get(name)!.add(year)
+      else hasBase.add(name)
     }
   }
-  return [...seen.keys()].sort()
+  return [...years.entries()]
+    .map(([name, yrs]) => {
+      if (!yrs.size) return { name, display: name }
+      const parts = hasBase.has(name) ? ['Base', ...[...yrs].sort()] : [...yrs].sort()
+      return { name, display: `${name} (${parts.join(', ')})` }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const biomeRestrictions = computed(() => {

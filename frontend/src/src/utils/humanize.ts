@@ -52,7 +52,7 @@ export function humanizeBiomeTag(tag: string): string {
  * Era suffixes (3025, 3031, 3050, 3150, etc.) are stripped at lookup time so
  * "kurita3031" → strips to "kurita" → 'Draconis Combine'. Only add an era-
  * suffixed key here when the era variant resolves to a DIFFERENT display name
- * than its base faction (e.g. ClanSeaFox3150 ≠ ClanDiamondShark).
+ * than its base faction would.
  */
 const FACTION_MAP: Record<string, string> = {
   // ── Inner Sphere great houses ───────────────────────────────────────────
@@ -141,7 +141,6 @@ const FACTION_MAP: Record<string, string> = {
   clanhellshorses:              'Clan Hell\'s Horses',
   clandiamondshark:             'Clan Diamond Shark',
   clanseafox:                   'Clan Sea Fox',
-  ClanSeaFox3150:               'Clan Sea Fox',
   clannovacat:                  'Clan Nova Cat',
   clanprotectorate:             'Clan Nova Cat Protectorate',
   clanstaradder:                'Clan Star Adder',
@@ -258,21 +257,40 @@ const FACTION_MAP_LOWER: Record<string, string> = Object.fromEntries(
  *   4. Fall through to humanizeTag
  */
 export function canonicalizeFaction(raw: string): string | null {
-  const lower = raw.toLowerCase()
-  if (SYSTEM_TAGS.has(lower)) return null
+  return resolveFaction(raw).name
+}
 
-  if (raw in FACTION_MAP) return FACTION_MAP[raw]
-  if (lower in FACTION_MAP_LOWER) return FACTION_MAP_LOWER[lower]
+/**
+ * Same resolution as canonicalizeFaction, but also surfaces the era year
+ * when the raw tag matched via the "strip trailing 4-digit year" fallback
+ * (e.g. "kurita3031" → { name: 'Draconis Combine', year: '3031' }).
+ * Tags that match FACTION_MAP directly (e.g. "ClanSeaFox3150", a distinct
+ * faction in its own right) return year: null — their digits are part of
+ * the faction identity, not a year to display separately.
+ */
+export function canonicalizeFactionWithYear(raw: string): { name: string | null; year: string | null } {
+  return resolveFaction(raw)
+}
+
+function resolveFaction(raw: string): { name: string | null; year: string | null } {
+  const lower = raw.toLowerCase()
+  if (SYSTEM_TAGS.has(lower)) return { name: null, year: null }
+
+  if (raw in FACTION_MAP) return { name: FACTION_MAP[raw], year: null }
+  if (lower in FACTION_MAP_LOWER) return { name: FACTION_MAP_LOWER[lower], year: null }
 
   // Strip trailing 4-digit era year (3025, 3031, 3050, 3150, …) and retry
-  const base = raw.replace(/\d{4}$/, '')
-  if (base.length && base !== raw) {
-    const baseLower = base.toLowerCase()
-    if (base in FACTION_MAP) return FACTION_MAP[base]
-    if (baseLower in FACTION_MAP_LOWER) return FACTION_MAP_LOWER[baseLower]
+  const match = raw.match(/^(.*?)(\d{4})$/)
+  if (match) {
+    const [, base, year] = match
+    if (base.length) {
+      const baseLower = base.toLowerCase()
+      if (base in FACTION_MAP) return { name: FACTION_MAP[base], year }
+      if (baseLower in FACTION_MAP_LOWER) return { name: FACTION_MAP_LOWER[baseLower], year }
+    }
   }
 
-  return humanizeTag(raw)
+  return { name: humanizeTag(raw), year: null }
 }
 
 /**
