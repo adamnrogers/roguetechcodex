@@ -90,6 +90,7 @@ class VariantDetail(BaseModel):
     chassis_defaults: list
     multi_defaults: list
     lootable_unique_mech: bool
+    is_unique: bool                     # UniqueMech chassis tag or unit_rarity_chassis_unique loadout tag
     source_mod: Optional[str]
     hardpoints_summary: str             # e.g. "4B 3E 5M 1S 20JJ"
     # Embedded loadout (None if no mechdef exists)
@@ -117,6 +118,7 @@ class ChassisSummary(BaseModel):
     variant_id: str
     variant_name: Optional[str]
     variant_ui_name: Optional[str] = None
+    is_unique: bool = False
 
 
 class ChassisListResponse(BaseModel):

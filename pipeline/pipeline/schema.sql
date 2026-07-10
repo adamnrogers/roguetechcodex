@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS loadout (
     locations_json          TEXT,               -- JSON array of per-location armor values
     required_to_spawn_tags  TEXT,               -- JSON array from RequiredToSpawnCompanyTags
     source_file             TEXT,
-    source_mod              TEXT
+    source_mod              TEXT,
+    nickname_name           TEXT                -- mechdef/vehicledef Description.UIName, e.g. "King Crab KGC-KJ 'Kaiju'"
 );
 
 CREATE INDEX IF NOT EXISTS idx_chassis_unit_type    ON chassis(unit_type);

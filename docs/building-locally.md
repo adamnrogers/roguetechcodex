@@ -64,7 +64,7 @@ PyInstaller must run on Windows to produce a Windows executable.
 Open PowerShell and navigate to the repo root. If the repo is in WSL, access it via:
 
 ```powershell
-cd \\wsl$\Ubuntu\home\<username>\projects\RogueTech Codex
+cd '\\wsl$\Ubuntu\home\<username>\projects\RogueTech Codex'
 ```
 
 Install dependencies and build:

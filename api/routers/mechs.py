@@ -310,13 +310,32 @@ def _parse_json_list(raw: Optional[str]) -> list:
         return []
 
 
+_UNIQUE_LOADOUT_TAGS = {"unit_rarity_chassis_unique", "unit_unique"}
+
+
+def _compute_is_unique(chassis_tags_json: Optional[str], unit_tags_json: Optional[str]) -> bool:
+    """UniqueMech chassis tag (mechs/BA) or unit_rarity_chassis_unique/unit_unique loadout tag (vehicles/VTOLs)."""
+    chassis_tags = {t.lower() for t in _parse_json_list(chassis_tags_json) if isinstance(t, str)}
+    if "uniquemech" in chassis_tags:
+        return True
+    unit_tags = {t.lower() for t in _parse_json_list(unit_tags_json) if isinstance(t, str)}
+    return bool(unit_tags & _UNIQUE_LOADOUT_TAGS)
+
+
+_UNIQUE_SQL_CONDITION = (
+    '(v.chassis_tags LIKE \'%"UniqueMech"%\''
+    ' OR l.unit_tags LIKE \'%"unit_rarity_chassis_unique"%\''
+    ' OR l.unit_tags LIKE \'%"unit_unique"%\')'
+)
+
+
 def _extract_quirk_ids(fixed_equipment_json: Optional[str]) -> list[str]:
-    """Return ComponentDefIDs from fixed equipment that start with 'Quirk_'."""
+    """Return ComponentDefIDs from fixed equipment (matched against affinity quirk_names, whatever the prefix)."""
     items = _parse_json_list(fixed_equipment_json)
     return [
         item.get("ComponentDefID", "")
         for item in items
-        if isinstance(item, dict) and item.get("ComponentDefID", "").startswith("Quirk_")
+        if isinstance(item, dict) and item.get("ComponentDefID", "")
     ]
 
 
@@ -467,6 +486,7 @@ def _build_variant_detail(
         chassis_defaults=_parse_json_list(vrow["chassis_defaults_json"]),
         multi_defaults=_parse_json_list(vrow["multi_defaults_json"]),
         lootable_unique_mech=bool(vrow["lootable_unique_mech"]),
+        is_unique=_compute_is_unique(vrow["chassis_tags"], lrow["unit_tags"] if lrow else None),
         source_mod=vrow["source_mod"],
         hardpoints_summary=hardpoints_summary,
         loadout_id=loadout_id,
@@ -561,6 +581,7 @@ async def list_mechs(
     hp_handheld_loc:    Optional[str] = Query(default=None),
     hp_exclude_omni:    bool          = Query(default=False),
     hp_omni_only:       bool          = Query(default=False),
+    unique_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -575,7 +596,8 @@ async def list_mechs(
     params: list = []
 
     if q:
-        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ?)")
+        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ? OR l.nickname_name LIKE ?)")
+        params.append(f"%{q}%")
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
@@ -635,12 +657,16 @@ async def list_mechs(
     _add_hp_condition(conditions, params, hp_bomb_count,      hp_bomb_loc,      "InternalBombBay",   hp_exclude_omni)
     _add_hp_condition(conditions, params, hp_handheld_count,  hp_handheld_loc,  "SpecialHandHeld",   hp_exclude_omni)
 
+    if unique_only:
+        conditions.append(_UNIQUE_SQL_CONDITION)
+
     where_clause = " AND ".join(conditions)
 
     count_sql = f"""
         SELECT COUNT(*)
         FROM variant v
         JOIN chassis c ON c.prefab_base = v.chassis_id
+        LEFT JOIN loadout l ON l.variant_id = v.id
         WHERE {where_clause}
     """
     async with db.execute(count_sql, params) as cur:
@@ -653,6 +679,8 @@ async def list_mechs(
             v.id          AS variant_id,
             v.variant_name,
             v.ui_name     AS variant_ui_name,
+            v.chassis_tags,
+            l.unit_tags,
             c.prefab_base,
             c.ui_name,
             c.unit_type,
@@ -661,6 +689,7 @@ async def list_mechs(
             c.icon
         FROM variant v
         JOIN chassis c ON c.prefab_base = v.chassis_id
+        LEFT JOIN loadout l ON l.variant_id = v.id
         WHERE {where_clause}
         ORDER BY {order_col} {order_dir}, v.variant_name ASC
         LIMIT ? OFFSET ?
@@ -679,6 +708,7 @@ async def list_mechs(
             variant_id=row["variant_id"],
             variant_name=row["variant_name"],
             variant_ui_name=row["variant_ui_name"] if row["variant_ui_name"] != row["ui_name"] else None,
+            is_unique=_compute_is_unique(row["chassis_tags"], row["unit_tags"]),
         )
         for row in rows
     ]
@@ -849,6 +879,7 @@ async def list_vehicles(
     q: Optional[str] = Query(default=None),
     unit_type: Optional[str] = Query(default=None),
     tonnage: list[float] = Query(default=[]),
+    unique_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     sort: str = Query(default="name"),
@@ -859,13 +890,14 @@ async def list_vehicles(
     order_dir = "DESC" if sort_dir.lower() == "desc" else "ASC"
 
     if unit_type in ("vehicle", "vtol"):
-        conditions: list[str] = [f"c.unit_type = '{unit_type}'"]
+        conditions: list[str] = [f"v.unit_type = '{unit_type}'"]
     else:
-        conditions = ["c.unit_type IN ('vehicle', 'vtol')"]
+        conditions = ["v.unit_type IN ('vehicle', 'vtol')"]
     params: list = []
 
     if q:
-        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ?)")
+        conditions.append("(c.ui_name LIKE ? OR v.variant_name LIKE ? OR l.nickname_name LIKE ?)")
+        params.append(f"%{q}%")
         params.append(f"%{q}%")
         params.append(f"%{q}%")
 
@@ -874,12 +906,16 @@ async def list_vehicles(
         conditions.append(f"c.tonnage IN ({placeholders})")
         params.extend(tonnage)
 
+    if unique_only:
+        conditions.append(_UNIQUE_SQL_CONDITION)
+
     where_clause = " AND ".join(conditions)
 
     count_sql = f"""
         SELECT COUNT(*)
         FROM variant v
         JOIN chassis c ON c.prefab_base = v.chassis_id
+        LEFT JOIN loadout l ON l.variant_id = v.id
         WHERE {where_clause}
     """
     async with db.execute(count_sql, params) as cur:
@@ -892,6 +928,8 @@ async def list_vehicles(
             v.id          AS variant_id,
             v.variant_name,
             v.ui_name     AS variant_ui_name,
+            v.chassis_tags,
+            l.unit_tags,
             c.prefab_base,
             c.ui_name,
             c.unit_type,
@@ -900,6 +938,7 @@ async def list_vehicles(
             c.icon
         FROM variant v
         JOIN chassis c ON c.prefab_base = v.chassis_id
+        LEFT JOIN loadout l ON l.variant_id = v.id
         WHERE {where_clause}
         ORDER BY {order_col} {order_dir}, v.variant_name ASC
         LIMIT ? OFFSET ?
@@ -918,6 +957,7 @@ async def list_vehicles(
             variant_id=row["variant_id"],
             variant_name=row["variant_name"],
             variant_ui_name=row["variant_ui_name"] if row["variant_ui_name"] != row["ui_name"] else None,
+            is_unique=_compute_is_unique(row["chassis_tags"], row["unit_tags"]),
         )
         for row in rows
     ]

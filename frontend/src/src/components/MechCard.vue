@@ -14,6 +14,7 @@
           <div class="mech-meta">
             <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
             <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
+            <span v-if="is_unique" class="unique-badge">Unique</span>
             <span v-if="list" class="mech-type-inline">{{ unitTypeLabel }}</span>
           </div>
           <div v-if="!list" class="mech-type">{{ unitTypeLabel }}</div>
@@ -37,6 +38,7 @@ interface MechCardProps {
   variant_id: string
   variant_name: string | null
   variant_ui_name?: string | null
+  is_unique?: boolean
   list?: boolean
 }
 
@@ -143,6 +145,16 @@ const unitTypeLabel = computed(() => {
 .mech-tonnage {
   font-size: 12px;
   color: var(--text-muted);
+}
+.unique-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--badge-radius);
+  letter-spacing: 0.3px;
+  background: rgba(200, 160, 60, 0.18);
+  color: #d4af37;
 }
 .mech-type {
   color: var(--text-muted);

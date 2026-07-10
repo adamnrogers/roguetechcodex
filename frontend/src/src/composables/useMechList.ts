@@ -21,6 +21,7 @@ export interface ChassisSummary {
   variant_id: string
   variant_name: string | null
   variant_ui_name?: string | null
+  is_unique?: boolean
 }
 
 export interface ChassisListResponse {
@@ -73,6 +74,7 @@ export interface MechFilters {
   hasLowerArm: boolean | null
   hasHand: boolean | null
   hardpoints: HardpointFilters
+  uniqueOnly: boolean
 }
 
 export function defaultMechFilters(): MechFilters {
@@ -88,6 +90,7 @@ export function defaultMechFilters(): MechFilters {
     hasLowerArm: null,
     hasHand: null,
     hardpoints: defaultHardpoints(),
+    uniqueOnly: false,
   }
 }
 
@@ -129,6 +132,7 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
           unit_type: isBattleArmor.value ? 'battle_armor' : 'mech',
           has_lower_arm: filters.value.hasLowerArm ?? undefined,
           has_hand: filters.value.hasHand ?? undefined,
+          unique_only: filters.value.uniqueOnly || undefined,
           page: filters.value.page,
           page_size: 60,
           sort: filters.value.sort,
@@ -140,6 +144,7 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
         q: filters.value.q || undefined,
         tonnage: filters.value.tonnage.length ? filters.value.tonnage : undefined,
         unit_type: isVehicle.value ? 'vehicle' : isVtol.value ? 'vtol' : undefined,
+        unique_only: filters.value.uniqueOnly || undefined,
         page: filters.value.page,
         page_size: 60,
         sort: filters.value.sort,

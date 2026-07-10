@@ -46,6 +46,7 @@
               v-html="renderRichText(selectedVariant.details)"
             ></div>
             <p v-else class="empty-text">No description available.</p>
+            <span v-if="selectedVariant?.is_unique" class="unique-badge">Unique</span>
           </section>
 
           <!-- ── Bay section ───────────────────────────── -->
@@ -513,6 +514,19 @@ const parsedHardpoints = computed(() => {
 .wc-badge[data-wc="MEDIUM"]  { background: var(--badge-medium-bg);  color: var(--badge-medium-fg); }
 .wc-badge[data-wc="HEAVY"]   { background: var(--badge-heavy-bg);   color: var(--badge-heavy-fg); }
 .wc-badge[data-wc="ASSAULT"] { background: var(--badge-assault-bg); color: var(--badge-assault-fg); }
+
+.unique-badge {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--badge-radius, 4px);
+  letter-spacing: 0.3px;
+  background: rgba(200, 160, 60, 0.18);
+  color: #d4af37;
+}
 
 /* Sidebar hardpoint badges */
 .hp-badges {

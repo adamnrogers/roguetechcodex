@@ -73,6 +73,7 @@ export interface VariantDetail {
   chassis_defaults: unknown[]
   multi_defaults: unknown[]
   lootable_unique_mech: boolean
+  is_unique: boolean
   source_mod: string | null
   hardpoints_summary: string
   loadout_id: string | null

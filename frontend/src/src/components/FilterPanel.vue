@@ -46,6 +46,12 @@
         {{ eraOpt.label }} <span class="era-years">[{{ eraOpt.years }}]</span>
       </label>
     </div>
+    <div class="filter-section">
+      <label class="filter-check">
+        <input type="checkbox" :checked="uniqueOnly" @change="emit('update:uniqueOnly', !uniqueOnly)" />
+        Unique only
+      </label>
+    </div>
     <div v-if="mode === 'mech'" class="filter-section">
       <h3 class="filter-title">Arm Actuators</h3>
       <label class="filter-check">
@@ -264,6 +270,7 @@ const props = defineProps<{
   hasLowerArm: boolean | null
   hasHand: boolean | null
   hardpoints: HardpointFilters
+  uniqueOnly: boolean
 }>()
 
 const emit = defineEmits<{
@@ -272,6 +279,7 @@ const emit = defineEmits<{
   'update:hasLowerArm': [value: boolean | null]
   'update:hasHand': [value: boolean | null]
   'update:hardpoints': [value: HardpointFilters]
+  'update:uniqueOnly': [value: boolean]
   'clearAll': []
 }>()
 
@@ -387,6 +395,7 @@ function clearAll() {
   emit('update:hasLowerArm', null)
   emit('update:hasHand', null)
   emit('update:hardpoints', defaultHardpoints())
+  emit('update:uniqueOnly', false)
   emit('clearAll')
 }
 </script>

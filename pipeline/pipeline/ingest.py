@@ -18,6 +18,7 @@ import re
 import sqlite3
 import sys
 import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -473,10 +474,18 @@ _OMNI_DISPLAY_NAMES: dict[str, str] = {
 
 
 def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
-    """Derive and insert one chassis row per unique chassis_key."""
+    """Derive and insert one chassis row per unique chassis_key.
+
+    unit_type is decided by majority vote across all files sharing the chassis
+    key, not by whichever file happens to be scanned first — a chassis family
+    can include a debug/experimental file missing the VTOL tag, and first-wins
+    would misclassify the whole group (and hide it from the correct browse tab).
+    """
     chassis: dict[str, dict] = {}
+    unit_type_votes: dict[str, Counter] = {}
     for entity_id, (data, path) in variant_data.items():
         key = _chassis_group_key(entity_id, data)
+        unit_type_votes.setdefault(key, Counter())[detect_unit_type(data)] += 1
         if key not in chassis:
             desc = data.get("Description", {})
             v_prefab = data.get("Custom", {}).get("VAssemblyVariant", {}).get("PrefabID", "")
@@ -485,11 +494,13 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
             chassis[key] = {
                 "prefab_base": key,
                 "ui_name": ui_name,
-                "unit_type": detect_unit_type(data),
                 "weight_class": data.get("weightClass"),
                 "tonnage": data.get("Tonnage"),
                 "icon": raw_icon.strip() or None,
             }
+
+    for key, c in chassis.items():
+        c["unit_type"] = unit_type_votes[key].most_common(1)[0][0]
 
     rows = [
         (c["prefab_base"], c["ui_name"], c["unit_type"], c["weight_class"], c["tonnage"], c["icon"])
@@ -652,6 +663,8 @@ def insert_loadouts(
         era_tags, faction_tags = extract_tags(tags)
         spawn_tags = data.get("RequiredToSpawnCompanyTags", {})
         spawn_items = spawn_tags.get("items", []) if isinstance(spawn_tags, dict) else []
+        desc = data.get("Description", {})
+        nickname_name = desc.get("UIName") or desc.get("Name") or ""
 
         rows.append((
             entity_id,
@@ -665,13 +678,15 @@ def insert_loadouts(
             json.dumps(spawn_items),
             str(path.relative_to(rt_root)),
             source_mod(path, rt_root),
+            nickname_name,
         ))
 
     con.executemany(
         """INSERT OR REPLACE INTO loadout
            (id, variant_id, chassis_id, unit_tags, era_tags, faction_tags,
-            inventory_json, locations_json, required_to_spawn_tags, source_file, source_mod)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            inventory_json, locations_json, required_to_spawn_tags, source_file, source_mod,
+            nickname_name)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
         rows,
     )
     con.commit()

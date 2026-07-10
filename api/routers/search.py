@@ -71,10 +71,12 @@ async def search(
         WHERE c.ui_name LIKE ?
            OR EXISTS(SELECT 1 FROM variant v5 WHERE v5.chassis_id = c.prefab_base
                      AND v5.variant_name LIKE ?)
+           OR EXISTS(SELECT 1 FROM variant v6 JOIN loadout l6 ON l6.variant_id = v6.id
+                     WHERE v6.chassis_id = c.prefab_base AND l6.nickname_name LIKE ?)
         ORDER BY rank, c.ui_name
         LIMIT 8
         """,
-        [q_contains, q, q_starts, q, q, q_starts, q_starts, q_contains, q_contains, q_contains],
+        [q_contains, q, q_starts, q, q, q_starts, q_starts, q_contains, q_contains, q_contains, q_contains],
     ) as cursor:
         async for row in cursor:
             unit_type: str = row["unit_type"] or "mech"
@@ -134,9 +136,10 @@ async def search_chassis(
         SELECT COUNT(*)
         FROM chassis c
         JOIN variant v ON v.chassis_id = c.prefab_base
-        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ?
+        LEFT JOIN loadout l ON l.variant_id = v.id
+        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ? OR l.nickname_name LIKE ?
         """,
-        [q_contains, q_contains],
+        [q_contains, q_contains, q_contains],
     ) as cursor:
         row = await cursor.fetchone()
         total = row[0] if row else 0
@@ -157,11 +160,12 @@ async def search_chassis(
             END AS rank
         FROM chassis c
         JOIN variant v ON v.chassis_id = c.prefab_base
-        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ?
+        LEFT JOIN loadout l ON l.variant_id = v.id
+        WHERE c.ui_name LIKE ? OR v.variant_name LIKE ? OR l.nickname_name LIKE ?
         ORDER BY rank, c.ui_name, v.variant_name
         LIMIT ? OFFSET ?
         """,
-        [q, q, q_starts, q_starts, q_contains, q_contains, q_contains, page_size, offset],
+        [q, q, q_starts, q_starts, q_contains, q_contains, q_contains, q_contains, page_size, offset],
     ) as cursor:
         async for row in cursor:
             unit_type: str = row["unit_type"] or "mech"

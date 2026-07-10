@@ -7,12 +7,14 @@
       :hasLowerArm="filters.hasLowerArm"
       :hasHand="filters.hasHand"
       :hardpoints="filters.hardpoints"
+      :uniqueOnly="filters.uniqueOnly"
       @update:tonnage="v => filters = { ...filters, tonnage: v, page: 1 }"
       @update:era="onEraChange"
       @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
       @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
       @update:hardpoints="v => filters = { ...filters, hardpoints: v, page: 1 }"
-      @clearAll="filters = { ...filters, tonnage: [], era: [], hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), page: 1 }"
+      @update:uniqueOnly="v => filters = { ...filters, uniqueOnly: v, page: 1 }"
+      @clearAll="filters = { ...filters, tonnage: [], era: [], hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), uniqueOnly: false, page: 1 }"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -143,7 +145,8 @@ function readFiltersFromRoute(): MechFilters {
   hardpoints.handheld.loc    = route.query.hp_hh_loc as string ?? ''
   hardpoints.excludeOmni     = route.query.hp_excl_omni === '1'
   hardpoints.omniOnly        = route.query.hp_omni_only === '1'
-  return { q, tonnage, era, faction, tag, page, sort, sortDir, hasLowerArm, hasHand, hardpoints }
+  const uniqueOnly = route.query.unique === '1'
+  return { q, tonnage, era, faction, tag, page, sort, sortDir, hasLowerArm, hasHand, hardpoints, uniqueOnly }
 }
 
 function clearTag() {
@@ -187,7 +190,7 @@ function nextPage() {
 watch(() => props.mode, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchInput.value = ''
-  filters.value = { q: '', tonnage: [], era: [], faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints() }
+  filters.value = { q: '', tonnage: [], era: [], faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), uniqueOnly: false }
 })
 
 // Sync filters to URL
@@ -212,6 +215,7 @@ watch(filters, (f) => {
   if (f.hardpoints.handheld.count)  { query.hp_hh = String(f.hardpoints.handheld.count); if (f.hardpoints.handheld.loc)  query.hp_hh_loc = f.hardpoints.handheld.loc }
   if (f.hardpoints.excludeOmni) query.hp_excl_omni = '1'
   if (f.hardpoints.omniOnly)    query.hp_omni_only = '1'
+  if (f.uniqueOnly) query.unique = '1'
   router.replace({ query })
 }, { deep: true })
 
