@@ -262,10 +262,7 @@ function gearRoute(id: string, defType: string): string | null {
   return null
 }
 
-const hideBlacklisted = import.meta.env.VITE_HIDE_BLACKLISTED === 'true'
-
 function aggregateItems(rawItems: { component_def_id: string; component_def_type: string; weapon_category?: string | null; ui_name?: string | null; blacklisted?: boolean }[]): CellItem[] {
-  if (hideBlacklisted) rawItems = rawItems.filter(i => !i.blacklisted)
   // Track first-seen defType, weapon_category, and ui_name per id
   const counts = new Map<string, number>()
   const defTypes = new Map<string, string>()
