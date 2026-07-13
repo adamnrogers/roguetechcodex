@@ -1169,8 +1169,10 @@ def insert_star_systems(con: sqlite3.Connection, rt_root: Path) -> int:
 # ── RTO Legend pilots ────────────────────────────────────────────────────────
 
 RTO_LEGEND_TAG = "pilot_rtolegend"
+RTO_CREW_TAG = "pilot_rtcrew"
+RTO_UNIQUE_PILOT_TAGS = (RTO_LEGEND_TAG, RTO_CREW_TAG)
 EXCLUDED_PILOT_TAG_PREFIXES = ("stat_on_", "name_", "can_pilot_")
-EXCLUDED_PILOT_TAGS = frozenset({"pilot_backer", RTO_LEGEND_TAG})
+EXCLUDED_PILOT_TAGS = frozenset({"pilot_backer", RTO_LEGEND_TAG, RTO_CREW_TAG})
 
 QUIRK_DEF_DIRS = (
     "Core/MechAffinity/QuirkDefs",
@@ -1315,10 +1317,11 @@ def build_requirements_payload(raw_def: dict, id_to_name: dict[str, str]) -> dic
 
 def insert_rto_pilots(con: sqlite3.Connection, rt_root: Path) -> int:
     """Insert one rto_pilot row per pilot_*.json whose PilotTags.items contains
-    "pilot_rtolegend". Two-pass: first collect all matching pilots and build an
-    id -> display name map, then resolve quirk/requirement cross-references."""
+    "pilot_rtolegend" or "pilot_rtcrew" (both are unique/hireable special pilots).
+    Two-pass: first collect all matching pilots and build an id -> display name
+    map, then resolve quirk/requirement cross-references."""
 
-    # Pass 1: collect RTO legend pilots + build id -> name map
+    # Pass 1: collect RTO legend/crew pilots + build id -> name map
     legends: list[tuple[Path, dict]] = []
     id_to_name: dict[str, str] = {}
     for path in sorted(rt_root.rglob("pilot_*.json")):
@@ -1328,7 +1331,7 @@ def insert_rto_pilots(con: sqlite3.Connection, rt_root: Path) -> int:
         if not data:
             continue
         items = data.get("PilotTags", {}).get("items", [])
-        if not isinstance(items, list) or RTO_LEGEND_TAG not in items:
+        if not isinstance(items, list) or not any(t in items for t in RTO_UNIQUE_PILOT_TAGS):
             continue
         entity_id = data.get("Description", {}).get("Id", "").strip()
         if not entity_id:
