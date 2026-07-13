@@ -20,6 +20,7 @@ from models import (
     StatsResponse,
     AffinityEntry,
     AffinityLevel,
+    QuirkEffect,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["mechs"])
@@ -339,6 +340,40 @@ def _extract_quirk_ids(fixed_equipment_json: Optional[str]) -> list[str]:
     ]
 
 
+# Generic filler entries added by the "Quirk" bonus-description tag itself, not a real effect.
+_GENERIC_QUIRK_TRAIT_TEXT = {"This Unit's Quirk.", "This Unit's Quirks."}
+
+
+def _build_quirk_effects(
+    fixed_equipment_json: Optional[str],
+    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_bonus_map: Optional[dict[str, list[str]]] = None,
+) -> list[QuirkEffect]:
+    """Own (always-active) effects for fixed-equipment items that are true quirks (id prefix
+    'Quirk_'), as distinct from mission-gated Affinity bonuses. Rendered above the Affinity
+    table on the chassis page."""
+    seen: set[str] = set()
+    effects: list[QuirkEffect] = []
+    for qid in _extract_quirk_ids(fixed_equipment_json):
+        if not qid.startswith("Quirk_") or qid in seen:
+            continue
+        seen.add(qid)
+        descriptions = [
+            d for d in (gear_bonus_map.get(qid) if gear_bonus_map else None) or []
+            if d not in _GENERIC_QUIRK_TRAIT_TEXT
+        ]
+        if not descriptions:
+            continue
+        effects.append(
+            QuirkEffect(
+                id=qid,
+                ui_name=(gear_ui_map.get(qid) or "") if gear_ui_map else "",
+                bonus_descriptions=descriptions,
+            )
+        )
+    return effects
+
+
 def _parse_affinity_levels(raw: Optional[str]) -> list[AffinityLevel]:
     try:
         items = json.loads(raw or "[]")
@@ -422,6 +457,7 @@ def _build_variant_detail(
     gear_ui_map: Optional[dict[str, str]] = None,
     alt_variant_map: Optional[dict[str, list[AffinityEntry]]] = None,
     gear_blacklist: Optional[set[str]] = None,
+    gear_bonus_map: Optional[dict[str, list[str]]] = None,
 ) -> VariantDetail:
     loadout_id = lrow["id"] if lrow else None
     era_tags = _split_csv(lrow["era_tags"] if lrow else None)
@@ -497,6 +533,7 @@ def _build_variant_detail(
         required_to_spawn_tags=spawn_tags,
         health_summary=health_summary,
         affinities=affinities,
+        quirks=_build_quirk_effects(vrow["fixed_equipment_json"], gear_ui_map, gear_bonus_map),
     )
 
 
@@ -504,6 +541,22 @@ async def _fetch_gear_ui_map(db: aiosqlite.Connection) -> dict[str, str]:
     async with db.execute("SELECT id, ui_name FROM gear WHERE ui_name IS NOT NULL") as cur:
         rows = await cur.fetchall()
     return {row["id"]: row["ui_name"] for row in rows}
+
+
+async def _fetch_gear_bonus_map(db: aiosqlite.Connection) -> dict[str, list[str]]:
+    async with db.execute(
+        "SELECT id, bonus_descriptions FROM gear WHERE id LIKE 'Quirk\\_%' ESCAPE '\\' AND bonus_descriptions IS NOT NULL"
+    ) as cur:
+        rows = await cur.fetchall()
+    result: dict[str, list[str]] = {}
+    for row in rows:
+        try:
+            descriptions = json.loads(row["bonus_descriptions"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            descriptions = []
+        if isinstance(descriptions, list):
+            result[row["id"]] = descriptions
+    return result
 
 
 async def _fetch_gear_blacklist_set(db: aiosqlite.Connection) -> set[str]:
@@ -768,6 +821,7 @@ async def get_mech(
 
     gear_ui_map = await _fetch_gear_ui_map(db)
     gear_blacklist = await _fetch_gear_blacklist_set(db)
+    gear_bonus_map = await _fetch_gear_bonus_map(db)
 
     # Fetch all affinities once; resolve Global+Chassis pre-matched + quirk map for per-variant
     try:
@@ -780,7 +834,7 @@ async def get_mech(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
         for vrow in variant_rows
     ]
 
@@ -805,7 +859,7 @@ async def get_battle_armor(
     db: aiosqlite.Connection = Depends(get_db),
 ) -> ChassisDetail:
     async with db.execute(
-        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage FROM chassis WHERE prefab_base = ? AND unit_type = 'battle_armor'",
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis WHERE prefab_base = ? AND unit_type = 'battle_armor'",
         (prefab_base,),
     ) as cur:
         chassis_row = await cur.fetchone()
@@ -845,6 +899,7 @@ async def get_battle_armor(
 
     gear_ui_map = await _fetch_gear_ui_map(db)
     gear_blacklist = await _fetch_gear_blacklist_set(db)
+    gear_bonus_map = await _fetch_gear_bonus_map(db)
 
     try:
         async with db.execute(
@@ -856,7 +911,7 @@ async def get_battle_armor(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
         for vrow in variant_rows
     ]
 
@@ -866,6 +921,7 @@ async def get_battle_armor(
         unit_type=chassis_row["unit_type"],
         weight_class=chassis_row["weight_class"],
         tonnage=chassis_row["tonnage"],
+        icon=chassis_row["icon"],
         variants=variants,
     )
 
@@ -1012,6 +1068,7 @@ async def get_vehicle(
 
     gear_ui_map = await _fetch_gear_ui_map(db)
     gear_blacklist = await _fetch_gear_blacklist_set(db)
+    gear_bonus_map = await _fetch_gear_bonus_map(db)
 
     try:
         async with db.execute(
@@ -1023,7 +1080,7 @@ async def get_vehicle(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist)
+        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
         for vrow in variant_rows
     ]
 

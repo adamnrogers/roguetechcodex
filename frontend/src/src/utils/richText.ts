@@ -75,9 +75,18 @@ function applyColourTags(escaped: string): string {
   )
 }
 
+// Mod lore text ("Details") bakes in a "Quirk: <name>" callout line. The quirk's actual
+// mechanics (and its affinity, if any) are already surfaced in the Affinity/Component
+// Layout sections, so this line is redundant in the description and is stripped here.
+const QUIRK_CALLOUT_RE = /\n*<b>\s*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\s*<\/b>\n*|\n*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\n*/gi
+
+export function stripQuirkCallout(raw: string): string {
+  return raw.replace(QUIRK_CALLOUT_RE, '\n\n')
+}
+
 export function renderRichText(raw: string | null | undefined): string {
   if (!raw) return ''
-  const escaped = raw
+  const escaped = stripQuirkCallout(raw)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // escape first
   return applyColourTags(escaped)
     .replace(/&lt;b&gt;/g, '<strong>').replace(/&lt;\/b&gt;/g, '</strong>')

@@ -16,6 +16,12 @@ export interface AffinityEntry {
   levels: AffinityLevel[]
 }
 
+export interface QuirkEffect {
+  id: string              // quirk gear ID, used for /quirks/:id link
+  ui_name: string
+  bonus_descriptions: string[]
+}
+
 export interface Hardpoint {
   weapon_mount_id: string
   omni: boolean
@@ -84,6 +90,7 @@ export interface VariantDetail {
   required_to_spawn_tags: string[]
   health_summary: string
   affinities: AffinityEntry[]
+  quirks: QuirkEffect[]
 }
 
 export interface ChassisDetail {

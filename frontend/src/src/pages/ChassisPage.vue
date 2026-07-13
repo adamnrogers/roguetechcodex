@@ -55,6 +55,12 @@
               <h2 class="section-title">{{ bayLabel }}</h2>
             </div>
 
+            <!-- Quirk effects (own, always-active — distinct from mission-gated Affinity) -->
+            <div v-if="selectedVariant?.quirks?.length" class="subsection">
+              <h3 class="subsection-title">Quirk</h3>
+              <QuirkTable :quirks="selectedVariant.quirks" />
+            </div>
+
             <!-- Affinity table -->
             <div class="subsection">
               <h3 class="subsection-title">Affinity</h3>
@@ -192,6 +198,7 @@ import { humanizeMod, canonicalizeFactionWithYear, humanizeBiomeTag } from '../u
 import { portraitUrl } from '../utils/portrait'
 import ComponentLayoutTable from '../components/ComponentLayoutTable.vue'
 import AffinityTable from '../components/AffinityTable.vue'
+import QuirkTable from '../components/QuirkTable.vue'
 
 const route = useRoute()
 const router = useRouter()

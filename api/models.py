@@ -21,6 +21,12 @@ class AffinityEntry(BaseModel):
     levels: list[AffinityLevel]
 
 
+class QuirkEffect(BaseModel):
+    id: str                  # quirk gear ID, used for /quirks/:id link
+    ui_name: str = ""
+    bonus_descriptions: list[str]
+
+
 # ---------------------------------------------------------------------------
 # Hardpoint / location sub-models (from variant.locations_json)
 # ---------------------------------------------------------------------------
@@ -102,6 +108,7 @@ class VariantDetail(BaseModel):
     required_to_spawn_tags: list[str]
     health_summary: str                 # e.g. "A=600/730 S=291"
     affinities: list[AffinityEntry]
+    quirks: list[QuirkEffect] = []
 
 
 # ---------------------------------------------------------------------------
