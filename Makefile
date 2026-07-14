@@ -53,7 +53,7 @@ ps: ## Show running containers
 # ── Development (source-mounted, hot reload) ──────────────────────────────────
 
 dev: ## Start dev servers with hot reload - no image rebuild needed for code changes
-	$(COMPOSE_DEV) up api frontend
+	$(COMPOSE_DEV) up -V api frontend
 
 dev-down: ## Stop dev services
 	$(COMPOSE_DEV) down

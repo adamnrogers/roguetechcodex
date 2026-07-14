@@ -26,7 +26,7 @@
     </div>
 
     <template v-else>
-      <div class="gear-layout">
+      <div class="gear-layout" ref="captureTarget">
         <main class="main-col">
           <header class="page-header">
             <nav class="breadcrumb">
@@ -44,6 +44,15 @@
                 {{ data.weapon_category }}
               </span>
             </div>
+            <button
+              class="export-btn"
+              data-export-exclude
+              :disabled="isExporting"
+              @click="handleExport"
+            >
+              {{ isExporting ? 'Generating…' : 'Export as Image' }}
+            </button>
+            <p v-if="exportError" class="export-error" data-export-exclude>{{ exportError }}</p>
           </header>
 
           <!-- Description -->
@@ -201,6 +210,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useGearDetail } from '../composables/useGearList'
+import { useExportImage } from '../composables/useExportImage'
 import { renderRichText } from '../utils/richText'
 import { humanizeMod, gearQualifier } from '../utils/humanize'
 import AffinityTable from '../components/AffinityTable.vue'
@@ -232,6 +242,14 @@ const qualifier = computed(() => data.value ? gearQualifier(data.value.id, data.
 
 const mechsOpen = ref(false)
 const vehiclesOpen = ref(false)
+
+const captureTarget = ref<HTMLElement | null>(null)
+const { isExporting, exportError, exportAsImage } = useExportImage()
+function handleExport() {
+  if (!captureTarget.value || !data.value) return
+  const slug = data.value.ui_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  exportAsImage(captureTarget.value, `${slug}.png`)
+}
 
 const componentTypeLabel = computed(() => {
   if (!data.value) return null
@@ -376,6 +394,26 @@ const componentTypeBadgeKey = computed(() => {
 .bc-link:hover { text-decoration: underline; }
 .bc-sep { color: var(--text-muted); }
 .bc-id { color: var(--text-muted); }
+
+.export-btn {
+  background: none;
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  margin-top: 8px;
+}
+.export-btn:hover:not(:disabled) { background: var(--accent-blue); color: var(--bg-card); }
+.export-btn:disabled { opacity: 0.6; cursor: default; }
+
+.export-error {
+  font-size: 12px;
+  color: var(--accent-red, #f85149);
+  margin-top: 4px;
+}
 
 .gear-title {
   font-size: 28px;
