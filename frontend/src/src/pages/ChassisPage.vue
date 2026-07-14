@@ -16,7 +16,7 @@
 
     <!-- ── Content ─────────────────────────────────────────── -->
     <template v-else>
-      <div class="chassis-layout">
+      <div class="chassis-layout" ref="captureTarget">
 
         <!-- ════════════════════════════════════════════════
              LEFT COLUMN
@@ -33,6 +33,15 @@
               <span class="bc-id">{{ data.ui_name }}</span>
             </nav>
             <h1 class="chassis-title">{{ data.ui_name }}</h1>
+            <button
+              class="export-btn"
+              data-export-exclude
+              :disabled="isExporting"
+              @click="handleExport"
+            >
+              {{ isExporting ? 'Generating…' : 'Export as Image' }}
+            </button>
+            <p v-if="exportError" class="export-error" data-export-exclude>{{ exportError }}</p>
           </header>
 
           <!-- ── Description section ────────────────────── -->
@@ -193,6 +202,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChassisDetail } from '../composables/useChassisDetail'
+import { useExportImage } from '../composables/useExportImage'
 import { renderRichText } from '../utils/richText'
 import { humanizeMod, canonicalizeFactionWithYear, humanizeBiomeTag } from '../utils/humanize'
 import { portraitUrl } from '../utils/portrait'
@@ -224,6 +234,15 @@ const bayLabel = computed(() =>
 )
 
 const portraitImgError = ref(false)
+
+const captureTarget = ref<HTMLElement | null>(null)
+const { isExporting, exportError, exportAsImage } = useExportImage()
+function handleExport() {
+  if (!captureTarget.value || !data.value) return
+  const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  const parts = [data.value.ui_name, selectedVariant.value?.variant_name].filter(Boolean) as string[]
+  exportAsImage(captureTarget.value, `${slug(parts.join('-'))}.png`)
+}
 
 // Which variant's data is shown
 const selectedVariantId = ref<string | null>(null)
@@ -364,6 +383,26 @@ const parsedHardpoints = computed(() => {
   font-family: inherit;
 }
 .back-btn:hover { text-decoration: underline; }
+
+.export-btn {
+  background: none;
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  margin-top: 8px;
+}
+.export-btn:hover:not(:disabled) { background: var(--accent-blue); color: var(--bg-card); }
+.export-btn:disabled { opacity: 0.6; cursor: default; }
+
+.export-error {
+  font-size: 12px;
+  color: var(--accent-red, #f85149);
+  margin-top: 4px;
+}
 
 .bc-link { color: var(--accent-blue); text-decoration: none; }
 .bc-link:hover { text-decoration: underline; }
