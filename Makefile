@@ -1,7 +1,7 @@
 .PHONY: build up down pipeline logs logs-api shell-api shell-pipeline fresh ps help \
         dev dev-down dev-build dev-pipeline dev-logs \
         standalone-run standalone-build portraits portraits-zip \
-        copy-db
+        copy-db lint-frontend lint-frontend-fix
 
 # Load .env if present
 ifneq (,$(wildcard .env))
@@ -95,3 +95,11 @@ portraits-zip: ## Build portraits.zip for standalone release
 	python3 -c "import shutil; shutil.make_archive('portraits', 'zip', 'portraits-staging', 'portraits')"
 	rm -rf portraits-staging
 	@echo "portraits.zip ready for release"
+
+# ── Lint / Format ──────────────────────────────────────────────────────────────
+
+lint-frontend: ## Run eslint + prettier check + type-check on frontend
+	cd frontend/src && npm run lint && npm run format:check && npx vue-tsc --noEmit
+
+lint-frontend-fix: ## Auto-fix eslint issues and reformat frontend
+	cd frontend/src && npm run lint:fix && npm run format
