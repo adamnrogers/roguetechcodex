@@ -33,6 +33,12 @@ export default tseslint.config(
       // renderRichText() escapes raw text then reintroduces a fixed tag allowlist —
       // not a free-form injection vector like typical v-html usage.
       'vue/no-v-html': 'off',
+      // This codebase consistently uses camelCase for custom component props/events,
+      // matching the TS defineProps/defineEmits keys used in <script setup> — not a
+      // native-HTML-attribute convention issue, so the kebab-case rules don't apply.
+      'vue/attribute-hyphenation': 'off',
+      'vue/v-on-event-hyphenation': 'off',
+      'vue/prop-name-casing': 'off',
     },
   },
   eslintConfigPrettier,
