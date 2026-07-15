@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import aiosqlite
-from fastapi import APIRouter, Depends, Query
-
 from db import get_db
-from models import SearchHit, SearchResponse, SearchPageResponse
+from fastapi import APIRouter, Depends, Query
+from models import SearchHit, SearchPageResponse, SearchResponse
 
 router = APIRouter(prefix="/api/v1", tags=["search"])
 
@@ -26,7 +23,7 @@ _COMPONENT_TYPE_TO_RESULT_TYPE: dict[str, str] = {
 }
 
 
-def _component_result_type(component_type: Optional[str]) -> str:
+def _component_result_type(component_type: str | None) -> str:
     if component_type is None:
         return "equipment"
     ct = component_type.lower()
@@ -84,12 +81,8 @@ async def search(
             t = f"{int(tonnage)}t" if tonnage else ""
             ut = unit_type.replace("_", " ").title()
             base_subtitle = f"{t} · {ut}" if t else ut
-            matched_variant: Optional[str] = row["matched_variant"]
-            subtitle = (
-                f"{matched_variant} · {base_subtitle}"
-                if matched_variant
-                else base_subtitle
-            )
+            matched_variant: str | None = row["matched_variant"]
+            subtitle = f"{matched_variant} · {base_subtitle}" if matched_variant else base_subtitle
             chassis_hits.append(
                 SearchHit(
                     id=row["prefab_base"],
@@ -101,12 +94,11 @@ async def search(
 
     gear_hits: list[SearchHit] = []
     async with db.execute(
-        "SELECT id, ui_name, component_type FROM gear "
-        "WHERE ui_name LIKE ? OR id LIKE ? ORDER BY ui_name LIMIT 8",
+        "SELECT id, ui_name, component_type FROM gear WHERE ui_name LIKE ? OR id LIKE ? ORDER BY ui_name LIMIT 8",
         [q_contains, q_contains],
     ) as cursor:
         async for row in cursor:
-            ct: Optional[str] = row["component_type"]
+            ct: str | None = row["component_type"]
             subtitle = ct.replace("_", " ").title() if ct else "Equipment"
             gear_hits.append(
                 SearchHit(
@@ -175,7 +167,9 @@ async def search_chassis(
             subtitle = f"{t} · {ut}" if t else ut
             variant_ui = row["variant_ui_name"]
             chassis_ui = row["ui_name"]
-            display_name = variant_ui if (variant_ui and variant_ui != chassis_ui) else f"{chassis_ui} ({row['variant_name']})"
+            display_name = (
+                variant_ui if (variant_ui and variant_ui != chassis_ui) else f"{chassis_ui} ({row['variant_name']})"
+            )
             results.append(
                 SearchHit(
                     id=row["prefab_base"],
@@ -225,7 +219,7 @@ async def search_gear(
         [q, q_starts, q_contains, q_contains, q_contains, page_size, offset],
     ) as cursor:
         async for row in cursor:
-            ct: Optional[str] = row["component_type"]
+            ct: str | None = row["component_type"]
             subtitle = ct.replace("_", " ").title() if ct else "Equipment"
             results.append(
                 SearchHit(

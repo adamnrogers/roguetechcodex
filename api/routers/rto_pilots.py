@@ -3,9 +3,8 @@ from __future__ import annotations
 import json
 
 import aiosqlite
-from fastapi import APIRouter, Depends
-
 from db import get_db
+from fastapi import APIRouter, Depends
 from models import RtoPilotDetail, RtoPilotRef, RtoPilotRequirements, RtoPilotTag
 
 router = APIRouter(prefix="/api/v1", tags=["rto-pilots"])

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-
 from db import get_db
-from models import StarSystemSummary, StarSystemListResponse, StarSystemDetail
+from fastapi import APIRouter, Depends, HTTPException, Query
+from models import StarSystemDetail, StarSystemListResponse, StarSystemSummary
 
 router = APIRouter(prefix="/api/v1", tags=["star-systems"])
 
@@ -19,12 +17,12 @@ _SORT_COLUMN_MAP: dict[str, str] = {
 
 @router.get("/star-systems", response_model=StarSystemListResponse)
 async def list_star_systems(
-    q: Optional[str] = Query(default=None),
-    biomes: Optional[list[str]] = Query(default=None),
-    population: Optional[list[str]] = Query(default=None),
-    tags: Optional[list[str]] = Query(default=None),
-    min_difficulty: Optional[int] = Query(default=None),
-    max_difficulty: Optional[int] = Query(default=None),
+    q: str | None = Query(default=None),
+    biomes: list[str] | None = Query(default=None),
+    population: list[str] | None = Query(default=None),
+    tags: list[str] | None = Query(default=None),
+    min_difficulty: int | None = Query(default=None),
+    max_difficulty: int | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=60, ge=1, le=200),
     sort: str = Query(default="name"),

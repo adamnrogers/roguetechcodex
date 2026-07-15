@@ -1,5 +1,6 @@
-import aiosqlite
 import os
+
+import aiosqlite
 
 DB_PATH = os.environ.get("DB_PATH", "roguetech.db")
 

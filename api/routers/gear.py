@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-
 from db import get_db
-from models import GearSummary, GearListResponse, GearDetail, UsedByChassis, AffinityEntry, AffinityLevel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from models import AffinityEntry, AffinityLevel, GearDetail, GearListResponse, GearSummary, UsedByChassis
 
 router = APIRouter(prefix="/api/v1", tags=["gear"])
 
@@ -31,26 +29,26 @@ _USED_BY_SQL = """
 
 @router.get("/gear", response_model=GearListResponse)
 async def list_gear(
-    q: Optional[str] = Query(default=None),
-    component_type: Optional[str] = Query(default=None),
-    include_types: Optional[list[str]] = Query(default=None),
-    exclude_types: Optional[list[str]] = Query(default=None),
-    include_categories: Optional[list[str]] = Query(default=None),
-    exclude_categories: Optional[list[str]] = Query(default=None),
-    include_weapon_types: Optional[list[str]] = Query(default=None),
-    exclude_weapon_types: Optional[list[str]] = Query(default=None),
-    include_weapon_subtypes: Optional[list[str]] = Query(default=None),
-    exclude_weapon_subtypes: Optional[list[str]] = Query(default=None),
-    include_weapon_category_ids: Optional[list[str]] = Query(default=None),
-    min_tonnage: Optional[float] = Query(default=None),
-    max_tonnage: Optional[float] = Query(default=None),
-    min_heat: Optional[float] = Query(default=None),
-    max_heat: Optional[float] = Query(default=None),
-    min_slots: Optional[int] = Query(default=None),
-    max_slots: Optional[int] = Query(default=None),
-    include_locations: Optional[list[str]] = Query(default=None),
-    exclude_locations: Optional[list[str]] = Query(default=None),
-    source_mod: Optional[str] = Query(default=None),
+    q: str | None = Query(default=None),
+    component_type: str | None = Query(default=None),
+    include_types: list[str] | None = Query(default=None),
+    exclude_types: list[str] | None = Query(default=None),
+    include_categories: list[str] | None = Query(default=None),
+    exclude_categories: list[str] | None = Query(default=None),
+    include_weapon_types: list[str] | None = Query(default=None),
+    exclude_weapon_types: list[str] | None = Query(default=None),
+    include_weapon_subtypes: list[str] | None = Query(default=None),
+    exclude_weapon_subtypes: list[str] | None = Query(default=None),
+    include_weapon_category_ids: list[str] | None = Query(default=None),
+    min_tonnage: float | None = Query(default=None),
+    max_tonnage: float | None = Query(default=None),
+    min_heat: float | None = Query(default=None),
+    max_heat: float | None = Query(default=None),
+    min_slots: int | None = Query(default=None),
+    max_slots: int | None = Query(default=None),
+    include_locations: list[str] | None = Query(default=None),
+    exclude_locations: list[str] | None = Query(default=None),
+    source_mod: str | None = Query(default=None),
     hide_blacklisted: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=60, ge=1, le=200),
@@ -103,10 +101,8 @@ async def list_gear(
 
     if include_weapon_types and include_weapon_subtypes:
         type_ph = ",".join("?" * len(include_weapon_types))
-        sub_ph  = ",".join("?" * len(include_weapon_subtypes))
-        conditions.append(
-            f"(g.weapon_type IN ({type_ph}) OR g.weapon_subtype IN ({sub_ph}))"
-        )
+        sub_ph = ",".join("?" * len(include_weapon_subtypes))
+        conditions.append(f"(g.weapon_type IN ({type_ph}) OR g.weapon_subtype IN ({sub_ph}))")
         params.extend(include_weapon_types)
         params.extend(include_weapon_subtypes)
     elif include_weapon_types:
@@ -337,7 +333,25 @@ async def get_gear(
         bonus_descriptions=bonus_descriptions,
         modes=modes,
         source_mod=row["source_mod"],
-        used_by_mechs=[UsedByChassis(prefab_base=r["prefab_base"], ui_name=r["ui_name"], unit_type=r["unit_type"], variant_id=r["variant_id"], variant_name=r["variant_name"]) for r in mech_rows],
-        used_by_vehicles=[UsedByChassis(prefab_base=r["prefab_base"], ui_name=r["ui_name"], unit_type=r["unit_type"], variant_id=r["variant_id"], variant_name=r["variant_name"]) for r in vehicle_rows],
+        used_by_mechs=[
+            UsedByChassis(
+                prefab_base=r["prefab_base"],
+                ui_name=r["ui_name"],
+                unit_type=r["unit_type"],
+                variant_id=r["variant_id"],
+                variant_name=r["variant_name"],
+            )
+            for r in mech_rows
+        ],
+        used_by_vehicles=[
+            UsedByChassis(
+                prefab_base=r["prefab_base"],
+                ui_name=r["ui_name"],
+                unit_type=r["unit_type"],
+                variant_id=r["variant_id"],
+                variant_name=r["variant_name"],
+            )
+            for r in vehicle_rows
+        ],
         related_affinities=related_affinities,
     )

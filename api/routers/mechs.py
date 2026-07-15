@@ -1,26 +1,24 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-
 from db import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models import (
-    ChassisSummary,
-    ChassisListResponse,
-    ChassisDetail,
-    VariantDetail,
-    VariantLocation,
-    Hardpoint,
-    LoadoutLocation,
-    InventoryItem,
-    EquipmentItem,
-    StatsResponse,
     AffinityEntry,
     AffinityLevel,
+    ChassisDetail,
+    ChassisListResponse,
+    ChassisSummary,
+    EquipmentItem,
+    Hardpoint,
+    InventoryItem,
+    LoadoutLocation,
     QuirkEffect,
+    StatsResponse,
+    VariantDetail,
+    VariantLocation,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["mechs"])
@@ -48,12 +46,18 @@ _MOUNT_CATEGORY: dict[str, str] = {
 _IGNORED_MOUNTS = {"AntiPersonnel", "BattleArmor", "SpecialHandHeld", ""}
 
 _MECH_HP_LOCATIONS = (
-    "Head", "LeftArm", "LeftTorso", "LeftLeg",
-    "RightArm", "RightTorso", "RightLeg", "CenterTorso",
+    "Head",
+    "LeftArm",
+    "LeftTorso",
+    "LeftLeg",
+    "RightArm",
+    "RightTorso",
+    "RightLeg",
+    "CenterTorso",
 )
 
 
-def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Optional[int]) -> str:
+def _compute_hardpoints_summary(locations_json: str | None, max_jumpjets: int | None) -> str:
     counts: dict[str, int] = {}
     has_handheld = False
     if locations_json:
@@ -87,8 +91,8 @@ def _compute_hardpoints_summary(locations_json: Optional[str], max_jumpjets: Opt
 
 
 def _compute_health_summary(
-    variant_locations: Optional[str],
-    loadout_locations: Optional[str],
+    variant_locations: str | None,
+    loadout_locations: str | None,
 ) -> str:
     max_armor = 0
     total_structure = 0
@@ -123,8 +127,8 @@ def _compute_health_summary(
 def _add_hp_condition(
     conditions: list[str],
     params: list,
-    count: Optional[int],
-    loc: Optional[str],
+    count: int | None,
+    loc: str | None,
     type_key: str,
     exclude_omni: bool = False,
 ) -> None:
@@ -141,17 +145,11 @@ def _add_hp_condition(
                 f" + COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)) >= ?"
             )
     else:
-        type_parts = [
-            f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.{type_key}'),0)"
-            for l in _MECH_HP_LOCATIONS
-        ]
+        type_parts = [f"COALESCE(json_extract(v.hardpoints_json,'$.{loc}.{type_key}'),0)" for loc in _MECH_HP_LOCATIONS]
         if exclude_omni:
             cond = f"({' + '.join(type_parts)}) >= ?"
         else:
-            omni_parts = [
-                f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
-                for l in _MECH_HP_LOCATIONS
-            ]
+            omni_parts = [f"COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)" for loc in _MECH_HP_LOCATIONS]
             cond = f"({' + '.join(type_parts + omni_parts)}) >= ?"
     conditions.append(cond)
     params.append(count)
@@ -161,7 +159,8 @@ def _add_hp_condition(
 # Parsers
 # ---------------------------------------------------------------------------
 
-def _parse_variant_locations(raw: Optional[str]) -> list[VariantLocation]:
+
+def _parse_variant_locations(raw: str | None) -> list[VariantLocation]:
     if not raw:
         return []
     try:
@@ -190,7 +189,7 @@ def _parse_variant_locations(raw: Optional[str]) -> list[VariantLocation]:
     return result
 
 
-def _parse_loadout_locations(raw: Optional[str]) -> list[LoadoutLocation]:
+def _parse_loadout_locations(raw: str | None) -> list[LoadoutLocation]:
     if not raw:
         return []
     try:
@@ -209,9 +208,9 @@ def _parse_loadout_locations(raw: Optional[str]) -> list[LoadoutLocation]:
 
 
 def _parse_inventory(
-    raw: Optional[str],
-    gear_ui_map: Optional[dict[str, str]] = None,
-    gear_blacklist: Optional[set[str]] = None,
+    raw: str | None,
+    gear_ui_map: dict[str, str] | None = None,
+    gear_blacklist: set[str] | None = None,
 ) -> list[InventoryItem]:
     if not raw:
         return []
@@ -234,9 +233,9 @@ def _parse_inventory(
 
 
 def _parse_equipment(
-    raw: Optional[str],
-    gear_ui_map: Optional[dict[str, str]] = None,
-    gear_blacklist: Optional[set[str]] = None,
+    raw: str | None,
+    gear_ui_map: dict[str, str] | None = None,
+    gear_blacklist: set[str] | None = None,
 ) -> list[EquipmentItem]:
     if not raw:
         return []
@@ -259,9 +258,9 @@ def _parse_equipment(
 
 
 def _resolve_chassis_defaults(
-    raw: Optional[str],
-    gear_ui_map: Optional[dict[str, str]] = None,
-    gear_blacklist: Optional[set[str]] = None,
+    raw: str | None,
+    gear_ui_map: dict[str, str] | None = None,
+    gear_blacklist: set[str] | None = None,
 ) -> list[InventoryItem]:
     """Flatten Custom.ChassisDefaults (nested by CategoryID) into InventoryItem rows."""
     flattened = [
@@ -278,9 +277,9 @@ def _resolve_chassis_defaults(
 
 
 def _resolve_multi_defaults(
-    raw: Optional[str],
-    gear_ui_map: Optional[dict[str, str]] = None,
-    gear_blacklist: Optional[set[str]] = None,
+    raw: str | None,
+    gear_ui_map: dict[str, str] | None = None,
+    gear_blacklist: set[str] | None = None,
 ) -> list[InventoryItem]:
     """Flatten Custom.MultiDefaults (flat list) into InventoryItem rows."""
     flattened = [
@@ -295,13 +294,13 @@ def _resolve_multi_defaults(
     return _parse_inventory(json.dumps(flattened), gear_ui_map, gear_blacklist)
 
 
-def _split_csv(raw: Optional[str]) -> list[str]:
+def _split_csv(raw: str | None) -> list[str]:
     if not raw:
         return []
     return [t.strip() for t in raw.split(",") if t.strip()]
 
 
-def _parse_json_list(raw: Optional[str]) -> list:
+def _parse_json_list(raw: str | None) -> list:
     if not raw:
         return []
     try:
@@ -314,7 +313,7 @@ def _parse_json_list(raw: Optional[str]) -> list:
 _UNIQUE_LOADOUT_TAGS = {"unit_rarity_chassis_unique", "unit_unique"}
 
 
-def _compute_is_unique(chassis_tags_json: Optional[str], unit_tags_json: Optional[str]) -> bool:
+def _compute_is_unique(chassis_tags_json: str | None, unit_tags_json: str | None) -> bool:
     """UniqueMech chassis tag (mechs/BA) or unit_rarity_chassis_unique/unit_unique loadout tag (vehicles/VTOLs)."""
     chassis_tags = {t.lower() for t in _parse_json_list(chassis_tags_json) if isinstance(t, str)}
     if "uniquemech" in chassis_tags:
@@ -324,19 +323,17 @@ def _compute_is_unique(chassis_tags_json: Optional[str], unit_tags_json: Optiona
 
 
 _UNIQUE_SQL_CONDITION = (
-    '(v.chassis_tags LIKE \'%"UniqueMech"%\''
-    ' OR l.unit_tags LIKE \'%"unit_rarity_chassis_unique"%\''
-    ' OR l.unit_tags LIKE \'%"unit_unique"%\')'
+    "(v.chassis_tags LIKE '%\"UniqueMech\"%'"
+    " OR l.unit_tags LIKE '%\"unit_rarity_chassis_unique\"%'"
+    " OR l.unit_tags LIKE '%\"unit_unique\"%')"
 )
 
 
-def _extract_quirk_ids(fixed_equipment_json: Optional[str]) -> list[str]:
+def _extract_quirk_ids(fixed_equipment_json: str | None) -> list[str]:
     """Return ComponentDefIDs from fixed equipment (matched against affinity quirk_names, whatever the prefix)."""
     items = _parse_json_list(fixed_equipment_json)
     return [
-        item.get("ComponentDefID", "")
-        for item in items
-        if isinstance(item, dict) and item.get("ComponentDefID", "")
+        item.get("ComponentDefID", "") for item in items if isinstance(item, dict) and item.get("ComponentDefID", "")
     ]
 
 
@@ -345,9 +342,9 @@ _GENERIC_QUIRK_TRAIT_TEXT = {"This Unit's Quirk.", "This Unit's Quirks."}
 
 
 def _build_quirk_effects(
-    fixed_equipment_json: Optional[str],
-    gear_ui_map: Optional[dict[str, str]] = None,
-    gear_bonus_map: Optional[dict[str, list[str]]] = None,
+    fixed_equipment_json: str | None,
+    gear_ui_map: dict[str, str] | None = None,
+    gear_bonus_map: dict[str, list[str]] | None = None,
 ) -> list[QuirkEffect]:
     """Own (always-active) effects for fixed-equipment items that are true quirks (id prefix
     'Quirk_'), as distinct from mission-gated Affinity bonuses. Rendered above the Affinity
@@ -359,8 +356,7 @@ def _build_quirk_effects(
             continue
         seen.add(qid)
         descriptions = [
-            d for d in (gear_bonus_map.get(qid) if gear_bonus_map else None) or []
-            if d not in _GENERIC_QUIRK_TRAIT_TEXT
+            d for d in (gear_bonus_map.get(qid) if gear_bonus_map else None) or [] if d not in _GENERIC_QUIRK_TRAIT_TEXT
         ]
         if not descriptions:
             continue
@@ -374,7 +370,7 @@ def _build_quirk_effects(
     return effects
 
 
-def _parse_affinity_levels(raw: Optional[str]) -> list[AffinityLevel]:
+def _parse_affinity_levels(raw: str | None) -> list[AffinityLevel]:
     try:
         items = json.loads(raw or "[]")
     except (json.JSONDecodeError, TypeError):
@@ -392,7 +388,7 @@ def _parse_affinity_levels(raw: Optional[str]) -> list[AffinityLevel]:
 def _build_affinity_context(
     affinity_rows: list,
     chassis_prefab: str,
-    gear_ui_map: Optional[dict[str, str]] = None,
+    gear_ui_map: dict[str, str] | None = None,
 ) -> tuple[list[AffinityEntry], dict[str, list[AffinityEntry]], dict[str, list[AffinityEntry]]]:
     """Return (chassis_level_affinities, quirk_map, alt_variant_map).
 
@@ -443,7 +439,9 @@ def _build_affinity_context(
                 quirk_names = []
             for qname in quirk_names:
                 quirk_ui_name = (gear_ui_map.get(qname) or "") if gear_ui_map else ""
-                entry = AffinityEntry(id=arow["id"], affinity_type="Quirk", quirk_name=qname, quirk_ui_name=quirk_ui_name, levels=levels)
+                entry = AffinityEntry(
+                    id=arow["id"], affinity_type="Quirk", quirk_name=qname, quirk_ui_name=quirk_ui_name, levels=levels
+                )
                 quirk_map.setdefault(qname, []).append(entry)
 
     return chassis_affinities, quirk_map, alt_variant_map
@@ -451,13 +449,13 @@ def _build_affinity_context(
 
 def _build_variant_detail(
     vrow: aiosqlite.Row,
-    lrow: Optional[aiosqlite.Row],
-    chassis_affinities: Optional[list[AffinityEntry]] = None,
-    quirk_map: Optional[dict[str, list[AffinityEntry]]] = None,
-    gear_ui_map: Optional[dict[str, str]] = None,
-    alt_variant_map: Optional[dict[str, list[AffinityEntry]]] = None,
-    gear_blacklist: Optional[set[str]] = None,
-    gear_bonus_map: Optional[dict[str, list[str]]] = None,
+    lrow: aiosqlite.Row | None,
+    chassis_affinities: list[AffinityEntry] | None = None,
+    quirk_map: dict[str, list[AffinityEntry]] | None = None,
+    gear_ui_map: dict[str, str] | None = None,
+    alt_variant_map: dict[str, list[AffinityEntry]] | None = None,
+    gear_blacklist: set[str] | None = None,
+    gear_bonus_map: dict[str, list[str]] | None = None,
 ) -> VariantDetail:
     loadout_id = lrow["id"] if lrow else None
     era_tags = _split_csv(lrow["era_tags"] if lrow else None)
@@ -468,9 +466,7 @@ def _build_variant_detail(
     inventory += _resolve_multi_defaults(vrow["multi_defaults_json"], gear_ui_map, gear_blacklist)
     spawn_tags = _parse_json_list(lrow["required_to_spawn_tags"] if lrow else None)
 
-    hardpoints_summary = _compute_hardpoints_summary(
-        vrow["locations_json"], vrow["max_jumpjets"]
-    )
+    hardpoints_summary = _compute_hardpoints_summary(vrow["locations_json"], vrow["max_jumpjets"])
     health_summary = _compute_health_summary(
         vrow["locations_json"],
         lrow["locations_json"] if lrow else None,
@@ -545,7 +541,8 @@ async def _fetch_gear_ui_map(db: aiosqlite.Connection) -> dict[str, str]:
 
 async def _fetch_gear_bonus_map(db: aiosqlite.Connection) -> dict[str, list[str]]:
     async with db.execute(
-        "SELECT id, bonus_descriptions FROM gear WHERE id LIKE 'Quirk\\_%' ESCAPE '\\' AND bonus_descriptions IS NOT NULL"
+        "SELECT id, bonus_descriptions FROM gear WHERE id LIKE 'Quirk\\_%' ESCAPE '\\'"
+        " AND bonus_descriptions IS NOT NULL"
     ) as cur:
         rows = await cur.fetchall()
     result: dict[str, list[str]] = {}
@@ -560,9 +557,7 @@ async def _fetch_gear_bonus_map(db: aiosqlite.Connection) -> dict[str, list[str]
 
 
 async def _fetch_gear_blacklist_set(db: aiosqlite.Connection) -> set[str]:
-    async with db.execute(
-        "SELECT id FROM gear WHERE component_tags LIKE '%\"BLACKLISTED\"%'"
-    ) as cur:
+    async with db.execute("SELECT id FROM gear WHERE component_tags LIKE '%\"BLACKLISTED\"%'") as cur:
         rows = await cur.fetchall()
     return {row["id"] for row in rows}
 
@@ -571,23 +566,18 @@ async def _fetch_gear_blacklist_set(db: aiosqlite.Connection) -> set[str]:
 # GET /api/v1/meta/stats
 # ---------------------------------------------------------------------------
 
+
 @router.get("/meta/stats", response_model=StatsResponse)
 async def get_stats(db: aiosqlite.Connection = Depends(get_db)) -> StatsResponse:
-    async with db.execute(
-        "SELECT COUNT(*) FROM chassis WHERE unit_type = 'mech'"
-    ) as cur:
+    async with db.execute("SELECT COUNT(*) FROM chassis WHERE unit_type = 'mech'") as cur:
         row = await cur.fetchone()
         mech_count: int = row[0] if row else 0
 
-    async with db.execute(
-        "SELECT COUNT(*) FROM chassis WHERE unit_type IN ('vehicle', 'vtol')"
-    ) as cur:
+    async with db.execute("SELECT COUNT(*) FROM chassis WHERE unit_type IN ('vehicle', 'vtol')") as cur:
         row = await cur.fetchone()
         vehicle_count: int = row[0] if row else 0
 
-    async with db.execute(
-        "SELECT COUNT(*) FROM gear WHERE component_type = 'Weapon'"
-    ) as cur:
+    async with db.execute("SELECT COUNT(*) FROM gear WHERE component_type = 'Weapon'") as cur:
         row = await cur.fetchone()
         weapon_count: int = row[0] if row else 0
 
@@ -609,31 +599,31 @@ _MECH_ENDPOINT_UNIT_TYPES = {"mech", "battle_armor"}
 
 @router.get("/mechs", response_model=ChassisListResponse)
 async def list_mechs(
-    q: Optional[str] = Query(default=None),
+    q: str | None = Query(default=None),
     era: list[str] = Query(default=[]),
-    faction: Optional[str] = Query(default=None),
-    mod: Optional[str] = Query(default=None),
-    tag: Optional[str] = Query(default=None),
-    unit_type: Optional[str] = Query(default=None),
+    faction: str | None = Query(default=None),
+    mod: str | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    unit_type: str | None = Query(default=None),
     tonnage: list[float] = Query(default=[]),
-    has_lower_arm: Optional[bool] = Query(default=None),
-    has_hand: Optional[bool] = Query(default=None),
-    hp_ballistic_count: Optional[int] = Query(default=None, ge=0),
-    hp_ballistic_loc:   Optional[str] = Query(default=None),
-    hp_energy_count:    Optional[int] = Query(default=None, ge=0),
-    hp_energy_loc:      Optional[str] = Query(default=None),
-    hp_missile_count:   Optional[int] = Query(default=None, ge=0),
-    hp_missile_loc:     Optional[str] = Query(default=None),
-    hp_special_count:   Optional[int] = Query(default=None, ge=0),
-    hp_special_loc:     Optional[str] = Query(default=None),
-    hp_wing_count:      Optional[int] = Query(default=None, ge=0),
-    hp_wing_loc:        Optional[str] = Query(default=None),
-    hp_bomb_count:      Optional[int] = Query(default=None, ge=0),
-    hp_bomb_loc:        Optional[str] = Query(default=None),
-    hp_handheld_count:  Optional[int] = Query(default=None, ge=0),
-    hp_handheld_loc:    Optional[str] = Query(default=None),
-    hp_exclude_omni:    bool          = Query(default=False),
-    hp_omni_only:       bool          = Query(default=False),
+    has_lower_arm: bool | None = Query(default=None),
+    has_hand: bool | None = Query(default=None),
+    hp_ballistic_count: int | None = Query(default=None, ge=0),
+    hp_ballistic_loc: str | None = Query(default=None),
+    hp_energy_count: int | None = Query(default=None, ge=0),
+    hp_energy_loc: str | None = Query(default=None),
+    hp_missile_count: int | None = Query(default=None, ge=0),
+    hp_missile_loc: str | None = Query(default=None),
+    hp_special_count: int | None = Query(default=None, ge=0),
+    hp_special_loc: str | None = Query(default=None),
+    hp_wing_count: int | None = Query(default=None, ge=0),
+    hp_wing_loc: str | None = Query(default=None),
+    hp_bomb_count: int | None = Query(default=None, ge=0),
+    hp_bomb_loc: str | None = Query(default=None),
+    hp_handheld_count: int | None = Query(default=None, ge=0),
+    hp_handheld_loc: str | None = Query(default=None),
+    hp_exclude_omni: bool = Query(default=False),
+    hp_omni_only: bool = Query(default=False),
     unique_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
@@ -661,15 +651,11 @@ async def list_mechs(
 
     if era:
         placeholders = " OR ".join("era_tags LIKE ?" for _ in era)
-        conditions.append(
-            f"c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE {placeholders})"
-        )
+        conditions.append(f"c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE {placeholders})")
         params.extend(f"%{e}%" for e in era)
 
     if faction:
-        conditions.append(
-            "c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE faction_tags LIKE ?)"
-        )
+        conditions.append("c.prefab_base IN (SELECT DISTINCT chassis_id FROM loadout WHERE faction_tags LIKE ?)")
         params.append(f"%{faction}%")
 
     if mod:
@@ -685,7 +671,9 @@ async def list_mechs(
             "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE "
             "(fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ? OR fixed_equipment_json LIKE ?))"
         )
-        params.extend(['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%'])
+        params.extend(
+            ['%"Default_Actuator_Arm_Lower"%', '%"Gear_Actuator_Omni_Lower"%', '%"Gear_Actuator_Omni_Lower_QS"%']
+        )
     if has_hand is True:
         conditions.append(
             "c.prefab_base IN (SELECT DISTINCT chassis_id FROM variant WHERE "
@@ -693,22 +681,19 @@ async def list_mechs(
         )
         params.extend(['%"Default_Actuator_Arm_Hand"%', '%"Gear_Actuator_Omni_Hand"%'])
 
-    omni_total = " + ".join(
-        f"COALESCE(json_extract(v.hardpoints_json,'$.{l}.Omni'),0)"
-        for l in _MECH_HP_LOCATIONS
-    )
+    omni_total = " + ".join(f"COALESCE(json_extract(v.hardpoints_json,'$.{loc}.Omni'),0)" for loc in _MECH_HP_LOCATIONS)
     if hp_exclude_omni:
         conditions.append(f"({omni_total}) = 0")
     elif hp_omni_only:
         conditions.append(f"({omni_total}) > 0")
 
-    _add_hp_condition(conditions, params, hp_ballistic_count, hp_ballistic_loc, "Ballistic",        hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_energy_count,    hp_energy_loc,    "Energy",            hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_missile_count,   hp_missile_loc,   "Missile",           hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_special_count,   hp_special_loc,   "Special",           hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_wing_count,      hp_wing_loc,      "WingMountedWeapon", hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_bomb_count,      hp_bomb_loc,      "InternalBombBay",   hp_exclude_omni)
-    _add_hp_condition(conditions, params, hp_handheld_count,  hp_handheld_loc,  "SpecialHandHeld",   hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_ballistic_count, hp_ballistic_loc, "Ballistic", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_energy_count, hp_energy_loc, "Energy", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_missile_count, hp_missile_loc, "Missile", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_special_count, hp_special_loc, "Special", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_wing_count, hp_wing_loc, "WingMountedWeapon", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_bomb_count, hp_bomb_loc, "InternalBombBay", hp_exclude_omni)
+    _add_hp_condition(conditions, params, hp_handheld_count, hp_handheld_loc, "SpecialHandHeld", hp_exclude_omni)
 
     if unique_only:
         conditions.append(_UNIQUE_SQL_CONDITION)
@@ -773,6 +758,7 @@ async def list_mechs(
 # GET /api/v1/mechs/{prefab_base}  - chassis detail
 # ---------------------------------------------------------------------------
 
+
 @router.get("/mechs/{prefab_base}", response_model=ChassisDetail)
 async def get_mech(
     prefab_base: str,
@@ -815,9 +801,7 @@ async def get_mech(
         loadout_rows = await cur.fetchall()
 
     # Map variant_id → loadout row (1:1 in practice)
-    loadout_by_variant: dict[str, aiosqlite.Row] = {
-        row["variant_id"]: row for row in loadout_rows
-    }
+    loadout_by_variant: dict[str, aiosqlite.Row] = {row["variant_id"]: row for row in loadout_rows}
 
     gear_ui_map = await _fetch_gear_ui_map(db)
     gear_blacklist = await _fetch_gear_blacklist_set(db)
@@ -834,7 +818,16 @@ async def get_mech(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
+        _build_variant_detail(
+            vrow,
+            loadout_by_variant.get(vrow["id"]),
+            chassis_affs,
+            quirk_map,
+            gear_ui_map,
+            alt_variant_map,
+            gear_blacklist,
+            gear_bonus_map,
+        )
         for vrow in variant_rows
     ]
 
@@ -853,13 +846,15 @@ async def get_mech(
 # GET /api/v1/battle-armor/{prefab_base}  - battle armor detail
 # ---------------------------------------------------------------------------
 
+
 @router.get("/battle-armor/{prefab_base}", response_model=ChassisDetail)
 async def get_battle_armor(
     prefab_base: str,
     db: aiosqlite.Connection = Depends(get_db),
 ) -> ChassisDetail:
     async with db.execute(
-        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis WHERE prefab_base = ? AND unit_type = 'battle_armor'",
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis"
+        " WHERE prefab_base = ? AND unit_type = 'battle_armor'",
         (prefab_base,),
     ) as cur:
         chassis_row = await cur.fetchone()
@@ -893,9 +888,7 @@ async def get_battle_armor(
     ) as cur:
         loadout_rows = await cur.fetchall()
 
-    loadout_by_variant: dict[str, aiosqlite.Row] = {
-        row["variant_id"]: row for row in loadout_rows
-    }
+    loadout_by_variant: dict[str, aiosqlite.Row] = {row["variant_id"]: row for row in loadout_rows}
 
     gear_ui_map = await _fetch_gear_ui_map(db)
     gear_blacklist = await _fetch_gear_blacklist_set(db)
@@ -911,7 +904,16 @@ async def get_battle_armor(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
+        _build_variant_detail(
+            vrow,
+            loadout_by_variant.get(vrow["id"]),
+            chassis_affs,
+            quirk_map,
+            gear_ui_map,
+            alt_variant_map,
+            gear_blacklist,
+            gear_bonus_map,
+        )
         for vrow in variant_rows
     ]
 
@@ -930,10 +932,11 @@ async def get_battle_armor(
 # GET /api/v1/vehicles  - vehicle browse
 # ---------------------------------------------------------------------------
 
+
 @router.get("/vehicles", response_model=ChassisListResponse)
 async def list_vehicles(
-    q: Optional[str] = Query(default=None),
-    unit_type: Optional[str] = Query(default=None),
+    q: str | None = Query(default=None),
+    unit_type: str | None = Query(default=None),
     tonnage: list[float] = Query(default=[]),
     unique_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
@@ -1025,13 +1028,15 @@ async def list_vehicles(
 # GET /api/v1/vehicles/{prefab_base}  - vehicle detail
 # ---------------------------------------------------------------------------
 
+
 @router.get("/vehicles/{prefab_base}", response_model=ChassisDetail)
 async def get_vehicle(
     prefab_base: str,
     db: aiosqlite.Connection = Depends(get_db),
 ) -> ChassisDetail:
     async with db.execute(
-        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis WHERE prefab_base = ? AND unit_type IN ('vehicle', 'vtol')",
+        "SELECT prefab_base, ui_name, unit_type, weight_class, tonnage, icon FROM chassis"
+        " WHERE prefab_base = ? AND unit_type IN ('vehicle', 'vtol')",
         (prefab_base,),
     ) as cur:
         chassis_row = await cur.fetchone()
@@ -1080,7 +1085,16 @@ async def get_vehicle(
         chassis_affs, quirk_map, alt_variant_map = [], {}, {}
 
     variants = [
-        _build_variant_detail(vrow, loadout_by_variant.get(vrow["id"]), chassis_affs, quirk_map, gear_ui_map, alt_variant_map, gear_blacklist, gear_bonus_map)
+        _build_variant_detail(
+            vrow,
+            loadout_by_variant.get(vrow["id"]),
+            chassis_affs,
+            quirk_map,
+            gear_ui_map,
+            alt_variant_map,
+            gear_blacklist,
+            gear_bonus_map,
+        )
         for vrow in variant_rows
     ]
 

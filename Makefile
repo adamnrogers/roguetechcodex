@@ -1,7 +1,8 @@
 .PHONY: build up down pipeline logs logs-api shell-api shell-pipeline fresh ps help \
         dev dev-down dev-build dev-pipeline dev-logs \
         standalone-run standalone-build portraits portraits-zip \
-        copy-db lint-frontend lint-frontend-fix
+        copy-db lint-frontend lint-frontend-fix \
+        lint-backend lint-backend-fix audit-backend
 
 # Load .env if present
 ifneq (,$(wildcard .env))
@@ -103,3 +104,18 @@ lint-frontend: ## Run eslint + prettier check + type-check on frontend
 
 lint-frontend-fix: ## Auto-fix eslint issues and reformat frontend
 	cd frontend/src && npm run lint:fix && npm run format
+
+lint-backend: ## Run ruff lint + format check on api/ and pipeline/
+	pip3 install -q -r requirements-dev.txt
+	ruff check .
+	ruff format --check .
+
+lint-backend-fix: ## Auto-fix ruff issues and reformat api/ and pipeline/
+	pip3 install -q -r requirements-dev.txt
+	ruff check . --fix
+	ruff format .
+
+audit-backend: ## Scan Python dependencies for known vulnerabilities
+	pip3 install -q -r requirements-dev.txt
+	pip-audit -r api/requirements.txt
+	pip-audit -r pipeline/requirements.txt

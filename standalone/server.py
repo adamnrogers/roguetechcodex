@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi.responses import FileResponse, Response
-
 from main import app  # noqa: E402 - flat import, api/ on sys.path
 
 

@@ -1,0 +1,27 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = ["build", "dist", "frontend", "portraits", "releases", "tmp"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "S",   # flake8-bandit (security)
+]
+ignore = [
+  "S101", # assert used (fine in this codebase, no test suite relying on asserts being stripped)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"pipeline/pipeline/ingest.py" = ["S608"] # SQL strings are built from trusted, static schema column names, not user input
+"api/routers/*.py" = [
+  "S608", # WHERE-clause fragments are static; actual values are always passed as parameterized `?` args
+  "B008", # FastAPI's Depends()/Query() idiom requires calls in argument defaults
+]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -35,14 +35,27 @@ AFFINITY_PREFIXES = ("AffinityDef_",)
 # Case-insensitive prefixes - gear files are named Gear_*.json, Weapon_*.json, etc.
 # (not upgradedef_* as originally assumed)
 GEAR_PREFIXES_LOWER = (
-    "gear_", "weapon_", "special_", "ammo_", "ammunitionbox_",
-    "heatsink_", "jumpjet_", "turret_", "unique_",
-    "quirk_",   # e.g. Quirk_AccurateWeaponCategory_Ballistics.json
+    "gear_",
+    "weapon_",
+    "special_",
+    "ammo_",
+    "ammunitionbox_",
+    "heatsink_",
+    "jumpjet_",
+    "turret_",
+    "unique_",
+    "quirk_",  # e.g. Quirk_AccurateWeaponCategory_Ballistics.json
 )
 
-GEAR_COMPONENT_TYPES = frozenset({
-    "Upgrade", "Weapon", "HeatSink", "AmmunitionBox", "JumpJet",
-})
+GEAR_COMPONENT_TYPES = frozenset(
+    {
+        "Upgrade",
+        "Weapon",
+        "HeatSink",
+        "AmmunitionBox",
+        "JumpJet",
+    }
+)
 
 ALL_CHASSIS_PREFIXES = CHASSIS_PREFIXES + VEHICLE_CHASSIS_PREFIXES
 ALL_LOADOUT_PREFIXES = LOADOUT_PREFIXES + VEHICLE_LOADOUT_PREFIXES
@@ -50,13 +63,21 @@ ALL_LOADOUT_PREFIXES = LOADOUT_PREFIXES + VEHICLE_LOADOUT_PREFIXES
 EXCLUDED_FRAGMENTS = ("MonsterMashup",)
 
 SYSTEM_TAG_PREFIXES = (
-    "unit_", "lance_", "pilot_", "mr-", "ai_", "tag_", "argo_",
-    "apply_", "TBAS_",
+    "unit_",
+    "lance_",
+    "pilot_",
+    "mr-",
+    "ai_",
+    "tag_",
+    "argo_",
+    "apply_",
+    "TBAS_",
 )
 
 EXCLUDED_TAGS = frozenset({"BLACKLISTED", "component_type_stock"})
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def should_exclude(path: Path) -> bool:
     return any(frag in str(path) for frag in EXCLUDED_FRAGMENTS)
@@ -64,9 +85,9 @@ def should_exclude(path: Path) -> bool:
 
 def classify(stem: str) -> str | None:
     if any(stem.startswith(p) for p in ALL_CHASSIS_PREFIXES):
-        return "variant"   # chassisdef / vehiclechassisdef → variant tier
+        return "variant"  # chassisdef / vehiclechassisdef → variant tier
     if any(stem.startswith(p) for p in ALL_LOADOUT_PREFIXES):
-        return "loadout"   # mechdef / vehicledef → loadout tier
+        return "loadout"  # mechdef / vehicledef → loadout tier
     if any(stem.startswith(p) for p in AFFINITY_PREFIXES):
         return "affinity"
     stem_lower = stem.lower()
@@ -115,7 +136,7 @@ def chassis_key(entity_id: str, data: dict) -> str:
     prefix = "chassisdef_"
     if not entity_id.startswith(prefix):
         return entity_id
-    body = entity_id[len(prefix):]
+    body = entity_id[len(prefix) :]
     variant_name = data.get("VariantName", "")
     if variant_name:
         suffix = f"_{variant_name}"
@@ -144,7 +165,7 @@ def vehicle_chassis_key(entity_id: str, data: dict) -> str:
     if prefab_id:
         return "v_" + prefab_id.lower()
     prefix = "vehiclechassisdef_"
-    body = entity_id[len(prefix):]
+    body = entity_id[len(prefix) :]
     parts = re.split(r"[-_]", body, maxsplit=1)
     return "v_" + parts[0].lower()
 
@@ -158,7 +179,7 @@ def vehicle_variant_name(entity_id: str) -> str:
     vehiclechassisdef_AJAX_SEALED → "SEALED"
     """
     prefix = "vehiclechassisdef_"
-    body = entity_id[len(prefix):]
+    body = entity_id[len(prefix) :]
     parts = re.split(r"[-_]", body, maxsplit=1)
     return parts[1] if len(parts) > 1 else "Prime"
 
@@ -172,7 +193,7 @@ def extract_tags(items: list) -> tuple[str, str]:
         if t in EXCLUDED_TAGS:
             continue
         if t.startswith("unit_era_"):
-            era.append(t[len("unit_era_"):])
+            era.append(t[len("unit_era_") :])
         elif not any(t.startswith(p) for p in SYSTEM_TAG_PREFIXES):
             faction.append(t)
     return ",".join(era), ",".join(faction)
@@ -187,32 +208,52 @@ def filter_chassis_tags(items: list) -> list:
 
 # MechEngineer CT category IDs - used to identify chassisdef FixedEquipment items that
 # are user-replaceable (ct_dynamic) and to build CT slot labels from structural defaults.
-_CT_CATEGORIES = frozenset([
-    "Armor", "Structure", "Cooling", "Gyro",
-    "EngineShield", "EngineHeatBlock", "EngineCore",
-])
+_CT_CATEGORIES = frozenset(
+    [
+        "Armor",
+        "Structure",
+        "Cooling",
+        "Gyro",
+        "EngineShield",
+        "EngineHeatBlock",
+        "EngineCore",
+    ]
+)
 
 # Structural default DefIDs that are internal placeholders and should not be surfaced.
 _EXCLUDED_STRUCTURAL_DEF_IDS = frozenset({"Gear_EngineCore_Dummy"})
 
 # Chassisdef FixedEquipment ComponentDefIDs that are passive markers / internal tags
 # and should not appear in the component layout (they have no meaningful slot display).
-_HIDDEN_FIXED_COMPONENT_IDS = frozenset({
-    "Quirk_Melee_Weapon",
-    "Quirk_Melee_Weapon_YLW",
-    "Quirk_Melee_Samurai",
-})
+_HIDDEN_FIXED_COMPONENT_IDS = frozenset(
+    {
+        "Quirk_Melee_Weapon",
+        "Quirk_Melee_Weapon_YLW",
+        "Quirk_Melee_Samurai",
+    }
+)
 
 # ── Hardpoint pre-aggregation ─────────────────────────────────────────────────
 
 _HP_SKIP_MOUNTS = frozenset({"AntiPersonnel", "BattleArmor", ""})
 _HP_ALL_TYPES = (
-    "Ballistic", "Energy", "Missile", "Special",
-    "WingMountedWeapon", "InternalBombBay", "SpecialHandHeld",
+    "Ballistic",
+    "Energy",
+    "Missile",
+    "Special",
+    "WingMountedWeapon",
+    "InternalBombBay",
+    "SpecialHandHeld",
 )
 _HP_MECH_LOCATIONS = (
-    "Head", "LeftArm", "LeftTorso", "LeftLeg",
-    "RightArm", "RightTorso", "RightLeg", "CenterTorso",
+    "Head",
+    "LeftArm",
+    "LeftTorso",
+    "LeftLeg",
+    "RightArm",
+    "RightTorso",
+    "RightLeg",
+    "CenterTorso",
 )
 
 
@@ -224,10 +265,7 @@ def compute_hardpoints_json(locations_raw: list) -> str:
     Omni=true hardpoints are counted under "Omni", not their WeaponMountID.
     AntiPersonnel, BattleArmor, and empty mounts are skipped.
     """
-    result: dict[str, dict[str, int]] = {
-        loc: {t: 0 for t in _HP_ALL_TYPES} | {"Omni": 0}
-        for loc in _HP_MECH_LOCATIONS
-    }
+    result: dict[str, dict[str, int]] = {loc: {t: 0 for t in _HP_ALL_TYPES} | {"Omni": 0} for loc in _HP_MECH_LOCATIONS}
     for loc_data in locations_raw:
         loc_name = loc_data.get("Location", "")
         if loc_name not in result:
@@ -283,11 +321,13 @@ def load_mech_global_defaults(
             if utype and overrides:
                 unit_type_overrides[utype] = overrides
         if defaults:
-            structural_categories.append({
-                "CategoryID": cid,
-                "Defaults": defaults,
-                "UnitTypeOverrides": unit_type_overrides,
-            })
+            structural_categories.append(
+                {
+                    "CategoryID": cid,
+                    "Defaults": defaults,
+                    "UnitTypeOverrides": unit_type_overrides,
+                }
+            )
 
     actuator_exclusions: dict[str, dict[str, set[str]]] = {}
     for entry in cat_data.get("Settings", []):
@@ -347,12 +387,14 @@ def build_structural_defaults(
             if def_id in _EXCLUDED_STRUCTURAL_DEF_IDS:
                 continue
             if "All" not in excluded and loc not in excluded:
-                result.append({
-                    "MountedLocation": loc,
-                    "ComponentDefID": def_id,
-                    "ComponentDefType": comp_type,
-                    "HardpointSlot": 0,
-                })
+                result.append(
+                    {
+                        "MountedLocation": loc,
+                        "ComponentDefID": def_id,
+                        "ComponentDefType": comp_type,
+                        "HardpointSlot": 0,
+                    }
+                )
 
     return result
 
@@ -380,6 +422,7 @@ DROP TABLE IF EXISTS rto_pilot;
 """
 
 # ── Phase 1: scan & classify ──────────────────────────────────────────────────
+
 
 def scan(rt_root: Path) -> tuple[dict, dict, dict, dict, int]:
     """Return (variant_data, loadout_data, affinity_data, gear_data, files_scanned).
@@ -451,6 +494,7 @@ def scan(rt_root: Path) -> tuple[dict, dict, dict, dict, int]:
 
 # ── Phase 2: write to DB ──────────────────────────────────────────────────────
 
+
 def _chassis_group_key(entity_id: str, data: dict) -> str:
     """Dispatch to the correct chassis key function based on entity type."""
     if entity_id.startswith("vehiclechassisdef_"):
@@ -461,15 +505,15 @@ def _chassis_group_key(entity_id: str, data: dict) -> str:
 # Chassis whose chassisdef Description.Name names the base mech they were derived from
 # rather than their own identity. Keyed on lowercased PrefabID (the chassis_key).
 _OMNI_DISPLAY_NAMES: dict[str, str] = {
-    "omnikgc":         "Proteus",
-    "anand":           "Anand",
-    "badbcatha":       "Badb Catha",
-    "hammertime":      "Hephaistos",
-    "mhacha":          "Mhacha",
+    "omnikgc": "Proteus",
+    "anand": "Anand",
+    "badbcatha": "Badb Catha",
+    "hammertime": "Hephaistos",
+    "mhacha": "Mhacha",
     "omniblackknight": "Conquistador",
-    "aswang":          "Aswang",
-    "gojira":          "Mekagojira",
-    "madcatlam":       "Mad Cat LAM",
+    "aswang": "Aswang",
+    "gojira": "Mekagojira",
+    "madcatlam": "Mad Cat LAM",
 }
 
 
@@ -483,7 +527,7 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
     """
     chassis: dict[str, dict] = {}
     unit_type_votes: dict[str, Counter] = {}
-    for entity_id, (data, path) in variant_data.items():
+    for entity_id, (data, _path) in variant_data.items():
         key = _chassis_group_key(entity_id, data)
         unit_type_votes.setdefault(key, Counter())[detect_unit_type(data)] += 1
         if key not in chassis:
@@ -507,7 +551,8 @@ def insert_chassis(con: sqlite3.Connection, variant_data: dict) -> None:
         for c in chassis.values()
     ]
     con.executemany(
-        "INSERT OR IGNORE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage, icon) VALUES (?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO chassis (prefab_base, ui_name, unit_type, weight_class, tonnage, icon)"
+        " VALUES (?,?,?,?,?,?)",
         rows,
     )
     con.commit()
@@ -578,19 +623,19 @@ def insert_variants(
         # ARC-2RF's CockpitFCS override), to avoid showing both the global default
         # and the actual overriding item.
         chassis_fixed_raw = [
-            item for item in data.get("FixedEquipment", [])
+            item
+            for item in data.get("FixedEquipment", [])
             if item.get("ComponentDefID", "") not in _HIDDEN_FIXED_COMPONENT_IDS
         ]
         ct_categories_present = {
-            ct_map[item["ComponentDefID"]]
-            for item in chassis_fixed_raw
-            if ct_map.get(item.get("ComponentDefID", ""))
+            ct_map[item["ComponentDefID"]] for item in chassis_fixed_raw if ct_map.get(item.get("ComponentDefID", ""))
         }
-        chassis_defaults_categories = {
-            entry["CategoryID"] for entry in chassis_defaults if entry.get("CategoryID")
-        }
+        chassis_defaults_categories = {entry["CategoryID"] for entry in chassis_defaults if entry.get("CategoryID")}
         structural = build_structural_defaults(
-            raw_tags, unit_type, structural_categories, actuator_exclusions,
+            raw_tags,
+            unit_type,
+            structural_categories,
+            actuator_exclusions,
             skip_ct_categories=ct_categories_present | chassis_defaults_categories,
         )
         fixed_equipment = _enrich_category(structural + chassis_fixed_raw, cat_map)
@@ -599,30 +644,32 @@ def insert_variants(
         hardpoints_json_val = compute_hardpoints_json(locations_raw)
 
         variant_to_chassis[entity_id] = prefab_base
-        rows.append((
-            entity_id,
-            prefab_base,
-            ui_name,
-            variant_name,
-            desc.get("Details"),
-            unit_type,
-            data.get("weightClass"),
-            data.get("Tonnage"),
-            data.get("MovementCapDefID"),
-            data.get("TopSpeed"),
-            data.get("MaxJumpjets"),
-            drop_cost,
-            json.dumps(filter_chassis_tags(raw_tags)),
-            json.dumps(locations_raw),
-            json.dumps(fixed_equipment),
-            json.dumps(chassis_defaults),
-            json.dumps(multi_defaults),
-            1 if lootable_block else 0,
-            data.get("movementType"),
-            str(path.relative_to(rt_root)),
-            source_mod(path, rt_root),
-            hardpoints_json_val,
-        ))
+        rows.append(
+            (
+                entity_id,
+                prefab_base,
+                ui_name,
+                variant_name,
+                desc.get("Details"),
+                unit_type,
+                data.get("weightClass"),
+                data.get("Tonnage"),
+                data.get("MovementCapDefID"),
+                data.get("TopSpeed"),
+                data.get("MaxJumpjets"),
+                drop_cost,
+                json.dumps(filter_chassis_tags(raw_tags)),
+                json.dumps(locations_raw),
+                json.dumps(fixed_equipment),
+                json.dumps(chassis_defaults),
+                json.dumps(multi_defaults),
+                1 if lootable_block else 0,
+                data.get("movementType"),
+                str(path.relative_to(rt_root)),
+                source_mod(path, rt_root),
+                hardpoints_json_val,
+            )
+        )
 
     con.executemany(
         """INSERT OR REPLACE INTO variant
@@ -666,20 +713,22 @@ def insert_loadouts(
         desc = data.get("Description", {})
         nickname_name = desc.get("UIName") or desc.get("Name") or ""
 
-        rows.append((
-            entity_id,
-            variant_id,
-            chassis_id,
-            json.dumps(tags),
-            era_tags,
-            faction_tags,
-            json.dumps(_enrich_category(data.get("inventory", []), cat_map)),
-            json.dumps(data.get("Locations", [])),
-            json.dumps(spawn_items),
-            str(path.relative_to(rt_root)),
-            source_mod(path, rt_root),
-            nickname_name,
-        ))
+        rows.append(
+            (
+                entity_id,
+                variant_id,
+                chassis_id,
+                json.dumps(tags),
+                era_tags,
+                faction_tags,
+                json.dumps(_enrich_category(data.get("inventory", []), cat_map)),
+                json.dumps(data.get("Locations", [])),
+                json.dumps(spawn_items),
+                str(path.relative_to(rt_root)),
+                source_mod(path, rt_root),
+                nickname_name,
+            )
+        )
 
     con.executemany(
         """INSERT OR REPLACE INTO loadout
@@ -752,28 +801,32 @@ def insert_gear_usage(
 def insert_affinities(con: sqlite3.Connection, affinity_data: dict) -> int:
     """Insert one affinity row per AffinityDef file."""
     rows = []
-    for entity_id, (data, path) in affinity_data.items():
+    for entity_id, (data, _path) in affinity_data.items():
         aff_type = data.get("affinityType", "")
         aff_data = data.get("affinityData", {})
 
         if aff_type == "Global":
             # Single level defined directly in affinityData (no affinityLevels array)
-            levels = [{
-                "missions_required": aff_data.get("missionsRequired", 0),
-                "level_name": aff_data.get("levelName", ""),
-                "description": _affinity_desc(aff_data),
-            }]
+            levels = [
+                {
+                    "missions_required": aff_data.get("missionsRequired", 0),
+                    "level_name": aff_data.get("levelName", ""),
+                    "description": _affinity_desc(aff_data),
+                }
+            ]
             quirk_names: list = []
             chassis_names: list = []
         else:
             # Quirk, Chassis, Tag types use affinityLevels array
             levels = []
             for lv in aff_data.get("affinityLevels", []):
-                levels.append({
-                    "missions_required": lv.get("missionsRequired", 0),
-                    "level_name": lv.get("levelName", ""),
-                    "description": _affinity_desc(lv),
-                })
+                levels.append(
+                    {
+                        "missions_required": lv.get("missionsRequired", 0),
+                        "level_name": lv.get("levelName", ""),
+                        "description": _affinity_desc(lv),
+                    }
+                )
             quirk_names = aff_data.get("quirkNames", [])
             # Chassis type: primary chassisNames are AssemblyVariant IDs with a tonnage suffix
             # (e.g. "annihilatoriic_100"). Strip the trailing _NNN and lowercase to match
@@ -781,24 +834,24 @@ def insert_affinities(con: sqlite3.Connection, affinity_data: dict) -> int:
             chassis_names = []
             alt_chassis_ids: list = []
             if aff_type == "Chassis":
-                chassis_names = [
-                    re.sub(r"_\d+$", "", n).lower()
-                    for n in aff_data.get("chassisNames", [])
-                ]
+                chassis_names = [re.sub(r"_\d+$", "", n).lower() for n in aff_data.get("chassisNames", [])]
                 for alt in aff_data.get("altMaps", []):
                     if alt.get("idType") == "ChassisId":
                         alt_chassis_ids.extend(alt.get("chassisIds", []))
 
-        rows.append((
-            entity_id,
-            aff_type,
-            json.dumps(quirk_names),
-            json.dumps(chassis_names),
-            json.dumps(alt_chassis_ids),
-            json.dumps(levels),
-        ))
+        rows.append(
+            (
+                entity_id,
+                aff_type,
+                json.dumps(quirk_names),
+                json.dumps(chassis_names),
+                json.dumps(alt_chassis_ids),
+                json.dumps(levels),
+            )
+        )
     con.executemany(
-        "INSERT OR REPLACE INTO affinity (id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json) VALUES (?,?,?,?,?,?)",
+        "INSERT OR REPLACE INTO affinity (id, affinity_type, quirk_names, chassis_names, alt_chassis_ids, levels_json)"
+        " VALUES (?,?,?,?,?,?)",
         rows,
     )
     con.commit()
@@ -818,12 +871,14 @@ def ingest_bonus_descriptions(con: sqlite3.Connection, rt_root: Path) -> int:
             key = entry.get("Bonus", "").strip()
             if not key:
                 continue
-            rows.append((
-                key,
-                entry.get("Short", ""),
-                entry.get("Long", ""),
-                entry.get("Full", ""),
-            ))
+            rows.append(
+                (
+                    key,
+                    entry.get("Short", ""),
+                    entry.get("Long", ""),
+                    entry.get("Full", ""),
+                )
+            )
     con.executemany(
         "INSERT OR REPLACE INTO bonus_descriptions_lookup (key, short, long, full) VALUES (?,?,?,?)",
         rows,
@@ -881,8 +936,12 @@ def compute_modes(weapon_data: dict) -> list[dict]:
     """
     base_min = weapon_data.get("MinRange") or 0
     base_short = (weapon_data.get("RangeSplit") or [0])[0] if weapon_data.get("RangeSplit") else 0
-    base_medium = (weapon_data.get("RangeSplit") or [0, 0])[1] if len(weapon_data.get("RangeSplit") or []) > 1 else base_short
-    base_long = (weapon_data.get("RangeSplit") or [0, 0, 0])[2] if len(weapon_data.get("RangeSplit") or []) > 2 else base_medium
+    base_medium = (
+        (weapon_data.get("RangeSplit") or [0, 0])[1] if len(weapon_data.get("RangeSplit") or []) > 1 else base_short
+    )
+    base_long = (
+        (weapon_data.get("RangeSplit") or [0, 0, 0])[2] if len(weapon_data.get("RangeSplit") or []) > 2 else base_medium
+    )
     base_max = weapon_data.get("MaxRange") or 0
 
     base = {
@@ -910,13 +969,15 @@ def compute_modes(weapon_data: dict) -> list[dict]:
     modes_raw = weapon_data.get("Modes", [])
     if not modes_raw:
         # No modes - return a single synthetic base entry
-        return [{
-            "mode_id": "base",
-            "mode_ui_name": "Base",
-            "mode_description": "",
-            "is_base_mode": True,
-            **base,
-        }]
+        return [
+            {
+                "mode_id": "base",
+                "mode_ui_name": "Base",
+                "mode_description": "",
+                "is_base_mode": True,
+                **base,
+            }
+        ]
 
     result = []
     for mode in modes_raw:
@@ -930,18 +991,18 @@ def compute_modes(weapon_data: dict) -> list[dict]:
         }
         # Numeric fields: mode values are deltas added on top of base
         for src, dst in [
-            ("DamagePerShot",             "damage"),
-            ("HeatGenerated",             "heat_generated"),
-            ("Instability",               "instability"),
-            ("HeatDamage",                "heat_damage"),
-            ("AccuracyModifier",          "accuracy_modifier"),
-            ("EvasivePipsIgnored",        "evasion_pips_ignored"),
-            ("AttackRecoil",              "attack_recoil"),
-            ("ShotsWhenFired",            "shots_when_fired"),
-            ("ProjectilesPerShot",        "projectiles_per_shot"),
-            ("CriticalChanceMultiplier",  "crit_chance_mult"),
-            ("APArmorShardsMod",          "ap_shards_mod"),
-            ("APCriticalChanceMultiplier","ap_crit_chance_mult"),
+            ("DamagePerShot", "damage"),
+            ("HeatGenerated", "heat_generated"),
+            ("Instability", "instability"),
+            ("HeatDamage", "heat_damage"),
+            ("AccuracyModifier", "accuracy_modifier"),
+            ("EvasivePipsIgnored", "evasion_pips_ignored"),
+            ("AttackRecoil", "attack_recoil"),
+            ("ShotsWhenFired", "shots_when_fired"),
+            ("ProjectilesPerShot", "projectiles_per_shot"),
+            ("CriticalChanceMultiplier", "crit_chance_mult"),
+            ("APArmorShardsMod", "ap_shards_mod"),
+            ("APCriticalChanceMultiplier", "ap_crit_chance_mult"),
         ]:
             if src in mode:
                 m[dst] = (base[dst] or 0) + mode[src]
@@ -949,8 +1010,8 @@ def compute_modes(weapon_data: dict) -> list[dict]:
                 m[dst] = base[dst]
         # Non-numeric fields: absolute override when present
         for src, dst in [
-            ("AmmoCategory",       "ammo_category"),
-            ("IndirectFireCapable","indirect_fire_capable"),
+            ("AmmoCategory", "ammo_category"),
+            ("IndirectFireCapable", "indirect_fire_capable"),
         ]:
             m[dst] = mode[src] if src in mode else base[dst]
         # Range deltas
@@ -1000,55 +1061,61 @@ def insert_gear(con: sqlite3.Connection, gear_data: dict, rt_root: Path) -> int:
                         weapon_category_id = cid
                         break
 
-        rows.append((
-            entity_id,
-            desc.get("UIName") or desc.get("Name") or entity_id,
-            desc.get("Details"),
-            data.get("ComponentType"),
-            data.get("ComponentSubType"),
-            data.get("Tonnage"),
-            data.get("InventorySize"),
-            desc.get("Cost"),
-            desc.get("Rarity"),
-            1 if desc.get("Purchasable", True) else 0,
-            desc.get("Manufacturer"),
-            desc.get("Model"),
-            data.get("BonusValueA"),
-            data.get("BonusValueB"),
-            data.get("AllowedLocations"),
-            data.get("DisallowedLocations"),
-            json.dumps([t for t in tags if isinstance(t, str)]),
-            # Weapon-specific fields (None for non-weapons)
-            data.get("Category"),
-            data.get("Type") if is_weapon else None,
-            data.get("WeaponSubType") if is_weapon else None,
-            data.get("Damage"),
-            data.get("HeatGenerated"),
-            data.get("MinRange"),
-            data.get("MaxRange"),
-            data.get("AmmoCategory"),
-            data.get("ShotsWhenFired"),
-            data.get("BattleValue"),
-            # Extended weapon stats
-            data.get("Instability") if is_weapon else None,
-            data.get("HeatDamage") if is_weapon else None,
-            data.get("AccuracyModifier") if is_weapon else None,
-            data.get("EvasivePipsIgnored") if is_weapon else None,
-            data.get("AttackRecoil") if is_weapon else None,
-            data.get("ProjectilesPerShot") if is_weapon else None,
-            data.get("CriticalChanceMultiplier") if is_weapon else None,
-            data.get("APArmorShardsMod") if is_weapon else None,
-            data.get("APCriticalChanceMultiplier") if is_weapon else None,
-            (data.get("RangeSplit") or [None])[0] if is_weapon else None,
-            (data.get("RangeSplit") or [None, None])[1] if is_weapon and len(data.get("RangeSplit") or []) > 1 else None,
-            (data.get("RangeSplit") or [None, None, None])[2] if is_weapon and len(data.get("RangeSplit") or []) > 2 else None,
-            1 if (is_weapon and data.get("IndirectFireCapable")) else (0 if is_weapon else None),
-            json.dumps(resolved_bonus) if resolved_bonus else None,
-            json.dumps(modes) if modes else None,
-            str(path.relative_to(rt_root)),
-            source_mod(path, rt_root),
-            weapon_category_id,
-        ))
+        rows.append(
+            (
+                entity_id,
+                desc.get("UIName") or desc.get("Name") or entity_id,
+                desc.get("Details"),
+                data.get("ComponentType"),
+                data.get("ComponentSubType"),
+                data.get("Tonnage"),
+                data.get("InventorySize"),
+                desc.get("Cost"),
+                desc.get("Rarity"),
+                1 if desc.get("Purchasable", True) else 0,
+                desc.get("Manufacturer"),
+                desc.get("Model"),
+                data.get("BonusValueA"),
+                data.get("BonusValueB"),
+                data.get("AllowedLocations"),
+                data.get("DisallowedLocations"),
+                json.dumps([t for t in tags if isinstance(t, str)]),
+                # Weapon-specific fields (None for non-weapons)
+                data.get("Category"),
+                data.get("Type") if is_weapon else None,
+                data.get("WeaponSubType") if is_weapon else None,
+                data.get("Damage"),
+                data.get("HeatGenerated"),
+                data.get("MinRange"),
+                data.get("MaxRange"),
+                data.get("AmmoCategory"),
+                data.get("ShotsWhenFired"),
+                data.get("BattleValue"),
+                # Extended weapon stats
+                data.get("Instability") if is_weapon else None,
+                data.get("HeatDamage") if is_weapon else None,
+                data.get("AccuracyModifier") if is_weapon else None,
+                data.get("EvasivePipsIgnored") if is_weapon else None,
+                data.get("AttackRecoil") if is_weapon else None,
+                data.get("ProjectilesPerShot") if is_weapon else None,
+                data.get("CriticalChanceMultiplier") if is_weapon else None,
+                data.get("APArmorShardsMod") if is_weapon else None,
+                data.get("APCriticalChanceMultiplier") if is_weapon else None,
+                (data.get("RangeSplit") or [None])[0] if is_weapon else None,
+                (data.get("RangeSplit") or [None, None])[1]
+                if is_weapon and len(data.get("RangeSplit") or []) > 1
+                else None,
+                (data.get("RangeSplit") or [None, None, None])[2]
+                if is_weapon and len(data.get("RangeSplit") or []) > 2
+                else None,
+                1 if (is_weapon and data.get("IndirectFireCapable")) else (0 if is_weapon else None),
+                json.dumps(resolved_bonus) if resolved_bonus else None,
+                json.dumps(modes) if modes else None,
+                str(path.relative_to(rt_root)),
+                source_mod(path, rt_root),
+                weapon_category_id,
+            )
+        )
     con.executemany(
         """INSERT OR REPLACE INTO gear
            (id, ui_name, details, component_type, component_subtype, tonnage, slots,
@@ -1076,8 +1143,11 @@ _POP_TAG_PREFIX = "planet_pop_"
 _SIZE_TAG_PREFIX = "planet_size_"
 _BIOME_TAG_PREFIX = "planet_biome_"
 _STAR_SYSTEM_FILTER_TAG_PREFIXES = (
-    "planet_climate_", "planet_industry_", "planet_civ_",
-    "planet_feature_", "planet_size_",
+    "planet_climate_",
+    "planet_industry_",
+    "planet_civ_",
+    "planet_feature_",
+    "planet_size_",
 )
 
 
@@ -1094,11 +1164,11 @@ def parse_star_system(data: dict) -> dict:
 
     for t in tags:
         if t.startswith(_POP_TAG_PREFIX):
-            population = t[len(_POP_TAG_PREFIX):]
+            population = t[len(_POP_TAG_PREFIX) :]
         elif t.startswith(_SIZE_TAG_PREFIX):
-            size = t[len(_SIZE_TAG_PREFIX):]
+            size = t[len(_SIZE_TAG_PREFIX) :]
         if t.startswith(_BIOME_TAG_PREFIX):
-            biomes.append(t[len(_BIOME_TAG_PREFIX):])
+            biomes.append(t[len(_BIOME_TAG_PREFIX) :])
         if t.startswith(_STAR_SYSTEM_FILTER_TAG_PREFIXES):
             filter_tags.append(t)
 
@@ -1135,23 +1205,25 @@ def insert_star_systems(con: sqlite3.Connection, rt_root: Path) -> int:
             continue
 
         fields = parse_star_system(data)
-        rows.append((
-            entity_id,
-            fields["ui_name"],
-            fields["details"],
-            fields["difficulty"],
-            fields["star_type"],
-            fields["owner_id"],
-            fields["jump_distance"],
-            fields["fueling_station"],
-            fields["population"],
-            fields["size"],
-            fields["biomes_json"],
-            fields["filter_tags_json"],
-            fields["tags_json"],
-            str(path.relative_to(rt_root)),
-            source_mod(path, rt_root),
-        ))
+        rows.append(
+            (
+                entity_id,
+                fields["ui_name"],
+                fields["details"],
+                fields["difficulty"],
+                fields["star_type"],
+                fields["owner_id"],
+                fields["jump_distance"],
+                fields["fueling_station"],
+                fields["population"],
+                fields["size"],
+                fields["biomes_json"],
+                fields["filter_tags_json"],
+                fields["tags_json"],
+                str(path.relative_to(rt_root)),
+                source_mod(path, rt_root),
+            )
+        )
 
     con.executemany(
         """INSERT OR REPLACE INTO star_system
@@ -1248,9 +1320,7 @@ def build_requirements_def_lookup(rt_root: Path) -> dict[str, dict]:
     return lookup
 
 
-def parse_rto_pilot_tags(
-    items: list[str], quirk_lookup: dict[str, tuple[str, str]]
-) -> tuple[list[str], list[dict]]:
+def parse_rto_pilot_tags(items: list[str], quirk_lookup: dict[str, tuple[str, str]]) -> tuple[list[str], list[dict]]:
     """Split PilotTags.items into (can_pilot tags, displayable tag dicts)."""
     can_pilot: list[str] = []
     tag_dicts: list[dict] = []
@@ -1263,11 +1333,13 @@ def parse_rto_pilot_tags(
         if tag.startswith(EXCLUDED_PILOT_TAG_PREFIXES) or tag in EXCLUDED_PILOT_TAGS:
             continue
         quirk_name, description = quirk_lookup.get(tag, ("", ""))
-        tag_dicts.append({
-            "tag": tag,
-            "label": quirk_name or None,
-            "description": description or None,
-        })
+        tag_dicts.append(
+            {
+                "tag": tag,
+                "label": quirk_name or None,
+                "description": description or None,
+            }
+        )
     return can_pilot, tag_dicts
 
 
@@ -1301,7 +1373,7 @@ def build_requirements_payload(raw_def: dict, id_to_name: dict[str, str]) -> dic
             hiring_visibility_requirements.append(f"{scope}: {text}".strip(": "))
         for rt in req.get("RequirementTags", {}).get("items", []) or []:
             if isinstance(rt, str) and rt.startswith("hasPilot_"):
-                ref_id = rt[len("hasPilot_"):]
+                ref_id = rt[len("hasPilot_") :]
                 name = id_to_name.get(ref_id)
                 hiring_visibility_requirements.append(f"Has Pilot: {name or ref_id}")
 
@@ -1355,23 +1427,25 @@ def insert_rto_pilots(con: sqlite3.Connection, rt_root: Path) -> int:
         raw_req = req_lookup.get(name_tag) if name_tag else None
         requirements = build_requirements_payload(raw_req, id_to_name) if raw_req else None
 
-        rows.append((
-            entity_id,
-            desc.get("Name") or entity_id,
-            desc.get("FirstName"),
-            desc.get("LastName"),
-            desc.get("Callsign"),
-            desc.get("Gender"),
-            desc.get("Faction"),
-            desc.get("Age"),
-            desc.get("Details"),
-            desc.get("Icon"),
-            json.dumps(can_pilot),
-            json.dumps(tag_dicts),
-            json.dumps(requirements) if requirements is not None else None,
-            str(path.relative_to(rt_root)),
-            source_mod(path, rt_root),
-        ))
+        rows.append(
+            (
+                entity_id,
+                desc.get("Name") or entity_id,
+                desc.get("FirstName"),
+                desc.get("LastName"),
+                desc.get("Callsign"),
+                desc.get("Gender"),
+                desc.get("Faction"),
+                desc.get("Age"),
+                desc.get("Details"),
+                desc.get("Icon"),
+                json.dumps(can_pilot),
+                json.dumps(tag_dicts),
+                json.dumps(requirements) if requirements is not None else None,
+                str(path.relative_to(rt_root)),
+                source_mod(path, rt_root),
+            )
+        )
 
     con.executemany(
         """INSERT OR REPLACE INTO rto_pilot
@@ -1387,6 +1461,7 @@ def insert_rto_pilots(con: sqlite3.Connection, rt_root: Path) -> int:
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
+
 
 def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     t0 = time.monotonic()
@@ -1425,9 +1500,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
     # Build in-memory weapon category lookup from gear_data before any DB writes.
     # insert_variants runs before insert_gear, so querying the DB won't work here.
     gear_category_map: dict[str, str] = {
-        eid: data.get("Category")
-        for eid, (data, _) in gear_data.items()
-        if data.get("Category")
+        eid: data.get("Category") for eid, (data, _) in gear_data.items() if data.get("Category")
     }
     # Map gear_id → MechEngineer CT CategoryID (Armor, Gyro, etc.) for ct_dynamic marking.
     ct_category_map: dict[str, str] = {}
@@ -1491,8 +1564,7 @@ def run(rt_root: Path, db_path: Path, full_rebuild: bool) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RogueTech Codex data ingestion pipeline")
-    parser.add_argument("--full-rebuild", action="store_true",
-                        help="Drop and recreate all tables before ingesting")
+    parser.add_argument("--full-rebuild", action="store_true", help="Drop and recreate all tables before ingesting")
     parser.add_argument("--rt-root", default=None, help="Override RT_ROOT env var")
     parser.add_argument("--db-path", default=None, help="Override DB_PATH env var")
     args = parser.parse_args()
@@ -1501,8 +1573,7 @@ def main() -> None:
     db_path_str = args.db_path or os.environ.get("DB_PATH", "roguetech.db")
 
     if not rt_root_str:
-        print("ERROR: RT_ROOT not set. Use --rt-root or set the RT_ROOT environment variable.",
-              file=sys.stderr)
+        print("ERROR: RT_ROOT not set. Use --rt-root or set the RT_ROOT environment variable.", file=sys.stderr)
         sys.exit(1)
 
     rt_root = Path(rt_root_str)

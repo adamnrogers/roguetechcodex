@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import aiosqlite
+from db import get_db
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
-
-from db import get_db
-from routers import mechs as mechs_router
 from routers import gear as gear_router
+from routers import mechs as mechs_router
+from routers import rto_pilots as rto_pilots_router
 from routers import search as search_router
 from routers import star_systems as star_systems_router
-from routers import rto_pilots as rto_pilots_router
-
 
 app = FastAPI(
     title="RogueTech Codex API",

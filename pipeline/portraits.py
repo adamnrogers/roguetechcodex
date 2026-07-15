@@ -9,6 +9,7 @@ Defaults:
     --rt-root      $RT_ROOT env var (or from .env)
     --db-path      $DB_PATH env var, else roguetech.db
 """
+
 from __future__ import annotations
 
 import argparse
@@ -91,10 +92,7 @@ def main() -> None:
     con = sqlite3.connect(db_path)
     try:
         icons = [
-            row[0]
-            for row in con.execute(
-                "SELECT DISTINCT icon FROM chassis WHERE icon IS NOT NULL AND icon != ''"
-            )
+            row[0] for row in con.execute("SELECT DISTINCT icon FROM chassis WHERE icon IS NOT NULL AND icon != ''")
         ]
         print(f"  {len(icons):,} distinct icon values in DB")
     except sqlite3.OperationalError:
