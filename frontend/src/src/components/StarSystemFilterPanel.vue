@@ -222,6 +222,7 @@ function toggleGroupExpand(groupId: string) {
 function toggle(field: 'biomes' | 'population' | 'tags', value: string) {
   const current = props[field]
   const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typed emit() can't accept a template-string event name
   emit(`update:${field}` as any, next)
 }
 

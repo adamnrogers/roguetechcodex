@@ -57,7 +57,7 @@ export interface SortOption {
   label: string
 }
 
-const props = defineProps<{
+defineProps<{
   total: number
   label: string
   sortKey: string

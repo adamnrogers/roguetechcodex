@@ -1,5 +1,6 @@
 export const API_BASE = import.meta.env.VITE_API_BASE ?? ''
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- caller-supplied query params are a heterogeneous string/number/boolean/array bag
 export async function apiFetch<T>(path: string, params?: Record<string, any>): Promise<T> {
   const base = API_BASE || window.location.origin
   const url = new URL(base + path)

@@ -49,6 +49,7 @@ export function useStarSystemList(filters: Ref<StarSystemFilters>) {
   return useQuery({
     queryKey: computed(() => ['star-systems', filters.value]),
     queryFn: () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- query params are a heterogeneous string/number/boolean/array bag
       const params: Record<string, any> = {
         page: filters.value.page,
         page_size: 60,

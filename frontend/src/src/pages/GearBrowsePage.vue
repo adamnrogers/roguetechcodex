@@ -254,6 +254,7 @@ watch(
   (f) => {
     const defaultSort = 'name'
     const defaultDir = 'asc'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- router query params are a heterogeneous string/array bag
     const query: Record<string, any> = {}
     if (f.q) query.q = f.q
     if (f.includeTypes.length) query.inc = f.includeTypes.join(',')
