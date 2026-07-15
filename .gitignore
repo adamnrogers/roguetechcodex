@@ -1,6 +1,9 @@
 # Environment
 .env
 
+# Zip Files
+*.zip
+
 # Database
 *.db
 *.db-shm
@@ -42,6 +45,7 @@ CLAUDE.md
 *.user
 
 # Portraits
+portraits/
 frontend/src/public/portraits/
 portraits-staging/
 portraits.zip
