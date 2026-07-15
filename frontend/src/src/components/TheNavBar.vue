@@ -3,6 +3,7 @@
     <div class="logo-block">
       <RouterLink to="/" class="logo">RTC</RouterLink>
       <span class="logo-version">{{ appVersion }}</span>
+      <span class="logo-rt-version">{{ rtVersion }}</span>
     </div>
     <div class="nav-tabs">
       <RouterLink to="/mechs" class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
@@ -64,6 +65,7 @@ defineProps<{ theme: string }>()
 defineEmits(['toggleTheme'])
 
 const appVersion = __APP_VERSION__
+const rtVersion = __RT_VERSION__
 
 const route = useRoute()
 const router = useRouter()
@@ -149,6 +151,12 @@ watch(
   font-size: 10px;
   letter-spacing: 0.5px;
   opacity: 0.7;
+}
+.logo-rt-version {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
 }
 .nav-tabs {
   display: flex;

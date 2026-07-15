@@ -32,8 +32,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       target: prod
     container_name: rt-frontend
     restart: unless-stopped

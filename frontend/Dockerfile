@@ -3,17 +3,18 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY src/package*.json ./
+COPY frontend/src/package*.json ./
 RUN npm ci
 
-COPY src/ ./
+COPY frontend/src/ ./
+COPY version.json /version.json
 RUN npm run build
 
 # ── Stage 2: serve ──────────────────────────────────────────────────────────
 FROM nginx:alpine AS prod
 
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
@@ -23,8 +24,9 @@ FROM node:20-alpine AS dev
 
 WORKDIR /app
 
-COPY src/package*.json ./
+COPY frontend/src/package*.json ./
 RUN npm ci
+COPY version.json /version.json
 
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

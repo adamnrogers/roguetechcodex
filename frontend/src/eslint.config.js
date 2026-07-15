@@ -14,6 +14,7 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         __APP_VERSION__: 'readonly',
+        __RT_VERSION__: 'readonly',
       },
     },
   },

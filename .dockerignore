@@ -1,5 +1,6 @@
-# Keep build context lean for the API image (context is repo root)
-frontend/
+# Keep build context lean for the API/frontend images (context is repo root)
+frontend/src/node_modules/
+frontend/src/dist/
 pipeline/
 standalone/
 docs/
