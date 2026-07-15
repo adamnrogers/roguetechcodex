@@ -65,7 +65,8 @@ async def list_gear(
     params: list = []
 
     if q:
-        conditions.append("g.ui_name LIKE ?")
+        conditions.append("(g.ui_name LIKE ? OR g.id LIKE ?)")
+        params.append(f"%{q}%")
         params.append(f"%{q}%")
 
     if component_type:

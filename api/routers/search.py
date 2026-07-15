@@ -102,8 +102,8 @@ async def search(
     gear_hits: list[SearchHit] = []
     async with db.execute(
         "SELECT id, ui_name, component_type FROM gear "
-        "WHERE ui_name LIKE ? ORDER BY ui_name LIMIT 8",
-        [q_contains],
+        "WHERE ui_name LIKE ? OR id LIKE ? ORDER BY ui_name LIMIT 8",
+        [q_contains, q_contains],
     ) as cursor:
         async for row in cursor:
             ct: Optional[str] = row["component_type"]
@@ -201,8 +201,8 @@ async def search_gear(
     offset = (page - 1) * page_size
 
     async with db.execute(
-        "SELECT COUNT(*) FROM gear WHERE ui_name LIKE ?",
-        [q_contains],
+        "SELECT COUNT(*) FROM gear WHERE ui_name LIKE ? OR id LIKE ?",
+        [q_contains, q_contains],
     ) as cursor:
         row = await cursor.fetchone()
         total = row[0] if row else 0
@@ -218,11 +218,11 @@ async def search_gear(
                 ELSE 4
             END AS rank
         FROM gear
-        WHERE ui_name LIKE ?
+        WHERE ui_name LIKE ? OR id LIKE ?
         ORDER BY rank, ui_name
         LIMIT ? OFFSET ?
         """,
-        [q, q_starts, q_contains, q_contains, page_size, offset],
+        [q, q_starts, q_contains, q_contains, q_contains, page_size, offset],
     ) as cursor:
         async for row in cursor:
             ct: Optional[str] = row["component_type"]
