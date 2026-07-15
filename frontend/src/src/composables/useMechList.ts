@@ -4,11 +4,11 @@ import { apiFetch } from './useApi'
 
 const ERA_TAG_MAP: Record<string, string> = {
   'Succession Wars': 'succession_wars',
-  'Clan Invasion':   'clan_invasion',
-  'Civil War':       'civil_war',
-  'Jihad':           'jihad',
-  'Republic':        'republic',
-  'Dark Age':        'dark_ages',
+  'Clan Invasion': 'clan_invasion',
+  'Civil War': 'civil_war',
+  Jihad: 'jihad',
+  Republic: 'republic',
+  'Dark Age': 'dark_ages',
 }
 
 export interface ChassisSummary {
@@ -37,28 +37,28 @@ export interface HardpointFilter {
 }
 
 export type HardpointFilters = {
-  ballistic:    HardpointFilter
-  energy:       HardpointFilter
-  missile:      HardpointFilter
-  special:      HardpointFilter
-  wing:         HardpointFilter
-  bomb:         HardpointFilter
-  handheld:     HardpointFilter
-  excludeOmni:  boolean
-  omniOnly:     boolean
+  ballistic: HardpointFilter
+  energy: HardpointFilter
+  missile: HardpointFilter
+  special: HardpointFilter
+  wing: HardpointFilter
+  bomb: HardpointFilter
+  handheld: HardpointFilter
+  excludeOmni: boolean
+  omniOnly: boolean
 }
 
 export function defaultHardpoints(): HardpointFilters {
   return {
-    ballistic:   { count: 0, loc: '' },
-    energy:      { count: 0, loc: '' },
-    missile:     { count: 0, loc: '' },
-    special:     { count: 0, loc: '' },
-    wing:        { count: 0, loc: '' },
-    bomb:        { count: 0, loc: '' },
-    handheld:    { count: 0, loc: '' },
+    ballistic: { count: 0, loc: '' },
+    energy: { count: 0, loc: '' },
+    missile: { count: 0, loc: '' },
+    special: { count: 0, loc: '' },
+    wing: { count: 0, loc: '' },
+    bomb: { count: 0, loc: '' },
+    handheld: { count: 0, loc: '' },
     excludeOmni: false,
-    omniOnly:    false,
+    omniOnly: false,
   }
 }
 
@@ -107,16 +107,16 @@ function hpParams(hp: HardpointFilters): Record<string, string | number | boolea
     }
   }
   if (hp.excludeOmni) params['hp_exclude_omni'] = true
-  if (hp.omniOnly)    params['hp_omni_only'] = true
+  if (hp.omniOnly) params['hp_omni_only'] = true
   return params
 }
 
 export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string> = 'mech') {
   const modeRef = computed(() => (typeof mode === 'string' ? mode : mode.value))
 
-  const isMech        = computed(() => modeRef.value === 'mech')
-  const isVehicle     = computed(() => modeRef.value === 'vehicle')
-  const isVtol        = computed(() => modeRef.value === 'vtol')
+  const isMech = computed(() => modeRef.value === 'mech')
+  const isVehicle = computed(() => modeRef.value === 'vehicle')
+  const isVtol = computed(() => modeRef.value === 'vtol')
   const isBattleArmor = computed(() => modeRef.value === 'battle_armor')
 
   return useQuery({
@@ -126,7 +126,9 @@ export function useMechList(filters: Ref<MechFilters>, mode: string | Ref<string
         return apiFetch<ChassisListResponse>('/api/v1/mechs', {
           q: filters.value.q || undefined,
           tonnage: filters.value.tonnage.length ? filters.value.tonnage : undefined,
-          era: filters.value.era.length ? filters.value.era.map(e => ERA_TAG_MAP[e] ?? e) : undefined,
+          era: filters.value.era.length
+            ? filters.value.era.map((e) => ERA_TAG_MAP[e] ?? e)
+            : undefined,
           faction: filters.value.faction || undefined,
           tag: filters.value.tag || undefined,
           unit_type: isBattleArmor.value ? 'battle_armor' : 'mech',

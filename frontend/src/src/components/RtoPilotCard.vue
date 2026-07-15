@@ -7,7 +7,9 @@
     </div>
 
     <div v-if="canPilotLabels.length" class="rp-cp-badges">
-      <span v-for="cp in canPilotLabels" :key="cp.tag" class="cp-badge" :data-cp="cp.tag">{{ cp.label }}</span>
+      <span v-for="cp in canPilotLabels" :key="cp.tag" class="cp-badge" :data-cp="cp.tag">{{
+        cp.label
+      }}</span>
     </div>
 
     <div v-if="pilot.details" class="rp-bio">
@@ -28,21 +30,33 @@
       <div v-if="pilot.requirements.hiring_requirements.length" class="req-group">
         <div class="req-label">Hiring Requirements</div>
         <div class="req-chips">
-          <span v-for="(r, i) in pilot.requirements.hiring_requirements" :key="i" class="req-chip">{{ r }}</span>
+          <span
+            v-for="(r, i) in pilot.requirements.hiring_requirements"
+            :key="i"
+            class="req-chip"
+            >{{ r }}</span
+          >
         </div>
       </div>
 
       <div v-if="pilot.requirements.hiring_visibility_requirements.length" class="req-group">
         <div class="req-label">Visibility Requirements</div>
         <div class="req-chips">
-          <span v-for="(r, i) in pilot.requirements.hiring_visibility_requirements" :key="i" class="req-chip">{{ r }}</span>
+          <span
+            v-for="(r, i) in pilot.requirements.hiring_visibility_requirements"
+            :key="i"
+            class="req-chip"
+            >{{ r }}</span
+          >
         </div>
       </div>
 
       <div v-if="pilot.requirements.required_system_owner.length" class="req-group">
         <div class="req-label">Required System Owner</div>
         <div class="req-chips">
-          <span v-for="f in pilot.requirements.required_system_owner" :key="f" class="req-chip">{{ canonicalizeFaction(f) ?? f }}</span>
+          <span v-for="f in pilot.requirements.required_system_owner" :key="f" class="req-chip">{{
+            canonicalizeFaction(f) ?? f
+          }}</span>
         </div>
       </div>
 
@@ -50,7 +64,11 @@
         <div class="req-label">Required System</div>
         <div class="req-chips">
           <template v-for="id in pilot.requirements.required_system_core_ids" :key="id">
-            <RouterLink v-if="id.startsWith('starsystemdef_')" :to="`/star-systems/${id}`" class="req-chip req-chip--link">
+            <RouterLink
+              v-if="id.startsWith('starsystemdef_')"
+              :to="`/star-systems/${id}`"
+              class="req-chip req-chip--link"
+            >
               {{ humanizeTag(id.replace(/^starsystemdef_/, '')) }}
             </RouterLink>
             <span v-else class="req-chip">{{ humanizeTag(id) }}</span>
@@ -61,14 +79,21 @@
       <div v-if="pilot.requirements.required_pilot_ids.length" class="req-group">
         <div class="req-label">Required Pilots</div>
         <div class="req-chips">
-          <span v-for="r in pilot.requirements.required_pilot_ids" :key="r.id" class="req-chip">{{ r.name ?? humanizeTag(r.id.replace(/^pilot_/, '')) }}</span>
+          <span v-for="r in pilot.requirements.required_pilot_ids" :key="r.id" class="req-chip">{{
+            r.name ?? humanizeTag(r.id.replace(/^pilot_/, ''))
+          }}</span>
         </div>
       </div>
 
       <div v-if="pilot.requirements.conflicting_pilot_ids.length" class="req-group">
         <div class="req-label">Conflicts With</div>
         <div class="req-chips">
-          <span v-for="r in pilot.requirements.conflicting_pilot_ids" :key="r.id" class="req-chip req-chip--conflict">{{ r.name ?? humanizeTag(r.id.replace(/^pilot_/, '')) }}</span>
+          <span
+            v-for="r in pilot.requirements.conflicting_pilot_ids"
+            :key="r.id"
+            class="req-chip req-chip--conflict"
+            >{{ r.name ?? humanizeTag(r.id.replace(/^pilot_/, '')) }}</span
+          >
         </div>
       </div>
     </div>
@@ -112,7 +137,10 @@ const CAN_PILOT_LABELS: Record<string, string> = {
 }
 
 const canPilotLabels = computed(() =>
-  pilot.can_pilot.map(tag => ({ tag, label: CAN_PILOT_LABELS[tag] ?? humanizeTag(tag.replace(/^can_pilot_/, '')) }))
+  pilot.can_pilot.map((tag) => ({
+    tag,
+    label: CAN_PILOT_LABELS[tag] ?? humanizeTag(tag.replace(/^can_pilot_/, '')),
+  })),
 )
 </script>
 
@@ -166,11 +194,26 @@ const canPilotLabels = computed(() =>
   letter-spacing: 0.3px;
 }
 
-.cp-badge[data-cp="can_pilot_generic_mech"]    { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
-.cp-badge[data-cp="can_pilot_generic_vehicle"] { background: rgba(80, 200, 120, 0.15); color: #50c878; }
-.cp-badge[data-cp="can_pilot_vtol"]            { background: rgba(180, 100, 255, 0.15); color: #b464ff; }
-.cp-badge[data-cp="can_pilot_landairmech"]     { background: rgba(255, 140, 0, 0.15); color: #ff8c00; }
-.cp-badge[data-cp="can_pilot_battle_armor"]    { background: rgba(210, 153, 34, 0.15); color: #d29922; }
+.cp-badge[data-cp='can_pilot_generic_mech'] {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+}
+.cp-badge[data-cp='can_pilot_generic_vehicle'] {
+  background: rgba(80, 200, 120, 0.15);
+  color: #50c878;
+}
+.cp-badge[data-cp='can_pilot_vtol'] {
+  background: rgba(180, 100, 255, 0.15);
+  color: #b464ff;
+}
+.cp-badge[data-cp='can_pilot_landairmech'] {
+  background: rgba(255, 140, 0, 0.15);
+  color: #ff8c00;
+}
+.cp-badge[data-cp='can_pilot_battle_armor'] {
+  background: rgba(210, 153, 34, 0.15);
+  color: #d29922;
+}
 
 .rp-bio-text {
   color: var(--text-primary);

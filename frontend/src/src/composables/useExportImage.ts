@@ -2,15 +2,15 @@ import { ref } from 'vue'
 import { domToPng } from 'modern-screenshot'
 
 function nextFrame(): Promise<void> {
-  return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  )
 }
 
 function waitForImages(target: HTMLElement): Promise<void> {
   const images = Array.from(target.querySelectorAll('img'))
   return Promise.all(
-    images.map(img =>
-      img.complete ? Promise.resolve() : img.decode().catch(() => undefined)
-    )
+    images.map((img) => (img.complete ? Promise.resolve() : img.decode().catch(() => undefined))),
   ).then(() => undefined)
 }
 
@@ -22,8 +22,10 @@ export function useExportImage() {
     isExporting.value = true
     exportError.value = null
     const sidebars = target.querySelectorAll<HTMLElement>('.sidebar, .side-col')
-    const prevPositions = Array.from(sidebars).map(el => el.style.position)
-    sidebars.forEach(el => { el.style.position = 'static' })
+    const prevPositions = Array.from(sidebars).map((el) => el.style.position)
+    sidebars.forEach((el) => {
+      el.style.position = 'static'
+    })
     try {
       // Settle layout after the sidebar override and make sure fonts/images
       // are fully ready before measuring — the library's own internal
@@ -42,16 +44,20 @@ export function useExportImage() {
         height,
         scale: 1,
         backgroundColor: getComputedStyle(document.body).backgroundColor,
-        filter: node => !(node instanceof HTMLElement && node.hasAttribute('data-export-exclude')),
+        filter: (node) =>
+          !(node instanceof HTMLElement && node.hasAttribute('data-export-exclude')),
       })
       const a = document.createElement('a')
       a.href = dataUrl
       a.download = filename
       a.click()
     } catch {
-      exportError.value = 'Could not generate image. Try again or use your browser\'s screenshot tool.'
+      exportError.value =
+        "Could not generate image. Try again or use your browser's screenshot tool."
     } finally {
-      sidebars.forEach((el, i) => { el.style.position = prevPositions[i] })
+      sidebars.forEach((el, i) => {
+        el.style.position = prevPositions[i]
+      })
       isExporting.value = false
     }
   }

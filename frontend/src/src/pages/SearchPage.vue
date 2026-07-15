@@ -33,9 +33,23 @@
           </button>
         </div>
         <div v-if="chassisData.total > PAGE_SIZE" class="pagination">
-          <button class="page-btn" :disabled="chassisPage <= 1" @click="setChassisPage(chassisPage - 1)">← Prev</button>
-          <span class="page-info">Page {{ chassisPage }} of {{ Math.ceil(chassisData.total / PAGE_SIZE) }}</span>
-          <button class="page-btn" :disabled="chassisPage >= Math.ceil(chassisData.total / PAGE_SIZE)" @click="setChassisPage(chassisPage + 1)">Next →</button>
+          <button
+            class="page-btn"
+            :disabled="chassisPage <= 1"
+            @click="setChassisPage(chassisPage - 1)"
+          >
+            ← Prev
+          </button>
+          <span class="page-info"
+            >Page {{ chassisPage }} of {{ Math.ceil(chassisData.total / PAGE_SIZE) }}</span
+          >
+          <button
+            class="page-btn"
+            :disabled="chassisPage >= Math.ceil(chassisData.total / PAGE_SIZE)"
+            @click="setChassisPage(chassisPage + 1)"
+          >
+            Next →
+          </button>
         </div>
       </template>
     </section>
@@ -62,9 +76,19 @@
           </button>
         </div>
         <div v-if="gearData.total > PAGE_SIZE" class="pagination">
-          <button class="page-btn" :disabled="gearPage <= 1" @click="setGearPage(gearPage - 1)">← Prev</button>
-          <span class="page-info">Page {{ gearPage }} of {{ Math.ceil(gearData.total / PAGE_SIZE) }}</span>
-          <button class="page-btn" :disabled="gearPage >= Math.ceil(gearData.total / PAGE_SIZE)" @click="setGearPage(gearPage + 1)">Next →</button>
+          <button class="page-btn" :disabled="gearPage <= 1" @click="setGearPage(gearPage - 1)">
+            ← Prev
+          </button>
+          <span class="page-info"
+            >Page {{ gearPage }} of {{ Math.ceil(gearData.total / PAGE_SIZE) }}</span
+          >
+          <button
+            class="page-btn"
+            :disabled="gearPage >= Math.ceil(gearData.total / PAGE_SIZE)"
+            @click="setGearPage(gearPage + 1)"
+          >
+            Next →
+          </button>
         </div>
       </template>
     </section>
@@ -84,7 +108,9 @@ const router = useRouter()
 
 const q = computed(() => (route.query.q as string) || '')
 const searchInput = ref(q.value)
-watch(q, (v) => { searchInput.value = v })
+watch(q, (v) => {
+  searchInput.value = v
+})
 
 function runSearch() {
   const term = searchInput.value.trim()
@@ -147,7 +173,9 @@ function setGearPage(p: number) {
   outline: none;
   transition: border-color 0.15s;
 }
-.search-bar-input:focus { border-color: var(--accent-orange); }
+.search-bar-input:focus {
+  border-color: var(--accent-orange);
+}
 .search-heading {
   font-size: 20px;
   font-weight: 600;
@@ -224,7 +252,9 @@ function setGearPage(p: number) {
   padding: 5px 12px;
   font-size: 12px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 .page-btn:hover:not(:disabled) {
   color: var(--accent-blue);
@@ -238,7 +268,8 @@ function setGearPage(p: number) {
   font-size: 12px;
   color: var(--text-muted);
 }
-.loading, .empty {
+.loading,
+.empty {
   padding: 16px 12px;
   font-size: 13px;
   color: var(--text-muted);

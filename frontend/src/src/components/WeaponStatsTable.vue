@@ -36,12 +36,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="mode in modes"
-            :key="mode.mode_id"
-            :class="{ 'row-base': mode.is_base_mode }"
-          >
-            <td class="col-mode"><span class="mode-name">{{ mode.mode_ui_name }}</span></td>
+          <tr v-for="mode in modes" :key="mode.mode_id" :class="{ 'row-base': mode.is_base_mode }">
+            <td class="col-mode">
+              <span class="mode-name">{{ mode.mode_ui_name }}</span>
+            </td>
             <td class="col-ammo ammo-cell">{{ mode.ammo_category ?? '' }}</td>
             <td class="col-num">{{ fmtNum(mode.damage) }}</td>
             <td class="col-num">{{ fmtNum(mode.heat_damage) }}</td>
@@ -125,7 +123,9 @@ function fmtRange(v: number | null | undefined): string {
   border-right: 1px solid rgba(128, 128, 128, 0.1);
 }
 
-.super-row th:last-child { border-right: none; }
+.super-row th:last-child {
+  border-right: none;
+}
 
 .super-row th.col-mode,
 .super-row th.col-ammo {
@@ -192,6 +192,10 @@ function fmtRange(v: number | null | undefined): string {
   color: var(--text-muted);
 }
 
-.yes { color: #50c878; }
-.no  { color: var(--text-muted); }
+.yes {
+  color: #50c878;
+}
+.no {
+  color: var(--text-muted);
+}
 </style>

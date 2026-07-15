@@ -24,12 +24,29 @@
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
 }
-.skel-title  { height: 16px; width: 70%; }
-.skel-badge  { height: 12px; width: 40%; }
-.skel-role   { height: 12px; width: 55%; }
-.skel-footer { height: 10px; width: 90%; margin-top: auto; }
+.skel-title {
+  height: 16px;
+  width: 70%;
+}
+.skel-badge {
+  height: 12px;
+  width: 40%;
+}
+.skel-role {
+  height: 12px;
+  width: 55%;
+}
+.skel-footer {
+  height: 10px;
+  width: 90%;
+  margin-top: auto;
+}
 @keyframes shimmer {
-  0%   { background-position: 200% 0 }
-  100% { background-position: -200% 0 }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>

@@ -9,29 +9,35 @@
  */
 export function humanizeTag(raw: string): string {
   return raw
-    .replace(/[_\-]/g, ' ')
+    .replace(/[_-]/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]{2,})([A-Z][a-z])/g, '$1 $2')
     .replace(/([a-zA-Z])(\d{2,})/g, '$1 $2')
     .replace(/\s{2,}/g, ' ')
     .trim()
-    .replace(/\b\w/g, c => c.toUpperCase())
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function splitIdWords(s: string): string[] {
-  return s.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s_]+/).filter(Boolean)
+  return s
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .split(/[\s_]+/)
+    .filter(Boolean)
 }
 
 export function gearQualifier(id: string, uiName: string): string | null {
   const prefixes = ['Quirk_', 'Weapon_', 'Gear_', 'emod_', 'Ammo_']
   let rest = id
   for (const p of prefixes) {
-    if (id.startsWith(p)) { rest = id.slice(p.length); break }
+    if (id.startsWith(p)) {
+      rest = id.slice(p.length)
+      break
+    }
   }
-  const nameWordSet = new Set(splitIdWords(uiName).map(w => w.toLowerCase()))
-  const extra = splitIdWords(rest).filter(w => !nameWordSet.has(w.toLowerCase()))
+  const nameWordSet = new Set(splitIdWords(uiName).map((w) => w.toLowerCase()))
+  const extra = splitIdWords(rest).filter((w) => !nameWordSet.has(w.toLowerCase()))
   if (!extra.length) return null
-  return extra.map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
+  return extra.map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')
 }
 
 /**
@@ -56,149 +62,149 @@ export function humanizeBiomeTag(tag: string): string {
  */
 const FACTION_MAP: Record<string, string> = {
   // ── Inner Sphere great houses ───────────────────────────────────────────
-  davion:                       'Federated Suns',
-  steiner:                      'Lyran Commonwealth',
-  kurita:                       'Draconis Combine',
-  liao:                         'Capellan Confederation',
-  marik:                        'Free Worlds League',
-  marikstewart:                 'Free Worlds League',
-  republic:                     'Republic of the Sphere',
-  federatedcommonwealth:        'Federated Commonwealth',
+  davion: 'Federated Suns',
+  steiner: 'Lyran Commonwealth',
+  kurita: 'Draconis Combine',
+  liao: 'Capellan Confederation',
+  marik: 'Free Worlds League',
+  marikstewart: 'Free Worlds League',
+  republic: 'Republic of the Sphere',
+  federatedcommonwealth: 'Federated Commonwealth',
 
   // ── Periphery states ────────────────────────────────────────────────────
-  taurianconcordat:             'Taurian Concordat',
-  calderonprotectorate:         'Calderon Protectorate',
-  magistracyofcanopus:          'Magistracy of Canopus',
-  magistracycentrella:          'Magistracy Centrella',
-  marian:                       'Marian Hegemony',
-  illyrian:                     'Illyrian Palatinate',
-  lothian:                      'Lothian League',
-  outworld:                     'Outworlds Alliance',
-  rasalhague:                   'Free Rasalhague Republic',
-  rasalhaguedominion:           'Rasalhague Dominion',
-  circinus:                     'Circinus Federation',
-  oberon:                       'Oberon Confederation',
-  newoberonconfederation:       'New Oberon Confederation',
-  tortuga:                      'Tortuga Dominions',
-  chainelane:                   'Chain Lane Pirates',
-  valkyrate:                    'Valkyrate',
-  aurigandirectorate:           'Aurigan Directorate',
-  auriganrestoration:           'Aurigan Restoration',
-  auriganpirates:               'Aurigan Pirates',
-  auriganmercenaries:           'Aurigan Mercenaries',
-  hanse:                        'Hanse Davion Forces',
-  ives:                         'St. Ives Compact',
-  froncreaches:                 'Fronc Reaches',
-  filtveltcoalition:            'Filtvelt Coalition',
-  galateanleague:               'Galatean League',
-  alynamercantileleague:        'Alyina Mercantile League',
-  arcroyal:                     'Arc-Royal',
-  arcroyal_libertycoalition:    'Arc-Royal Liberty Coalition',
-  arcroyllibertycoalition:      'Arc-Royal Liberty Coalition',
-  tamarindabbey:                'Tamarind Abbey',
-  tamarpact:                    'Tamar Pact',
-  orienteprotectorate:          'Oriente Protectorate',
-  regulanfiefs:                 'Regulan Fiefs',
-  duchyofandurien:              'Duchy of Andurien',
-  rimcommonality:               'Rim Commonality',
-  rim:                          'Rim',
-  rimterritories:               'Rim Territories',
-  rimworldsrepublic:            'Rim Worlds Republic',
-  ferriscollective:             'Ferris Collective',
-  timbuktucollective:           'Timbuktu Collective',
-  vespermarches:                'Vesper Marches',
-  republicofthebarrens:         'Republic of the Barrens',
-  ragnarokunion:                'Ragnarok Union',
-  amarisempire:                 'Amaris Empire',
-  terranhegemony:               'Terran Hegemony',
-  tikonovfreerepublic:          'Tikonov Free Republic',
-  finmarkfreerepublic:          'Finmark Free Republic',
-  delphi:                       'New Delphi Compact',
-  elysia:                       'Elysia',
-  jarnfolk:                     'Jarnfolk',
-  axumite:                      'Axumite Providence',
-  castile:                      'Kingdom of Castile',
-  kitteryprefecture:            'Kittery Prefecture',
-  havens:                       'Haven Worlds',
-  nautilus:                     'Nautilus',
-  umayyadcaliphate:             'Umayyad Caliphate',
-  majestymetals:                'Majesty Metals',
-  sldf:                         'SLDF',
-  sldfinexile:                  'SLDF in Exile',
+  taurianconcordat: 'Taurian Concordat',
+  calderonprotectorate: 'Calderon Protectorate',
+  magistracyofcanopus: 'Magistracy of Canopus',
+  magistracycentrella: 'Magistracy Centrella',
+  marian: 'Marian Hegemony',
+  illyrian: 'Illyrian Palatinate',
+  lothian: 'Lothian League',
+  outworld: 'Outworlds Alliance',
+  rasalhague: 'Free Rasalhague Republic',
+  rasalhaguedominion: 'Rasalhague Dominion',
+  circinus: 'Circinus Federation',
+  oberon: 'Oberon Confederation',
+  newoberonconfederation: 'New Oberon Confederation',
+  tortuga: 'Tortuga Dominions',
+  chainelane: 'Chain Lane Pirates',
+  valkyrate: 'Valkyrate',
+  aurigandirectorate: 'Aurigan Directorate',
+  auriganrestoration: 'Aurigan Restoration',
+  auriganpirates: 'Aurigan Pirates',
+  auriganmercenaries: 'Aurigan Mercenaries',
+  hanse: 'Hanse Davion Forces',
+  ives: 'St. Ives Compact',
+  froncreaches: 'Fronc Reaches',
+  filtveltcoalition: 'Filtvelt Coalition',
+  galateanleague: 'Galatean League',
+  alynamercantileleague: 'Alyina Mercantile League',
+  arcroyal: 'Arc-Royal',
+  arcroyal_libertycoalition: 'Arc-Royal Liberty Coalition',
+  arcroyllibertycoalition: 'Arc-Royal Liberty Coalition',
+  tamarindabbey: 'Tamarind Abbey',
+  tamarpact: 'Tamar Pact',
+  orienteprotectorate: 'Oriente Protectorate',
+  regulanfiefs: 'Regulan Fiefs',
+  duchyofandurien: 'Duchy of Andurien',
+  rimcommonality: 'Rim Commonality',
+  rim: 'Rim',
+  rimterritories: 'Rim Territories',
+  rimworldsrepublic: 'Rim Worlds Republic',
+  ferriscollective: 'Ferris Collective',
+  timbuktucollective: 'Timbuktu Collective',
+  vespermarches: 'Vesper Marches',
+  republicofthebarrens: 'Republic of the Barrens',
+  ragnarokunion: 'Ragnarok Union',
+  amarisempire: 'Amaris Empire',
+  terranhegemony: 'Terran Hegemony',
+  tikonovfreerepublic: 'Tikonov Free Republic',
+  finmarkfreerepublic: 'Finmark Free Republic',
+  delphi: 'New Delphi Compact',
+  elysia: 'Elysia',
+  jarnfolk: 'Jarnfolk',
+  axumite: 'Axumite Providence',
+  castile: 'Kingdom of Castile',
+  kitteryprefecture: 'Kittery Prefecture',
+  havens: 'Haven Worlds',
+  nautilus: 'Nautilus',
+  umayyadcaliphate: 'Umayyad Caliphate',
+  majestymetals: 'Majesty Metals',
+  sldf: 'SLDF',
+  sldfinexile: 'SLDF in Exile',
 
   // ── Clans ────────────────────────────────────────────────────────────────
-  clansgeneric:                 'Clans (Generic)',
-  clanwolf:                     'Clan Wolf',
-  clanwolfinexile:              'Clan Wolf-in-Exile',
-  wolfempire:                   'Wolf Empire',
-  clanjadefalcon:               'Clan Jade Falcon',
-  clanghostbear:                'Clan Ghost Bear',
-  ghostbeardominion:            'Ghost Bear Dominion',
-  clansmokejaguar:              'Clan Smoke Jaguar',
-  clansnowraven:                'Clan Snow Raven',
-  ravenalliance:                'Raven Alliance',
-  clanicehellion:               'Clan Ice Hellion',
-  clanhellshorses:              'Clan Hell\'s Horses',
-  clandiamondshark:             'Clan Diamond Shark',
-  clanseafox:                   'Clan Sea Fox',
-  clannovacat:                  'Clan Nova Cat',
-  clanprotectorate:             'Clan Nova Cat Protectorate',
-  clanstaradder:                'Clan Star Adder',
-  clansteelviper:               'Clan Steel Viper',
-  clancoyote:                   'Clan Coyote',
-  clancloudcobra:               'Clan Cloud Cobra',
-  clanfiremandrill:             'Clan Fire Mandrill',
-  clangoliathscorpion:          'Clan Goliath Scorpion',
-  escorpionimperio:             'Escorpión Imperio',
-  scorpionempire:               'Scorpion Empire',
-  clanburrock:                  'Clan Burrock',
-  clanbloodspirit:              'Clan Blood Spirit',
-  clanstonelion:                'Clan Stone Lion',
-  clanwidowmaker:               'Clan Widowmaker',
-  clanwolverine:                'Clan Wolverine',
-  clanmongoose:                 'Clan Mongoose',
-  minnesotatribe:               'Minnesota Tribe',
-  darkcaste:                    'Dark Caste',
-  society:                      'The Society',
-  greenghosts:                  'Green Ghosts',
-  shadowdivisions:              'Shadow Divisions',
+  clansgeneric: 'Clans (Generic)',
+  clanwolf: 'Clan Wolf',
+  clanwolfinexile: 'Clan Wolf-in-Exile',
+  wolfempire: 'Wolf Empire',
+  clanjadefalcon: 'Clan Jade Falcon',
+  clanghostbear: 'Clan Ghost Bear',
+  ghostbeardominion: 'Ghost Bear Dominion',
+  clansmokejaguar: 'Clan Smoke Jaguar',
+  clansnowraven: 'Clan Snow Raven',
+  ravenalliance: 'Raven Alliance',
+  clanicehellion: 'Clan Ice Hellion',
+  clanhellshorses: "Clan Hell's Horses",
+  clandiamondshark: 'Clan Diamond Shark',
+  clanseafox: 'Clan Sea Fox',
+  clannovacat: 'Clan Nova Cat',
+  clanprotectorate: 'Clan Nova Cat Protectorate',
+  clanstaradder: 'Clan Star Adder',
+  clansteelviper: 'Clan Steel Viper',
+  clancoyote: 'Clan Coyote',
+  clancloudcobra: 'Clan Cloud Cobra',
+  clanfiremandrill: 'Clan Fire Mandrill',
+  clangoliathscorpion: 'Clan Goliath Scorpion',
+  escorpionimperio: 'Escorpión Imperio',
+  scorpionempire: 'Scorpion Empire',
+  clanburrock: 'Clan Burrock',
+  clanbloodspirit: 'Clan Blood Spirit',
+  clanstonelion: 'Clan Stone Lion',
+  clanwidowmaker: 'Clan Widowmaker',
+  clanwolverine: 'Clan Wolverine',
+  clanmongoose: 'Clan Mongoose',
+  minnesotatribe: 'Minnesota Tribe',
+  darkcaste: 'Dark Caste',
+  society: 'The Society',
+  greenghosts: 'Green Ghosts',
+  shadowdivisions: 'Shadow Divisions',
 
   // ── Other factions ──────────────────────────────────────────────────────
-  comstar:                      'ComStar',
-  wordofblake:                  'Word of Blake',
-  solaris7:                     'Solaris VII',
+  comstar: 'ComStar',
+  wordofblake: 'Word of Blake',
+  solaris7: 'Solaris VII',
 
   // ── Mercenaries & independent units ────────────────────────────────────
-  kellhounds:                   'Kell Hounds',
-  graydeathlegion:              'Gray Death Legion',
-  blackwidowcompany:            'Black Widow Company',
-  masonsmarauders:              'Mason\'s Marauders',
-  marauders:                    'Marauders',
-  steelbeast:                   'Steel Beast',
-  redhareregiment:              'Red Hare Regiment',
-  razorbackmercs:               'Razorback Mercs',
-  hostilemercenaries:           'Hostile Mercenaries',
-  flakjackals:                  'Flak Jackals',
-  emeralddawn:                  'Emerald Dawn',
-  siantriumphant:               'Sian Triumphant',
-  housenakano:                  'House Nakano',
-  housekhulan:                  'House Khulan',
-  edcorbu:                      'Ed Corbu\'s Unit',
-  securitysolutionsinc:         'Security Solutions Inc.',
-  paladinprotectionllc:         'Paladin Protection LLC',
-  baumanngroup:                 'Baumann Group',
-  bountyhunterassociates:       'Bounty Hunter Associates',
-  betrayers:                    'Betrayers',
-  profhorvat:                   'Prof. Horvat\'s Unit',
-  selfemployed:                 'Self-Employed',
-  selfemployed_yang:            'Yang\'s Workshop',
-  mercenaryreviewboard:         'Mercenary Review Board',
+  kellhounds: 'Kell Hounds',
+  graydeathlegion: 'Gray Death Legion',
+  blackwidowcompany: 'Black Widow Company',
+  masonsmarauders: "Mason's Marauders",
+  marauders: 'Marauders',
+  steelbeast: 'Steel Beast',
+  redhareregiment: 'Red Hare Regiment',
+  razorbackmercs: 'Razorback Mercs',
+  hostilemercenaries: 'Hostile Mercenaries',
+  flakjackals: 'Flak Jackals',
+  emeralddawn: 'Emerald Dawn',
+  siantriumphant: 'Sian Triumphant',
+  housenakano: 'House Nakano',
+  housekhulan: 'House Khulan',
+  edcorbu: "Ed Corbu's Unit",
+  securitysolutionsinc: 'Security Solutions Inc.',
+  paladinprotectionllc: 'Paladin Protection LLC',
+  baumanngroup: 'Baumann Group',
+  bountyhunterassociates: 'Bounty Hunter Associates',
+  betrayers: 'Betrayers',
+  profhorvat: "Prof. Horvat's Unit",
+  selfemployed: 'Self-Employed',
+  selfemployed_yang: "Yang's Workshop",
+  mercenaryreviewboard: 'Mercenary Review Board',
 
   // ── Locals / pirates / misc ─────────────────────────────────────────────
-  locals:                       'Locals',
-  localsbrockwayrefugees:       'Brockway Refugees',
-  blackcalderadefense:          'Black Caldera Defense',
-  blackcalderadefense_hidden:   'Black Caldera Defense',
+  locals: 'Locals',
+  localsbrockwayrefugees: 'Brockway Refugees',
+  blackcalderadefense: 'Black Caldera Defense',
+  blackcalderadefense_hidden: 'Black Caldera Defense',
 }
 
 /**
@@ -238,12 +244,12 @@ const SYSTEM_TAGS = new Set([
   'unit_convoy_troops',
   'for_sweetpoppajellyroll',
   'thebabayiscanonicallyacombatvehicleescapepod',
-  'this damn thing is at it\'s armor limit of 900 points',
+  "this damn thing is at it's armor limit of 900 points",
 ])
 
 // Derived at module load - avoids per-call Object.entries overhead.
 const FACTION_MAP_LOWER: Record<string, string> = Object.fromEntries(
-  Object.entries(FACTION_MAP).map(([k, v]) => [k.toLowerCase(), v])
+  Object.entries(FACTION_MAP).map(([k, v]) => [k.toLowerCase(), v]),
 )
 
 /**
@@ -268,7 +274,10 @@ export function canonicalizeFaction(raw: string): string | null {
  * faction in its own right) return year: null — their digits are part of
  * the faction identity, not a year to display separately.
  */
-export function canonicalizeFactionWithYear(raw: string): { name: string | null; year: string | null } {
+export function canonicalizeFactionWithYear(raw: string): {
+  name: string | null
+  year: string | null
+} {
   return resolveFaction(raw)
 }
 

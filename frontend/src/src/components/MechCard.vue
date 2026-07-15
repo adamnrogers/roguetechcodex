@@ -12,7 +12,9 @@
         <div class="card-text">
           <div class="mech-name" :title="cardTitle">{{ cardTitle }}</div>
           <div class="mech-meta">
-            <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{ weight_class }}</span>
+            <span v-if="weight_class" class="wc-badge" :data-wc="weight_class">{{
+              weight_class
+            }}</span>
             <span v-if="tonnage != null" class="mech-tonnage">{{ tonnage }}t</span>
             <span v-if="is_unique" class="unique-badge">Unique</span>
             <span v-if="list" class="mech-type-inline">{{ unitTypeLabel }}</span>
@@ -45,15 +47,18 @@ interface MechCardProps {
 const props = defineProps<MechCardProps>()
 
 const portraitError = ref(false)
-watch(() => props.icon, () => { portraitError.value = false })
-const portraitSrc = computed(() =>
-  portraitError.value ? null : portraitUrl(props.icon)
+watch(
+  () => props.icon,
+  () => {
+    portraitError.value = false
+  },
 )
+const portraitSrc = computed(() => (portraitError.value ? null : portraitUrl(props.icon)))
 
 const cardTitle = computed(() =>
   props.variant_ui_name
     ? props.variant_ui_name
-    : `${props.ui_name} (${props.variant_name ?? props.variant_id})`
+    : `${props.ui_name} (${props.variant_name ?? props.variant_id})`,
 )
 
 const cardLink = computed(() => {
@@ -88,7 +93,10 @@ const unitTypeLabel = computed(() => {
   border-radius: var(--card-radius);
   padding: 14px;
   box-shadow: var(--card-shadow);
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -110,7 +118,7 @@ const unitTypeLabel = computed(() => {
   object-fit: contain;
   flex-shrink: 0;
   border-radius: 4px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 .card-text {
   flex: 1;
@@ -138,10 +146,22 @@ const unitTypeLabel = computed(() => {
   border-radius: var(--badge-radius);
   letter-spacing: 0.3px;
 }
-.wc-badge[data-wc="LIGHT"]   { background: var(--badge-light-bg);   color: var(--badge-light-fg); }
-.wc-badge[data-wc="MEDIUM"]  { background: var(--badge-medium-bg);  color: var(--badge-medium-fg); }
-.wc-badge[data-wc="HEAVY"]   { background: var(--badge-heavy-bg);   color: var(--badge-heavy-fg); }
-.wc-badge[data-wc="ASSAULT"] { background: var(--badge-assault-bg); color: var(--badge-assault-fg); }
+.wc-badge[data-wc='LIGHT'] {
+  background: var(--badge-light-bg);
+  color: var(--badge-light-fg);
+}
+.wc-badge[data-wc='MEDIUM'] {
+  background: var(--badge-medium-bg);
+  color: var(--badge-medium-fg);
+}
+.wc-badge[data-wc='HEAVY'] {
+  background: var(--badge-heavy-bg);
+  color: var(--badge-heavy-fg);
+}
+.wc-badge[data-wc='ASSAULT'] {
+  background: var(--badge-assault-bg);
+  color: var(--badge-assault-fg);
+}
 .mech-tonnage {
   font-size: 12px;
   color: var(--text-muted);

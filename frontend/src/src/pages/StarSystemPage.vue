@@ -25,7 +25,9 @@
               <span v-if="data.difficulty != null" class="diff-badge" :data-band="difficultyBand">
                 Difficulty {{ data.difficulty }}
               </span>
-              <span v-if="data.population" class="pop-badge">{{ humanizeTag(data.population) }} Pop</span>
+              <span v-if="data.population" class="pop-badge"
+                >{{ humanizeTag(data.population) }} Pop</span
+              >
             </div>
           </header>
 
@@ -133,22 +135,54 @@ const difficultyBand = computed(() => {
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
 }
-.skeleton-title { height: 32px; width: 40%; }
-.skeleton-line  { height: 16px; width: 80%; }
-.skeleton-line.short { width: 50%; }
+.skeleton-title {
+  height: 32px;
+  width: 40%;
+}
+.skeleton-line {
+  height: 16px;
+  width: 80%;
+}
+.skeleton-line.short {
+  width: 50%;
+}
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
-.not-found { padding: 48px; text-align: center; }
-.not-found-msg { color: var(--text-muted); font-size: 16px; }
-.back-link { color: var(--accent-blue); text-decoration: none; font-size: 14px; }
-.back-link:hover { text-decoration: underline; }
+.not-found {
+  padding: 48px;
+  text-align: center;
+}
+.not-found-msg {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+.back-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-size: 14px;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
 
-.ss-layout { display: flex; gap: 32px; align-items: flex-start; }
+.ss-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
 
-.main-col { flex: 1; min-width: 0; }
+.main-col {
+  flex: 1;
+  min-width: 0;
+}
 
 .side-col {
   width: 260px;
@@ -157,17 +191,41 @@ const difficultyBand = computed(() => {
   top: calc(var(--nav-height) + 16px);
 }
 
-.page-header { margin-bottom: 24px; }
+.page-header {
+  margin-bottom: 24px;
+}
 
-.breadcrumb { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
-.bc-link { color: var(--accent-blue); text-decoration: none; }
-.bc-link:hover { text-decoration: underline; }
-.bc-sep { color: var(--text-muted); }
-.bc-id { color: var(--text-muted); }
+.breadcrumb {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.bc-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+.bc-link:hover {
+  text-decoration: underline;
+}
+.bc-sep {
+  color: var(--text-muted);
+}
+.bc-id {
+  color: var(--text-muted);
+}
 
-.ss-title { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px; }
+.ss-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 10px;
+}
 
-.ss-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.ss-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 
 .diff-badge,
 .pop-badge {
@@ -179,12 +237,26 @@ const difficultyBand = computed(() => {
   letter-spacing: 0.3px;
 }
 
-.diff-badge[data-band="low"]  { background: rgba(63,  185, 80,  0.15); color: #3fb950; }
-.diff-badge[data-band="mid"]  { background: rgba(210, 153, 34,  0.15); color: #d29922; }
-.diff-badge[data-band="high"] { background: rgba(255, 80,  80,  0.15); color: #ff5555; }
-.pop-badge { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+.diff-badge[data-band='low'] {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+.diff-badge[data-band='mid'] {
+  background: rgba(210, 153, 34, 0.15);
+  color: #d29922;
+}
+.diff-badge[data-band='high'] {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff5555;
+}
+.pop-badge {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+}
 
-.content-section { margin-bottom: 28px; }
+.content-section {
+  margin-bottom: 28px;
+}
 
 .section-title.collapsible {
   cursor: pointer;
@@ -193,7 +265,9 @@ const difficultyBand = computed(() => {
   align-items: center;
   gap: 6px;
 }
-.section-title.collapsible:hover { color: var(--accent-blue); }
+.section-title.collapsible:hover {
+  color: var(--accent-blue);
+}
 .collapse-chevron {
   font-size: 14px;
   color: var(--text-muted);
@@ -202,7 +276,9 @@ const difficultyBand = computed(() => {
   line-height: 1;
   margin-left: auto;
 }
-.collapse-chevron.open { transform: rotate(90deg); }
+.collapse-chevron.open {
+  transform: rotate(90deg);
+}
 
 .section-title {
   font-size: 16px;
@@ -213,10 +289,22 @@ const difficultyBand = computed(() => {
   margin: 0 0 12px;
 }
 
-.lore-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
-.empty-text { color: var(--text-muted); font-size: 13px; font-style: italic; }
+.lore-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+.empty-text {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
 
-.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 
 .biome-chip,
 .tag-chip {
@@ -233,15 +321,39 @@ const difficultyBand = computed(() => {
   border-radius: var(--card-radius);
   overflow: hidden;
 }
-.infobox-table { width: 100%; border-collapse: collapse; }
-.infobox-table tr:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
-.ib-label { color: var(--text-muted); font-size: 12px; padding: 6px 12px; white-space: nowrap; }
-.ib-value { color: var(--text-primary); font-size: 13px; text-align: right; padding: 6px 12px; }
-.ib-yes { color: #50c878; }
-.ib-no  { color: var(--text-muted); }
+.infobox-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.infobox-table tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.ib-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.ib-value {
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: right;
+  padding: 6px 12px;
+}
+.ib-yes {
+  color: #50c878;
+}
+.ib-no {
+  color: var(--text-muted);
+}
 
 @media (max-width: 700px) {
-  .ss-layout { flex-direction: column; }
-  .side-col { width: 100%; position: static; }
+  .ss-layout {
+    flex-direction: column;
+  }
+  .side-col {
+    width: 100%;
+    position: static;
+  }
 }
 </style>

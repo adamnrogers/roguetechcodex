@@ -4,13 +4,11 @@
     <div class="sort-controls">
       <span class="sort-label">Sort:</span>
       <div class="select-wrapper">
-        <select
-          class="sort-select"
-          :value="sortKey"
-          @change="onSortChange"
-        >
+        <select class="sort-select" :value="sortKey" @change="onSortChange">
           <template v-if="options && options.length">
-            <option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            <option v-for="opt in options" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
           </template>
           <template v-else>
             <option value="name:asc">Name (A–Z)</option>
@@ -20,20 +18,32 @@
           </template>
         </select>
         <svg class="select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="currentColor">
-          <path d="M0 0l5 6 5-6z"/>
+          <path d="M0 0l5 6 5-6z" />
         </svg>
       </div>
       <div class="view-toggle">
-        <button :class="['view-btn', viewMode === 'grid' && 'view-btn--active']" title="Grid view" @click="emit('update:viewMode', 'grid')">
+        <button
+          :class="['view-btn', viewMode === 'grid' && 'view-btn--active']"
+          title="Grid view"
+          @click="emit('update:viewMode', 'grid')"
+        >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-            <rect x="0" y="0" width="6" height="6"/><rect x="8" y="0" width="6" height="6"/>
-            <rect x="0" y="8" width="6" height="6"/><rect x="8" y="8" width="6" height="6"/>
+            <rect x="0" y="0" width="6" height="6" />
+            <rect x="8" y="0" width="6" height="6" />
+            <rect x="0" y="8" width="6" height="6" />
+            <rect x="8" y="8" width="6" height="6" />
           </svg>
         </button>
-        <button :class="['view-btn', viewMode === 'list' && 'view-btn--active']" title="List view" @click="emit('update:viewMode', 'list')">
+        <button
+          :class="['view-btn', viewMode === 'list' && 'view-btn--active']"
+          title="List view"
+          @click="emit('update:viewMode', 'list')"
+        >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-            <rect x="0" y="0" width="14" height="2"/><rect x="0" y="4" width="14" height="2"/>
-            <rect x="0" y="8" width="14" height="2"/><rect x="0" y="12" width="14" height="2"/>
+            <rect x="0" y="0" width="14" height="2" />
+            <rect x="0" y="4" width="14" height="2" />
+            <rect x="0" y="8" width="14" height="2" />
+            <rect x="0" y="12" width="14" height="2" />
           </svg>
         </button>
       </div>
@@ -108,7 +118,9 @@ function onSortChange(event: Event) {
   transition: border-color 0.15s;
   color-scheme: dark;
 }
-.sort-select:focus { border-color: var(--accent-blue); }
+.sort-select:focus {
+  border-color: var(--accent-blue);
+}
 .sort-select option {
   background: var(--bg-select);
   color: var(--text-primary);
@@ -134,8 +146,16 @@ function onSortChange(event: Event) {
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.view-btn:hover { background: var(--viewbtn-hover); color: var(--text-primary); }
-.view-btn--active { background: var(--viewbtn-active); color: var(--text-primary); }
+.view-btn:hover {
+  background: var(--viewbtn-hover);
+  color: var(--text-primary);
+}
+.view-btn--active {
+  background: var(--viewbtn-active);
+  color: var(--text-primary);
+}
 </style>

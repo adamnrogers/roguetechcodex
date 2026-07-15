@@ -119,8 +119,20 @@ export interface GearDetail {
   bonus_descriptions: string[]
   modes: WeaponMode[]
   source_mod: string | null
-  used_by_mechs: { prefab_base: string; ui_name: string; unit_type: string | null; variant_id: string; variant_name: string | null }[]
-  used_by_vehicles: { prefab_base: string; ui_name: string; unit_type: string | null; variant_id: string; variant_name: string | null }[]
+  used_by_mechs: {
+    prefab_base: string
+    ui_name: string
+    unit_type: string | null
+    variant_id: string
+    variant_name: string | null
+  }[]
+  used_by_vehicles: {
+    prefab_base: string
+    ui_name: string
+    unit_type: string | null
+    variant_id: string
+    variant_name: string | null
+  }[]
   related_affinities: AffinityEntry[]
 }
 
@@ -138,13 +150,19 @@ export function useGearList(filters: Ref<GearFilters>) {
       if (filters.value.componentType) params.component_type = filters.value.componentType
       if (filters.value.includeTypes.length) params.include_types = filters.value.includeTypes
       if (filters.value.excludeTypes.length) params.exclude_types = filters.value.excludeTypes
-      if (filters.value.includeCategories.length) params.include_categories = filters.value.includeCategories
-      if (filters.value.excludeCategories.length) params.exclude_categories = filters.value.excludeCategories
-      if (filters.value.includeLocations.length) params.include_locations = filters.value.includeLocations
-      if (filters.value.excludeLocations.length) params.exclude_locations = filters.value.excludeLocations
+      if (filters.value.includeCategories.length)
+        params.include_categories = filters.value.includeCategories
+      if (filters.value.excludeCategories.length)
+        params.exclude_categories = filters.value.excludeCategories
+      if (filters.value.includeLocations.length)
+        params.include_locations = filters.value.includeLocations
+      if (filters.value.excludeLocations.length)
+        params.exclude_locations = filters.value.excludeLocations
       if (filters.value.weaponTypes.length) params.include_weapon_types = filters.value.weaponTypes
-      if (filters.value.weaponSubtypes.length) params.include_weapon_subtypes = filters.value.weaponSubtypes
-      if (filters.value.weaponCategoryIds.length) params.include_weapon_category_ids = filters.value.weaponCategoryIds
+      if (filters.value.weaponSubtypes.length)
+        params.include_weapon_subtypes = filters.value.weaponSubtypes
+      if (filters.value.weaponCategoryIds.length)
+        params.include_weapon_category_ids = filters.value.weaponCategoryIds
       if (filters.value.minTonnage !== null) params.min_tonnage = filters.value.minTonnage
       if (filters.value.maxTonnage !== null) params.max_tonnage = filters.value.maxTonnage
       if (filters.value.minHeat !== null) params.min_heat = filters.value.minHeat

@@ -8,13 +8,24 @@
       :hasHand="filters.hasHand"
       :hardpoints="filters.hardpoints"
       :uniqueOnly="filters.uniqueOnly"
-      @update:tonnage="v => filters = { ...filters, tonnage: v, page: 1 }"
+      @update:tonnage="(v) => (filters = { ...filters, tonnage: v, page: 1 })"
       @update:era="onEraChange"
-      @update:hasLowerArm="v => filters = { ...filters, hasLowerArm: v, page: 1 }"
-      @update:hasHand="v => filters = { ...filters, hasHand: v, page: 1 }"
-      @update:hardpoints="v => filters = { ...filters, hardpoints: v, page: 1 }"
-      @update:uniqueOnly="v => filters = { ...filters, uniqueOnly: v, page: 1 }"
-      @clearAll="filters = { ...filters, tonnage: [], era: [], hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), uniqueOnly: false, page: 1 }"
+      @update:hasLowerArm="(v) => (filters = { ...filters, hasLowerArm: v, page: 1 })"
+      @update:hasHand="(v) => (filters = { ...filters, hasHand: v, page: 1 })"
+      @update:hardpoints="(v) => (filters = { ...filters, hardpoints: v, page: 1 })"
+      @update:uniqueOnly="(v) => (filters = { ...filters, uniqueOnly: v, page: 1 })"
+      @clearAll="
+        filters = {
+          ...filters,
+          tonnage: [],
+          era: [],
+          hasLowerArm: null,
+          hasHand: null,
+          hardpoints: defaultHardpoints(),
+          uniqueOnly: false,
+          page: 1,
+        }
+      "
     />
     <div class="browse-main">
       <div class="search-row">
@@ -39,7 +50,7 @@
         :sortKey="`${filters.sort}:${filters.sortDir}`"
         :viewMode="viewMode"
         @update:sortKey="onSortKeyChange"
-        @update:viewMode="v => viewMode = v"
+        @update:viewMode="(v) => (viewMode = v)"
       />
       <div v-if="isError" class="error-msg">
         Failed to load data. Please check your connection and try again.
@@ -52,19 +63,9 @@
         :viewMode="viewMode"
       />
       <div class="pagination">
-        <button
-          class="page-btn"
-          :disabled="filters.page <= 1"
-          @click="prevPage"
-        >&lt; Prev</button>
-        <span class="page-info">
-          Page {{ filters.page }} of {{ totalPages }}
-        </span>
-        <button
-          class="page-btn"
-          :disabled="isLastPage"
-          @click="nextPage"
-        >Next &gt;</button>
+        <button class="page-btn" :disabled="filters.page <= 1" @click="prevPage">&lt; Prev</button>
+        <span class="page-info"> Page {{ filters.page }} of {{ totalPages }} </span>
+        <button class="page-btn" :disabled="isLastPage" @click="nextPage">Next &gt;</button>
       </div>
     </div>
   </div>
@@ -84,9 +85,9 @@ const router = useRouter()
 
 const PAGE_SIZE = 60
 const viewMode = ref<'grid' | 'list'>(
-  (localStorage.getItem('browse-view-mode') as 'grid' | 'list') ?? 'grid'
+  (localStorage.getItem('browse-view-mode') as 'grid' | 'list') ?? 'grid',
 )
-watch(viewMode, v => localStorage.setItem('browse-view-mode', v))
+watch(viewMode, (v) => localStorage.setItem('browse-view-mode', v))
 
 const modeLabel = computed(() => {
   const map: Record<string, string> = {
@@ -114,39 +115,52 @@ const searchPlaceholder = computed(() => {
 
 // Read initial filter state from URL params
 function readFiltersFromRoute(): MechFilters {
-  const q = route.query.q as string ?? ''
+  const q = (route.query.q as string) ?? ''
   const tRaw = route.query.t
   const tonnage = tRaw
-    ? (Array.isArray(tRaw) ? tRaw : [tRaw]).map(Number).filter(n => !isNaN(n))
+    ? (Array.isArray(tRaw) ? tRaw : [tRaw]).map(Number).filter((n) => !isNaN(n))
     : []
   const eraRaw = route.query.era
-  const era = Array.isArray(eraRaw) ? eraRaw as string[] : eraRaw ? [eraRaw as string] : []
-  const faction = route.query.faction as string ?? ''
-  const tag = route.query.tag as string ?? ''
-  const page = parseInt(route.query.page as string ?? '1') || 1
-  const sort = route.query.sort as string ?? 'name'
-  const sortDir = route.query.dir as string ?? 'asc'
+  const era = Array.isArray(eraRaw) ? (eraRaw as string[]) : eraRaw ? [eraRaw as string] : []
+  const faction = (route.query.faction as string) ?? ''
+  const tag = (route.query.tag as string) ?? ''
+  const page = parseInt((route.query.page as string) ?? '1') || 1
+  const sort = (route.query.sort as string) ?? 'name'
+  const sortDir = (route.query.dir as string) ?? 'asc'
   const hasLowerArm = route.query.la === '1' ? true : route.query.la === '0' ? false : null
   const hasHand = route.query.ha === '1' ? true : route.query.ha === '0' ? false : null
   const hardpoints = defaultHardpoints()
-  hardpoints.ballistic.count = parseInt(route.query.hp_b as string ?? '0') || 0
-  hardpoints.ballistic.loc   = route.query.hp_b_loc as string ?? ''
-  hardpoints.energy.count    = parseInt(route.query.hp_e as string ?? '0') || 0
-  hardpoints.energy.loc      = route.query.hp_e_loc as string ?? ''
-  hardpoints.missile.count   = parseInt(route.query.hp_m as string ?? '0') || 0
-  hardpoints.missile.loc     = route.query.hp_m_loc as string ?? ''
-  hardpoints.special.count   = parseInt(route.query.hp_s as string ?? '0') || 0
-  hardpoints.special.loc     = route.query.hp_s_loc as string ?? ''
-  hardpoints.wing.count      = parseInt(route.query.hp_w as string ?? '0') || 0
-  hardpoints.wing.loc        = route.query.hp_w_loc as string ?? ''
-  hardpoints.bomb.count      = parseInt(route.query.hp_bm as string ?? '0') || 0
-  hardpoints.bomb.loc        = route.query.hp_bm_loc as string ?? ''
-  hardpoints.handheld.count  = parseInt(route.query.hp_hh as string ?? '0') || 0
-  hardpoints.handheld.loc    = route.query.hp_hh_loc as string ?? ''
-  hardpoints.excludeOmni     = route.query.hp_excl_omni === '1'
-  hardpoints.omniOnly        = route.query.hp_omni_only === '1'
+  hardpoints.ballistic.count = parseInt((route.query.hp_b as string) ?? '0') || 0
+  hardpoints.ballistic.loc = (route.query.hp_b_loc as string) ?? ''
+  hardpoints.energy.count = parseInt((route.query.hp_e as string) ?? '0') || 0
+  hardpoints.energy.loc = (route.query.hp_e_loc as string) ?? ''
+  hardpoints.missile.count = parseInt((route.query.hp_m as string) ?? '0') || 0
+  hardpoints.missile.loc = (route.query.hp_m_loc as string) ?? ''
+  hardpoints.special.count = parseInt((route.query.hp_s as string) ?? '0') || 0
+  hardpoints.special.loc = (route.query.hp_s_loc as string) ?? ''
+  hardpoints.wing.count = parseInt((route.query.hp_w as string) ?? '0') || 0
+  hardpoints.wing.loc = (route.query.hp_w_loc as string) ?? ''
+  hardpoints.bomb.count = parseInt((route.query.hp_bm as string) ?? '0') || 0
+  hardpoints.bomb.loc = (route.query.hp_bm_loc as string) ?? ''
+  hardpoints.handheld.count = parseInt((route.query.hp_hh as string) ?? '0') || 0
+  hardpoints.handheld.loc = (route.query.hp_hh_loc as string) ?? ''
+  hardpoints.excludeOmni = route.query.hp_excl_omni === '1'
+  hardpoints.omniOnly = route.query.hp_omni_only === '1'
   const uniqueOnly = route.query.unique === '1'
-  return { q, tonnage, era, faction, tag, page, sort, sortDir, hasLowerArm, hasHand, hardpoints, uniqueOnly }
+  return {
+    q,
+    tonnage,
+    era,
+    faction,
+    tag,
+    page,
+    sort,
+    sortDir,
+    hasLowerArm,
+    hasHand,
+    hardpoints,
+    uniqueOnly,
+  }
 }
 
 function clearTag() {
@@ -187,37 +201,78 @@ function nextPage() {
 }
 
 // Clear everything when tab changes
-watch(() => props.mode, () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchInput.value = ''
-  filters.value = { q: '', tonnage: [], era: [], faction: '', tag: '', page: 1, sort: 'name', sortDir: 'asc', hasLowerArm: null, hasHand: null, hardpoints: defaultHardpoints(), uniqueOnly: false }
-})
+watch(
+  () => props.mode,
+  () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchInput.value = ''
+    filters.value = {
+      q: '',
+      tonnage: [],
+      era: [],
+      faction: '',
+      tag: '',
+      page: 1,
+      sort: 'name',
+      sortDir: 'asc',
+      hasLowerArm: null,
+      hasHand: null,
+      hardpoints: defaultHardpoints(),
+      uniqueOnly: false,
+    }
+  },
+)
 
 // Sync filters to URL
-watch(filters, (f) => {
-  const query: Record<string, any> = {}
-  if (f.q) query.q = f.q
-  if (f.tonnage.length) query.t = f.tonnage.map(String)
-  if (f.era.length) query.era = f.era
-  if (f.faction) query.faction = f.faction
-  if (f.tag) query.tag = f.tag
-  if (f.page > 1) query.page = String(f.page)
-  if (f.sort !== 'name') query.sort = f.sort
-  if (f.sortDir !== 'asc') query.dir = f.sortDir
-  if (f.hasLowerArm !== null) query.la = f.hasLowerArm ? '1' : '0'
-  if (f.hasHand !== null) query.ha = f.hasHand ? '1' : '0'
-  if (f.hardpoints.ballistic.count) { query.hp_b = String(f.hardpoints.ballistic.count); if (f.hardpoints.ballistic.loc) query.hp_b_loc = f.hardpoints.ballistic.loc }
-  if (f.hardpoints.energy.count)    { query.hp_e = String(f.hardpoints.energy.count);    if (f.hardpoints.energy.loc)    query.hp_e_loc = f.hardpoints.energy.loc }
-  if (f.hardpoints.missile.count)   { query.hp_m = String(f.hardpoints.missile.count);   if (f.hardpoints.missile.loc)   query.hp_m_loc = f.hardpoints.missile.loc }
-  if (f.hardpoints.special.count)   { query.hp_s = String(f.hardpoints.special.count);   if (f.hardpoints.special.loc)   query.hp_s_loc = f.hardpoints.special.loc }
-  if (f.hardpoints.wing.count)      { query.hp_w = String(f.hardpoints.wing.count);      if (f.hardpoints.wing.loc)      query.hp_w_loc = f.hardpoints.wing.loc }
-  if (f.hardpoints.bomb.count)      { query.hp_bm = String(f.hardpoints.bomb.count);     if (f.hardpoints.bomb.loc)      query.hp_bm_loc = f.hardpoints.bomb.loc }
-  if (f.hardpoints.handheld.count)  { query.hp_hh = String(f.hardpoints.handheld.count); if (f.hardpoints.handheld.loc)  query.hp_hh_loc = f.hardpoints.handheld.loc }
-  if (f.hardpoints.excludeOmni) query.hp_excl_omni = '1'
-  if (f.hardpoints.omniOnly)    query.hp_omni_only = '1'
-  if (f.uniqueOnly) query.unique = '1'
-  router.replace({ query })
-}, { deep: true })
+watch(
+  filters,
+  (f) => {
+    const query: Record<string, any> = {}
+    if (f.q) query.q = f.q
+    if (f.tonnage.length) query.t = f.tonnage.map(String)
+    if (f.era.length) query.era = f.era
+    if (f.faction) query.faction = f.faction
+    if (f.tag) query.tag = f.tag
+    if (f.page > 1) query.page = String(f.page)
+    if (f.sort !== 'name') query.sort = f.sort
+    if (f.sortDir !== 'asc') query.dir = f.sortDir
+    if (f.hasLowerArm !== null) query.la = f.hasLowerArm ? '1' : '0'
+    if (f.hasHand !== null) query.ha = f.hasHand ? '1' : '0'
+    if (f.hardpoints.ballistic.count) {
+      query.hp_b = String(f.hardpoints.ballistic.count)
+      if (f.hardpoints.ballistic.loc) query.hp_b_loc = f.hardpoints.ballistic.loc
+    }
+    if (f.hardpoints.energy.count) {
+      query.hp_e = String(f.hardpoints.energy.count)
+      if (f.hardpoints.energy.loc) query.hp_e_loc = f.hardpoints.energy.loc
+    }
+    if (f.hardpoints.missile.count) {
+      query.hp_m = String(f.hardpoints.missile.count)
+      if (f.hardpoints.missile.loc) query.hp_m_loc = f.hardpoints.missile.loc
+    }
+    if (f.hardpoints.special.count) {
+      query.hp_s = String(f.hardpoints.special.count)
+      if (f.hardpoints.special.loc) query.hp_s_loc = f.hardpoints.special.loc
+    }
+    if (f.hardpoints.wing.count) {
+      query.hp_w = String(f.hardpoints.wing.count)
+      if (f.hardpoints.wing.loc) query.hp_w_loc = f.hardpoints.wing.loc
+    }
+    if (f.hardpoints.bomb.count) {
+      query.hp_bm = String(f.hardpoints.bomb.count)
+      if (f.hardpoints.bomb.loc) query.hp_bm_loc = f.hardpoints.bomb.loc
+    }
+    if (f.hardpoints.handheld.count) {
+      query.hp_hh = String(f.hardpoints.handheld.count)
+      if (f.hardpoints.handheld.loc) query.hp_hh_loc = f.hardpoints.handheld.loc
+    }
+    if (f.hardpoints.excludeOmni) query.hp_excl_omni = '1'
+    if (f.hardpoints.omniOnly) query.hp_omni_only = '1'
+    if (f.uniqueOnly) query.unique = '1'
+    router.replace({ query })
+  },
+  { deep: true },
+)
 
 const { data, isLoading, isError } = useMechList(filters, toRef(props, 'mode'))
 
@@ -322,7 +377,9 @@ const isLastPage = computed(() => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 .page-btn:hover:not(:disabled) {
   border-color: var(--accent-orange);

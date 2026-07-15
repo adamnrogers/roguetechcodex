@@ -19,7 +19,7 @@ function applyTheme(v: Theme) {
   }
 }
 
-watch(theme, v => {
+watch(theme, (v) => {
   localStorage.setItem(STORAGE_KEY, v)
   applyTheme(v)
 })

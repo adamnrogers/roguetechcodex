@@ -16,7 +16,8 @@
               v-if="row.affinityType === 'Quirk'"
               :to="`/quirks/${row.quirk_name}`"
               class="affinity-link"
-            >{{ row.source }}</RouterLink>
+              >{{ row.source }}</RouterLink
+            >
             <span v-else class="td-source-text">{{ row.source }}</span>
           </td>
           <td class="td-desc">
@@ -106,8 +107,12 @@ const flatRows = computed((): FlatRow[] => {
   border-bottom: 1px solid rgba(88, 166, 255, 0.15);
 }
 
-.th-missions { width: 72px; }
-.th-source   { width: 160px; }
+.th-missions {
+  width: 72px;
+}
+.th-source {
+  width: 160px;
+}
 
 .affinity-table td {
   padding: 5px 10px;

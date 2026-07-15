@@ -7,7 +7,7 @@ export async function apiFetch<T>(path: string, params?: Record<string, any>): P
     Object.entries(params).forEach(([k, v]) => {
       if (v === null || v === undefined || v === '') return
       if (Array.isArray(v)) {
-        v.forEach(item => url.searchParams.append(k, String(item)))
+        v.forEach((item) => url.searchParams.append(k, String(item)))
       } else {
         url.searchParams.set(k, String(v))
       }

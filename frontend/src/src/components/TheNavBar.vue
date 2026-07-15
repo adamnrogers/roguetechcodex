@@ -5,15 +5,25 @@
       <span class="logo-version">{{ appVersion }}</span>
     </div>
     <div class="nav-tabs">
-      <RouterLink to="/mechs"     class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
-      <RouterLink to="/vehicles"  class="nav-tab" active-class="nav-tab--active">Vehicles</RouterLink>
-      <RouterLink to="/vtols"     class="nav-tab" active-class="nav-tab--active">VTOLs</RouterLink>
-      <RouterLink to="/battle-armor" class="nav-tab" active-class="nav-tab--active">Battle Armor</RouterLink>
-      <RouterLink to="/equipment" class="nav-tab" active-class="nav-tab--active">Equipment</RouterLink>
-      <RouterLink to="/weapons"   class="nav-tab" active-class="nav-tab--active">Weapons</RouterLink>
-      <RouterLink to="/quirks"    class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>
-      <RouterLink to="/star-systems" class="nav-tab" active-class="nav-tab--active">Systems</RouterLink>
-      <RouterLink to="/rto-pilots" class="nav-tab" active-class="nav-tab--active">RTO Pilots</RouterLink>
+      <RouterLink to="/mechs" class="nav-tab" active-class="nav-tab--active">Mechs</RouterLink>
+      <RouterLink to="/vehicles" class="nav-tab" active-class="nav-tab--active"
+        >Vehicles</RouterLink
+      >
+      <RouterLink to="/vtols" class="nav-tab" active-class="nav-tab--active">VTOLs</RouterLink>
+      <RouterLink to="/battle-armor" class="nav-tab" active-class="nav-tab--active"
+        >Battle Armor</RouterLink
+      >
+      <RouterLink to="/equipment" class="nav-tab" active-class="nav-tab--active"
+        >Equipment</RouterLink
+      >
+      <RouterLink to="/weapons" class="nav-tab" active-class="nav-tab--active">Weapons</RouterLink>
+      <RouterLink to="/quirks" class="nav-tab" active-class="nav-tab--active">Quirks</RouterLink>
+      <RouterLink to="/star-systems" class="nav-tab" active-class="nav-tab--active"
+        >Systems</RouterLink
+      >
+      <RouterLink to="/rto-pilots" class="nav-tab" active-class="nav-tab--active"
+        >RTO Pilots</RouterLink
+      >
     </div>
     <div class="nav-right">
       <div class="search-wrapper">
@@ -25,18 +35,18 @@
           @keydown.enter="handleSearchEnter"
           @keydown.escape="closeSearch"
         />
-        <GlobalSearchResults
-          v-if="showResults"
-          :data="searchData!"
-          @close="closeSearch"
-        />
+        <GlobalSearchResults v-if="showResults" :data="searchData!" @close="closeSearch" />
       </div>
       <select v-model="scale" class="scale-select" title="Text size">
         <option value="normal">A</option>
         <option value="large">A+</option>
         <option value="xl">A++</option>
       </select>
-      <button class="theme-toggle" @click="$emit('toggleTheme')" :title="theme === 'v1' ? 'Switch to Dark mode' : 'Switch to Light mode'">
+      <button
+        class="theme-toggle"
+        @click="$emit('toggleTheme')"
+        :title="theme === 'v1' ? 'Switch to Dark mode' : 'Switch to Light mode'"
+      >
         {{ theme === 'v1' ? '☀' : '☾' }}
       </button>
     </div>
@@ -60,21 +70,26 @@ const router = useRouter()
 
 const { scale } = useUIScale()
 
-
 const rawQuery = ref('')
 const debouncedQuery = ref('')
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(rawQuery, (val) => {
   if (debounceTimer) clearTimeout(debounceTimer)
-  if (val.length < 2) { debouncedQuery.value = ''; return }
-  debounceTimer = setTimeout(() => { debouncedQuery.value = val }, 300)
+  if (val.length < 2) {
+    debouncedQuery.value = ''
+    return
+  }
+  debounceTimer = setTimeout(() => {
+    debouncedQuery.value = val
+  }, 300)
 })
 
 const { data: searchData } = useGlobalSearch(debouncedQuery)
 
 const showResults = computed(
-  () => route.path !== '/search' && debouncedQuery.value.length >= 2 && searchData.value !== undefined
+  () =>
+    route.path !== '/search' && debouncedQuery.value.length >= 2 && searchData.value !== undefined,
 )
 
 function closeSearch() {
@@ -89,15 +104,20 @@ function handleSearchEnter() {
   }
 }
 
-watch(() => route.path, (path, prev) => {
-  if (path === '/search' || prev === '/search') closeSearch()
-})
+watch(
+  () => route.path,
+  (path, prev) => {
+    if (path === '/search' || prev === '/search') closeSearch()
+  },
+)
 </script>
 
 <style scoped>
 .navbar {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: var(--nav-height);
   background: var(--bg-nav);
   backdrop-filter: var(--nav-blur);
@@ -137,7 +157,9 @@ watch(() => route.path, (path, prev) => {
   overflow-x: auto;
   scrollbar-width: none;
 }
-.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
 .nav-tab {
   color: var(--text-muted);
   text-decoration: none;
@@ -146,10 +168,18 @@ watch(() => route.path, (path, prev) => {
   font-size: 14px;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
-.nav-tab:hover { color: var(--text-primary); text-decoration: none; }
-.nav-tab--active { color: var(--text-primary); border-bottom-color: var(--accent-blue); }
+.nav-tab:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.nav-tab--active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-blue);
+}
 .nav-right {
   display: flex;
   align-items: center;
@@ -170,7 +200,9 @@ watch(() => route.path, (path, prev) => {
   outline: none;
   transition: border-color 0.15s;
 }
-.search-input:focus { border-color: var(--accent-orange); }
+.search-input:focus {
+  border-color: var(--accent-orange);
+}
 .theme-toggle {
   background: transparent;
   border: var(--border-default);
@@ -179,7 +211,9 @@ watch(() => route.path, (path, prev) => {
   padding: 4px 6px;
   font-size: 13px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   width: 28px;
   height: 26px;
   text-align: center;
@@ -200,9 +234,12 @@ watch(() => route.path, (path, prev) => {
   cursor: pointer;
   height: 26px;
   width: 48px;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
-.scale-select:hover, .scale-select:focus {
+.scale-select:hover,
+.scale-select:focus {
   color: var(--accent-blue);
   border-color: var(--accent-blue);
   outline: none;

@@ -1,6 +1,5 @@
 <template>
   <div class="chassis-page-outer">
-
     <!-- ── Loading ─────────────────────────────────────────── -->
     <div v-if="isLoading" class="skeleton-wrap">
       <div class="skeleton skeleton-title"></div>
@@ -17,12 +16,10 @@
     <!-- ── Content ─────────────────────────────────────────── -->
     <template v-else>
       <div class="chassis-layout" ref="captureTarget">
-
         <!-- ════════════════════════════════════════════════
              LEFT COLUMN
              ════════════════════════════════════════════════ -->
         <main class="main-col">
-
           <!-- Page header -->
           <header class="page-header">
             <nav class="breadcrumb">
@@ -88,14 +85,12 @@
               />
             </div>
           </section>
-
         </main>
 
         <!-- ════════════════════════════════════════════════
              RIGHT SIDEBAR
              ════════════════════════════════════════════════ -->
         <aside class="sidebar">
-
           <!-- Identity card -->
           <div class="identity-card">
             <div class="identity-header">{{ data.ui_name }}</div>
@@ -120,7 +115,9 @@
                 <tr v-if="data.weight_class">
                   <td class="id-label">Class</td>
                   <td class="id-value">
-                    <span class="wc-badge" :data-wc="data.weight_class">{{ data.weight_class }}</span>
+                    <span class="wc-badge" :data-wc="data.weight_class">{{
+                      data.weight_class
+                    }}</span>
                   </td>
                 </tr>
                 <tr v-if="data.tonnage != null">
@@ -132,7 +129,12 @@
                   <td class="id-value">
                     <span v-if="parsedHardpoints.length" class="hp-badges">
                       <span v-for="hp in parsedHardpoints" :key="hp.cat" class="hp-entry">
-                        <span class="hp-count">{{ hp.count }}</span><span class="hp-badge" :style="{ background: hp.style.bg, color: hp.style.color }">{{ hp.cat }}</span>
+                        <span class="hp-count">{{ hp.count }}</span
+                        ><span
+                          class="hp-badge"
+                          :style="{ background: hp.style.bg, color: hp.style.color }"
+                          >{{ hp.cat }}</span
+                        >
                       </span>
                     </span>
                     <span v-else class="id-muted">-</span>
@@ -142,7 +144,9 @@
                   <td class="id-label">Total Health</td>
                   <td class="id-value">
                     <div>{{ selectedVariant.health_summary?.split(' S=')[0] }}</div>
-                    <div v-if="selectedVariant.health_summary?.includes(' S=')">S={{ selectedVariant.health_summary.split(' S=')[1] }}</div>
+                    <div v-if="selectedVariant.health_summary?.includes(' S=')">
+                      S={{ selectedVariant.health_summary.split(' S=')[1] }}
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="selectedVariant?.source_mod">
@@ -163,7 +167,8 @@
                   class="sidebar-link"
                   :class="{ 'sidebar-link-active': variant.id === effectiveVariantId }"
                   @click.prevent="selectedVariantId = variant.id"
-                >{{ variant.variant_name || variant.id }}</a>
+                  >{{ variant.variant_name || variant.id }}</a
+                >
               </li>
             </ul>
           </div>
@@ -176,7 +181,8 @@
                 <RouterLink
                   :to="{ path: browsePath, query: { faction: faction.name } }"
                   class="sidebar-link"
-                >{{ faction.display }}</RouterLink>
+                  >{{ faction.display }}</RouterLink
+                >
               </li>
               <li v-if="!allFactions.length" class="sidebar-empty">None</li>
             </ul>
@@ -191,7 +197,6 @@
               </li>
             </ul>
           </div>
-
         </aside>
       </div>
     </template>
@@ -212,9 +217,9 @@ import QuirkTable from '../components/QuirkTable.vue'
 
 const route = useRoute()
 const router = useRouter()
-const prefabBase    = computed(() => route.params.prefabBase as string)
-const isVehicle     = computed(() => route.path.startsWith('/vehicles/'))
-const isVtol        = computed(() => route.path.startsWith('/vtols/'))
+const prefabBase = computed(() => route.params.prefabBase as string)
+const isVehicle = computed(() => route.path.startsWith('/vehicles/'))
+const isVtol = computed(() => route.path.startsWith('/vtols/'))
 const isBattleArmor = computed(() => route.path.startsWith('/battle-armor/'))
 
 const { data, isLoading, isError } = useChassisDetail(
@@ -223,14 +228,32 @@ const { data, isLoading, isError } = useChassisDetail(
   isBattleArmor,
 )
 
-const browsePath  = computed(() =>
-  isVtol.value ? '/vtols' : isVehicle.value ? '/vehicles' : isBattleArmor.value ? '/battle-armor' : '/mechs'
+const browsePath = computed(() =>
+  isVtol.value
+    ? '/vtols'
+    : isVehicle.value
+      ? '/vehicles'
+      : isBattleArmor.value
+        ? '/battle-armor'
+        : '/mechs',
 )
 const browseLabel = computed(() =>
-  isVtol.value ? 'VTOLs' : isVehicle.value ? 'Vehicles' : isBattleArmor.value ? 'Battle Armor' : 'Mechs'
+  isVtol.value
+    ? 'VTOLs'
+    : isVehicle.value
+      ? 'Vehicles'
+      : isBattleArmor.value
+        ? 'Battle Armor'
+        : 'Mechs',
 )
 const bayLabel = computed(() =>
-  isVtol.value ? 'VTOL Bay' : isVehicle.value ? 'Vehicle Bay' : isBattleArmor.value ? 'Battle Armor Bay' : 'Mech Bay'
+  isVtol.value
+    ? 'VTOL Bay'
+    : isVehicle.value
+      ? 'Vehicle Bay'
+      : isBattleArmor.value
+        ? 'Battle Armor Bay'
+        : 'Mech Bay',
 )
 
 const portraitImgError = ref(false)
@@ -239,8 +262,14 @@ const captureTarget = ref<HTMLElement | null>(null)
 const { isExporting, exportError, exportAsImage } = useExportImage()
 function handleExport() {
   if (!captureTarget.value || !data.value) return
-  const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-  const parts = [data.value.ui_name, selectedVariant.value?.variant_name].filter(Boolean) as string[]
+  const slug = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  const parts = [data.value.ui_name, selectedVariant.value?.variant_name].filter(
+    Boolean,
+  ) as string[]
   exportAsImage(captureTarget.value, `${slug(parts.join('-'))}.png`)
 }
 
@@ -248,7 +277,9 @@ function handleExport() {
 const selectedVariantId = ref<string | null>(null)
 const queryVariantId = route.query.variant as string | undefined
 if (queryVariantId) selectedVariantId.value = queryVariantId
-watch(selectedVariantId, () => { window.scrollTo(0, 0) })
+watch(selectedVariantId, () => {
+  window.scrollTo(0, 0)
+})
 
 // Reset variant selection and portrait error when navigating to a different chassis
 watch(prefabBase, () => {
@@ -256,15 +287,14 @@ watch(prefabBase, () => {
   selectedVariantId.value = (route.query.variant as string | undefined) ?? null
 })
 
-const effectiveVariantId = computed(() =>
-  selectedVariantId.value ?? data.value?.variants[0]?.id ?? null
+const effectiveVariantId = computed(
+  () => selectedVariantId.value ?? data.value?.variants[0]?.id ?? null,
 )
 
 const selectedVariant = computed(() => {
   if (!data.value?.variants.length) return null
   return (
-    data.value.variants.find(v => v.id === effectiveVariantId.value) ??
-    data.value.variants[0]
+    data.value.variants.find((v) => v.id === effectiveVariantId.value) ?? data.value.variants[0]
   )
 })
 
@@ -306,21 +336,21 @@ const biomeRestrictions = computed(() => {
 })
 
 const HP_BADGE_STYLES: Record<string, { bg: string; color: string }> = {
-  O:  { bg: 'rgba(230,180,60,0.2)',   color: '#e6b43c' },
-  B:  { bg: 'rgba(88,166,255,0.2)',   color: '#58a6ff' },
-  E:  { bg: 'rgba(63,185,80,0.2)',    color: '#3fb950' },
-  M:  { bg: 'rgba(180,130,255,0.2)',  color: '#b482ff' },
-  S:  { bg: 'rgba(240,136,62,0.2)',   color: '#f0883e' },
+  O: { bg: 'rgba(230,180,60,0.2)', color: '#e6b43c' },
+  B: { bg: 'rgba(88,166,255,0.2)', color: '#58a6ff' },
+  E: { bg: 'rgba(63,185,80,0.2)', color: '#3fb950' },
+  M: { bg: 'rgba(180,130,255,0.2)', color: '#b482ff' },
+  S: { bg: 'rgba(240,136,62,0.2)', color: '#f0883e' },
   WM: { bg: 'rgba(128,128,128,0.15)', color: '#8b96a3' },
-  IB: { bg: 'rgba(248,81,73,0.15)',   color: '#f85149' },
-  SH: { bg: 'rgba(56,189,193,0.15)',  color: '#38bdc1' },
+  IB: { bg: 'rgba(248,81,73,0.15)', color: '#f85149' },
+  SH: { bg: 'rgba(56,189,193,0.15)', color: '#38bdc1' },
   JJ: { bg: 'rgba(139,150,163,0.15)', color: '#8b96a3' },
 }
 
 const parsedHardpoints = computed(() => {
   const summary = selectedVariant.value?.hardpoints_summary
   if (!summary || summary === '-') return []
-  return summary.split(' ').flatMap(token => {
+  return summary.split(' ').flatMap((token) => {
     const m = token.match(/^(\d+)(.+)$/)
     if (!m) return []
     const [, count, cat] = m
@@ -348,7 +378,9 @@ const parsedHardpoints = computed(() => {
 }
 
 /* ── Left column ───────────────────────────────────────────── */
-.main-col { min-width: 0; }
+.main-col {
+  min-width: 0;
+}
 
 /* ── Page header ───────────────────────────────────────────── */
 .page-header {
@@ -382,7 +414,9 @@ const parsedHardpoints = computed(() => {
   padding: 0;
   font-family: inherit;
 }
-.back-btn:hover { text-decoration: underline; }
+.back-btn:hover {
+  text-decoration: underline;
+}
 
 .export-btn {
   background: none;
@@ -395,8 +429,14 @@ const parsedHardpoints = computed(() => {
   font-family: inherit;
   margin-top: 8px;
 }
-.export-btn:hover:not(:disabled) { background: var(--accent-blue); color: var(--bg-card); }
-.export-btn:disabled { opacity: 0.6; cursor: default; }
+.export-btn:hover:not(:disabled) {
+  background: var(--accent-blue);
+  color: var(--bg-card);
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 .export-error {
   font-size: 12px;
@@ -404,10 +444,22 @@ const parsedHardpoints = computed(() => {
   margin-top: 4px;
 }
 
-.bc-link { color: var(--accent-blue); text-decoration: none; }
-.bc-link:hover { text-decoration: underline; }
-.bc-sep { color: var(--text-muted); padding: 0 2px; }
-.bc-id  { color: var(--text-muted); font-family: monospace; font-size: 11px; }
+.bc-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+.bc-link:hover {
+  text-decoration: underline;
+}
+.bc-sep {
+  color: var(--text-muted);
+  padding: 0 2px;
+}
+.bc-id {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 11px;
+}
 
 .chassis-title {
   font-size: 24px;
@@ -418,7 +470,9 @@ const parsedHardpoints = computed(() => {
 }
 
 /* ── Content sections ──────────────────────────────────────── */
-.content-section { margin-bottom: 28px; }
+.content-section {
+  margin-bottom: 28px;
+}
 
 .section-head {
   display: flex;
@@ -436,7 +490,9 @@ const parsedHardpoints = computed(() => {
   margin: 0;
 }
 
-.subsection { margin-bottom: 20px; }
+.subsection {
+  margin-bottom: 20px;
+}
 
 .subsection-title {
   font-size: 12px;
@@ -470,7 +526,10 @@ const parsedHardpoints = computed(() => {
   margin-bottom: 8px;
 }
 
-.vs-label { font-size: 12px; color: var(--text-muted); }
+.vs-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 
 .vs-select {
   background: var(--bg-card);
@@ -481,7 +540,10 @@ const parsedHardpoints = computed(() => {
   border-radius: 4px;
   cursor: pointer;
 }
-.vs-select:focus { outline: none; border-color: var(--accent-blue); }
+.vs-select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
 
 /* ── Right sidebar ─────────────────────────────────────────── */
 .sidebar {
@@ -531,7 +593,10 @@ const parsedHardpoints = computed(() => {
   color: rgba(88, 166, 255, 0.3);
 }
 
-.identity-table { width: 100%; border-collapse: collapse; }
+.identity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
 .identity-table td {
   padding: 5px 12px;
@@ -546,7 +611,10 @@ const parsedHardpoints = computed(() => {
   width: 50%;
 }
 
-.id-value { color: var(--text-primary); text-align: left; }
+.id-value {
+  color: var(--text-primary);
+  text-align: left;
+}
 
 .wc-badge {
   font-size: 10px;
@@ -556,10 +624,22 @@ const parsedHardpoints = computed(() => {
   border-radius: var(--badge-radius, 4px);
   letter-spacing: 0.3px;
 }
-.wc-badge[data-wc="LIGHT"]   { background: var(--badge-light-bg);   color: var(--badge-light-fg); }
-.wc-badge[data-wc="MEDIUM"]  { background: var(--badge-medium-bg);  color: var(--badge-medium-fg); }
-.wc-badge[data-wc="HEAVY"]   { background: var(--badge-heavy-bg);   color: var(--badge-heavy-fg); }
-.wc-badge[data-wc="ASSAULT"] { background: var(--badge-assault-bg); color: var(--badge-assault-fg); }
+.wc-badge[data-wc='LIGHT'] {
+  background: var(--badge-light-bg);
+  color: var(--badge-light-fg);
+}
+.wc-badge[data-wc='MEDIUM'] {
+  background: var(--badge-medium-bg);
+  color: var(--badge-medium-fg);
+}
+.wc-badge[data-wc='HEAVY'] {
+  background: var(--badge-heavy-bg);
+  color: var(--badge-heavy-fg);
+}
+.wc-badge[data-wc='ASSAULT'] {
+  background: var(--badge-assault-bg);
+  color: var(--badge-assault-fg);
+}
 
 .unique-badge {
   display: inline-block;
@@ -598,7 +678,9 @@ const parsedHardpoints = computed(() => {
   border-radius: 3px;
   letter-spacing: 0.2px;
 }
-.id-muted { color: var(--text-muted); }
+.id-muted {
+  color: var(--text-muted);
+}
 
 /* Sidebar sections */
 .sidebar-section {
@@ -625,7 +707,9 @@ const parsedHardpoints = computed(() => {
   margin: 0;
 }
 
-.sidebar-list li { margin-bottom: 4px; }
+.sidebar-list li {
+  margin-bottom: 4px;
+}
 
 .sidebar-link {
   color: var(--accent-blue);
@@ -633,8 +717,13 @@ const parsedHardpoints = computed(() => {
   text-decoration: none;
   transition: color 0.12s;
 }
-.sidebar-link:hover { text-decoration: underline; }
-.sidebar-link-active { color: var(--accent-orange); font-weight: 600; }
+.sidebar-link:hover {
+  text-decoration: underline;
+}
+.sidebar-link-active {
+  color: var(--accent-orange);
+  font-weight: 600;
+}
 
 .sidebar-empty {
   font-size: 12px;
@@ -663,18 +752,45 @@ const parsedHardpoints = computed(() => {
   margin-bottom: 12px;
   animation: pulse 1.4s ease-in-out infinite;
 }
-.skeleton-title { height: 32px; width: 280px; max-width: 100%; }
-.skeleton-line  { height: 14px; width: 100%; }
-.skeleton-line.short { width: 55%; }
+.skeleton-title {
+  height: 32px;
+  width: 280px;
+  max-width: 100%;
+}
+.skeleton-line {
+  height: 14px;
+  width: 100%;
+}
+.skeleton-line.short {
+  width: 55%;
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 0.9; }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
 /* ── Not found ─────────────────────────────────────────────── */
-.not-found { padding: 60px 32px; text-align: center; }
-.not-found-msg { color: var(--text-muted); font-size: 15px; margin-bottom: 12px; }
-.back-link { color: var(--accent-blue); font-size: 14px; text-decoration: none; }
-.back-link:hover { text-decoration: underline; }
+.not-found {
+  padding: 60px 32px;
+  text-align: center;
+}
+.not-found-msg {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.back-link {
+  color: var(--accent-blue);
+  font-size: 14px;
+  text-decoration: none;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
 </style>

@@ -6,10 +6,7 @@
     </div>
 
     <!-- Virtual scrolled grid/list -->
-    <div
-      v-else
-      :style="{ position: 'relative', height: totalSize + 'px' }"
-    >
+    <div v-else :style="{ position: 'relative', height: totalSize + 'px' }">
       <div
         v-for="vRow in virtualRows"
         :key="vRow.index"
@@ -57,7 +54,7 @@ const GAP = 12
 const columns = computed(() =>
   props.viewMode === 'list'
     ? 1
-    : Math.max(1, Math.floor((containerWidth.value - 32 + GAP) / (CARD_MIN_WIDTH + GAP)))
+    : Math.max(1, Math.floor((containerWidth.value - 32 + GAP) / (CARD_MIN_WIDTH + GAP))),
 )
 
 const rows = computed(() => Math.ceil(props.items.length / columns.value))
@@ -65,7 +62,7 @@ const rows = computed(() => Math.ceil(props.items.length / columns.value))
 let ro: ResizeObserver | null = null
 
 onMounted(() => {
-  ro = new ResizeObserver(entries => {
+  ro = new ResizeObserver((entries) => {
     containerWidth.value = entries[0].contentRect.width
   })
   if (containerRef.value) ro.observe(containerRef.value)
@@ -79,9 +76,9 @@ const rowVirtualizer = useVirtualizer(
   computed(() => ({
     count: rows.value,
     getScrollElement: () => document.documentElement,
-    estimateSize: () => props.viewMode === 'list' ? 48 : 140,
+    estimateSize: () => (props.viewMode === 'list' ? 48 : 140),
     overscan: 3,
-  }))
+  })),
 )
 
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())

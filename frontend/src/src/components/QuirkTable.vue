@@ -77,7 +77,9 @@ const flatRows = computed((): FlatRow[] => {
   border-bottom: 1px solid rgba(88, 166, 255, 0.15);
 }
 
-.th-source { width: 160px; }
+.th-source {
+  width: 160px;
+}
 
 .quirk-table td {
   padding: 5px 10px;

@@ -10,14 +10,14 @@ export interface AffinityLevel {
 
 export interface AffinityEntry {
   id: string
-  affinity_type: string   // "Global" | "Chassis" | "Quirk"
-  quirk_name: string      // quirk ID for /quirks/:id link (Quirk type only)
-  quirk_ui_name?: string  // gear table UIName for Quirk type (e.g. "Morrigan C3i")
+  affinity_type: string // "Global" | "Chassis" | "Quirk"
+  quirk_name: string // quirk ID for /quirks/:id link (Quirk type only)
+  quirk_ui_name?: string // gear table UIName for Quirk type (e.g. "Morrigan C3i")
   levels: AffinityLevel[]
 }
 
 export interface QuirkEffect {
-  id: string              // quirk gear ID, used for /quirks/:id link
+  id: string // quirk gear ID, used for /quirks/:id link
   ui_name: string
   bonus_descriptions: string[]
 }

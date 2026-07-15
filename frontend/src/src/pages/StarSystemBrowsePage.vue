@@ -6,11 +6,11 @@
       :tags="filters.tags"
       :minDifficulty="filters.minDifficulty"
       :maxDifficulty="filters.maxDifficulty"
-      @update:biomes="v => onFilterUpdate({ biomes: v })"
-      @update:population="v => onFilterUpdate({ population: v })"
-      @update:tags="v => onFilterUpdate({ tags: v })"
-      @update:minDifficulty="v => onFilterUpdate({ minDifficulty: v })"
-      @update:maxDifficulty="v => onFilterUpdate({ maxDifficulty: v })"
+      @update:biomes="(v) => onFilterUpdate({ biomes: v })"
+      @update:population="(v) => onFilterUpdate({ population: v })"
+      @update:tags="(v) => onFilterUpdate({ tags: v })"
+      @update:minDifficulty="(v) => onFilterUpdate({ minDifficulty: v })"
+      @update:maxDifficulty="(v) => onFilterUpdate({ maxDifficulty: v })"
     />
     <div class="browse-main">
       <div class="search-row">
@@ -29,7 +29,7 @@
         :options="sortOptions"
         :viewMode="viewMode"
         @update:sortKey="onSortKeyChange"
-        @update:viewMode="v => viewMode = v"
+        @update:viewMode="(v) => (viewMode = v)"
       />
       <div v-if="isError" class="error-msg">
         Failed to load data. Please check your connection and try again.
@@ -70,35 +70,37 @@ const router = useRouter()
 
 const PAGE_SIZE = 60
 const viewMode = ref<'grid' | 'list'>(
-  (localStorage.getItem('star-system-view-mode') as 'grid' | 'list') ?? 'grid'
+  (localStorage.getItem('star-system-view-mode') as 'grid' | 'list') ?? 'grid',
 )
-watch(viewMode, v => localStorage.setItem('star-system-view-mode', v))
+watch(viewMode, (v) => localStorage.setItem('star-system-view-mode', v))
 
 const sortOptions: SortOption[] = [
-  { value: 'name:asc',        label: 'Name (A–Z)' },
-  { value: 'name:desc',       label: 'Name (Z–A)' },
-  { value: 'difficulty:asc',  label: 'Difficulty ↑' },
+  { value: 'name:asc', label: 'Name (A–Z)' },
+  { value: 'name:desc', label: 'Name (Z–A)' },
+  { value: 'difficulty:asc', label: 'Difficulty ↑' },
   { value: 'difficulty:desc', label: 'Difficulty ↓' },
 ]
 
 function readFilters(): StarSystemFilters {
-  const q          = (route.query.q    as string) ?? ''
-  const page       = parseInt((route.query.page as string) ?? '1') || 1
-  const sort       = (route.query.sort as string) ?? 'name'
-  const sortDir    = (route.query.dir  as string) ?? 'asc'
-  const biomesRaw  = (route.query.biomes as string) ?? ''
-  const popRaw     = (route.query.pop    as string) ?? ''
-  const tagsRaw    = (route.query.tags   as string) ?? ''
-  const minD       = route.query.mind ? parseInt(route.query.mind as string) : null
-  const maxD       = route.query.maxd ? parseInt(route.query.maxd as string) : null
+  const q = (route.query.q as string) ?? ''
+  const page = parseInt((route.query.page as string) ?? '1') || 1
+  const sort = (route.query.sort as string) ?? 'name'
+  const sortDir = (route.query.dir as string) ?? 'asc'
+  const biomesRaw = (route.query.biomes as string) ?? ''
+  const popRaw = (route.query.pop as string) ?? ''
+  const tagsRaw = (route.query.tags as string) ?? ''
+  const minD = route.query.mind ? parseInt(route.query.mind as string) : null
+  const maxD = route.query.maxd ? parseInt(route.query.maxd as string) : null
   return {
     q,
-    biomes:     biomesRaw ? biomesRaw.split(',').filter(Boolean) : [],
-    population: popRaw    ? popRaw.split(',').filter(Boolean)    : [],
-    tags:       tagsRaw   ? tagsRaw.split(',').filter(Boolean)   : [],
+    biomes: biomesRaw ? biomesRaw.split(',').filter(Boolean) : [],
+    population: popRaw ? popRaw.split(',').filter(Boolean) : [],
+    tags: tagsRaw ? tagsRaw.split(',').filter(Boolean) : [],
     minDifficulty: minD,
     maxDifficulty: maxD,
-    page, sort, sortDir,
+    page,
+    sort,
+    sortDir,
   }
 }
 
@@ -131,19 +133,23 @@ function nextPage() {
   if (!isLastPage.value) filters.value = { ...filters.value, page: filters.value.page + 1 }
 }
 
-watch(filters, (f) => {
-  const query: Record<string, any> = {}
-  if (f.q)                    query.q      = f.q
-  if (f.biomes.length)        query.biomes = f.biomes.join(',')
-  if (f.population.length)    query.pop    = f.population.join(',')
-  if (f.tags.length)          query.tags   = f.tags.join(',')
-  if (f.minDifficulty !== null) query.mind = String(f.minDifficulty)
-  if (f.maxDifficulty !== null) query.maxd = String(f.maxDifficulty)
-  if (f.page > 1)              query.page = String(f.page)
-  if (f.sort !== 'name')       query.sort = f.sort
-  if (f.sortDir !== 'asc')     query.dir  = f.sortDir
-  router.replace({ query })
-}, { deep: true })
+watch(
+  filters,
+  (f) => {
+    const query: Record<string, any> = {}
+    if (f.q) query.q = f.q
+    if (f.biomes.length) query.biomes = f.biomes.join(',')
+    if (f.population.length) query.pop = f.population.join(',')
+    if (f.tags.length) query.tags = f.tags.join(',')
+    if (f.minDifficulty !== null) query.mind = String(f.minDifficulty)
+    if (f.maxDifficulty !== null) query.maxd = String(f.maxDifficulty)
+    if (f.page > 1) query.page = String(f.page)
+    if (f.sort !== 'name') query.sort = f.sort
+    if (f.sortDir !== 'asc') query.dir = f.sortDir
+    router.replace({ query })
+  },
+  { deep: true },
+)
 
 const { data, isLoading, isError } = useStarSystemList(filters)
 
@@ -188,8 +194,12 @@ const isLastPage = computed(() => {
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
-.search-input::placeholder { color: var(--text-muted); }
-.search-input:focus { border-color: var(--accent-blue); }
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+.search-input:focus {
+  border-color: var(--accent-blue);
+}
 
 .ss-grid {
   display: grid;
@@ -233,10 +243,21 @@ const isLastPage = computed(() => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
-.page-btn:hover:not(:disabled) { border-color: var(--accent-orange); color: var(--accent-orange); }
-.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.page-btn:hover:not(:disabled) {
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-.page-info { font-size: 13px; color: var(--text-muted); }
+.page-info {
+  font-size: 13px;
+  color: var(--text-muted);
+}
 </style>

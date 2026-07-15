@@ -3,24 +3,14 @@
     <template v-if="hasResults">
       <div v-if="data.chassis.length" class="result-group">
         <div class="group-label">Mechs &amp; Vehicles</div>
-        <button
-          v-for="hit in data.chassis"
-          :key="hit.id"
-          class="result-row"
-          @click="navigate(hit)"
-        >
+        <button v-for="hit in data.chassis" :key="hit.id" class="result-row" @click="navigate(hit)">
           <span class="result-name">{{ hit.name }}</span>
           <span class="result-subtitle">{{ hit.subtitle }}</span>
         </button>
       </div>
       <div v-if="data.gear.length" class="result-group">
         <div class="group-label">Gear</div>
-        <button
-          v-for="hit in data.gear"
-          :key="hit.id"
-          class="result-row"
-          @click="navigate(hit)"
-        >
+        <button v-for="hit in data.gear" :key="hit.id" class="result-row" @click="navigate(hit)">
           <span class="result-name">{{ hit.name }}</span>
           <span class="result-subtitle">{{ hit.subtitle }}</span>
         </button>
@@ -41,9 +31,7 @@ const emit = defineEmits<{ close: [] }>()
 const router = useRouter()
 const dropdownRef = ref<HTMLElement | null>(null)
 
-const hasResults = computed(
-  () => props.data.chassis.length > 0 || props.data.gear.length > 0
-)
+const hasResults = computed(() => props.data.chassis.length > 0 || props.data.gear.length > 0)
 
 const TYPE_ROUTE: Record<string, string> = {
   mech: '/mechs',

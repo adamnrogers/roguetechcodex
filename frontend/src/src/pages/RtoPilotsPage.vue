@@ -34,8 +34,8 @@ const filtered = computed(() => {
   const pilots = data.value ?? []
   const q = query.value.trim().toLowerCase()
   if (!q) return pilots
-  return pilots.filter(p =>
-    (p.callsign?.toLowerCase().includes(q)) || p.ui_name.toLowerCase().includes(q)
+  return pilots.filter(
+    (p) => p.callsign?.toLowerCase().includes(q) || p.ui_name.toLowerCase().includes(q),
   )
 })
 </script>

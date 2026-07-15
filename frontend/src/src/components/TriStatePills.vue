@@ -8,7 +8,8 @@
       :data-pill="opt.value"
       @click="cycle(opt.value)"
     >
-      <span class="tsp-prefix">{{ prefixOf(opt.value) }}</span>{{ opt.label }}
+      <span class="tsp-prefix">{{ prefixOf(opt.value) }}</span
+      >{{ opt.label }}
     </button>
   </div>
 </template>
@@ -52,10 +53,10 @@ function cycle(v: string) {
   if (s === 'off') {
     inc.push(v)
   } else if (s === 'include') {
-    inc = inc.filter(x => x !== v)
+    inc = inc.filter((x) => x !== v)
     exc.push(v)
   } else {
-    exc = exc.filter(x => x !== v)
+    exc = exc.filter((x) => x !== v)
   }
   emit('update:includeValues', inc)
   emit('update:excludeValues', exc)
@@ -82,7 +83,10 @@ function cycle(v: string) {
   color: var(--text-muted);
   cursor: pointer;
   width: 100%;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 
 .tsp-pill:hover {
@@ -98,23 +102,46 @@ function cycle(v: string) {
 }
 
 /* Include - colored by value */
-.tsp-pill.include { color: #fff; border-color: transparent; }
+.tsp-pill.include {
+  color: #fff;
+  border-color: transparent;
+}
 
 /* Fallback include color (used when no matching data-pill rule applies) */
-.tsp-pill.include { background: rgba(88, 166, 255, 0.55); }
+.tsp-pill.include {
+  background: rgba(88, 166, 255, 0.55);
+}
 
 /* Equipment types */
-.tsp-pill.include[data-pill="Upgrade"]       { background: rgba(88,  166, 255, 0.65); }
-.tsp-pill.include[data-pill="HeatSink"]      { background: rgba(255, 140, 0,   0.65); }
-.tsp-pill.include[data-pill="AmmunitionBox"] { background: rgba(80,  200, 120, 0.65); }
-.tsp-pill.include[data-pill="JumpJet"]       { background: rgba(180, 100, 255, 0.65); }
+.tsp-pill.include[data-pill='Upgrade'] {
+  background: rgba(88, 166, 255, 0.65);
+}
+.tsp-pill.include[data-pill='HeatSink'] {
+  background: rgba(255, 140, 0, 0.65);
+}
+.tsp-pill.include[data-pill='AmmunitionBox'] {
+  background: rgba(80, 200, 120, 0.65);
+}
+.tsp-pill.include[data-pill='JumpJet'] {
+  background: rgba(180, 100, 255, 0.65);
+}
 
 /* Weapon categories */
-.tsp-pill.include[data-pill="Ballistic"] { background: rgba(88,  166, 255, 0.6); }
-.tsp-pill.include[data-pill="Energy"]    { background: rgba(63,  185, 80,  0.6); }
-.tsp-pill.include[data-pill="Missile"]   { background: rgba(180, 130, 255, 0.6); }
-.tsp-pill.include[data-pill="Melee"]     { background: rgba(255, 80,  80,  0.6); }
-.tsp-pill.include[data-pill="Support"]   { background: rgba(180, 100, 255, 0.6); }
+.tsp-pill.include[data-pill='Ballistic'] {
+  background: rgba(88, 166, 255, 0.6);
+}
+.tsp-pill.include[data-pill='Energy'] {
+  background: rgba(63, 185, 80, 0.6);
+}
+.tsp-pill.include[data-pill='Missile'] {
+  background: rgba(180, 130, 255, 0.6);
+}
+.tsp-pill.include[data-pill='Melee'] {
+  background: rgba(255, 80, 80, 0.6);
+}
+.tsp-pill.include[data-pill='Support'] {
+  background: rgba(180, 100, 255, 0.6);
+}
 
 /* Exclude */
 .tsp-pill.exclude {

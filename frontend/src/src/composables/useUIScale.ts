@@ -15,7 +15,7 @@ function applyScale(v: UIScale) {
   document.documentElement.setAttribute('data-scale', v)
 }
 
-watch(scale, v => {
+watch(scale, (v) => {
   localStorage.setItem(STORAGE_KEY, v)
   applyScale(v)
 })

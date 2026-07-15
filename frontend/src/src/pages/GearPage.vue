@@ -19,8 +19,20 @@
       <div class="classified-body">
         <img src="/classified.png" alt="CLASSIFIED" class="classified-img" />
         <div class="classified-text">
-          <p>This item or unit has been marked as restricted (not directly for player use) or spoiler by the Developers.</p>
-          <p>If you feel this was done in error, open a ticket on <a href="https://discord.gg/93kxWQZ" target="_blank" rel="noopener" class="classified-link">Discuss</a>.</p>
+          <p>
+            This item or unit has been marked as restricted (not directly for player use) or spoiler
+            by the Developers.
+          </p>
+          <p>
+            If you feel this was done in error, open a ticket on
+            <a
+              href="https://discord.gg/93kxWQZ"
+              target="_blank"
+              rel="noopener"
+              class="classified-link"
+              >Discuss</a
+            >.
+          </p>
         </div>
       </div>
     </div>
@@ -40,7 +52,11 @@
               <span v-if="componentTypeLabel" class="ct-badge" :data-ct="componentTypeBadgeKey">
                 {{ componentTypeLabel }}
               </span>
-              <span v-if="data.weapon_category" class="wcat-badge" :data-wcat="data.weapon_category">
+              <span
+                v-if="data.weapon_category"
+                class="wcat-badge"
+                :data-wcat="data.weapon_category"
+              >
                 {{ data.weapon_category }}
               </span>
             </div>
@@ -84,7 +100,7 @@
           <!-- Weapon stats (weapons only) -->
           <section v-if="data.weapon_category" class="content-section">
             <h2 class="section-title">Weapon Stats</h2>
-            <WeaponStatsTable v-if="data.modes?.length" :modes="(data.modes as any)" />
+            <WeaponStatsTable v-if="data.modes?.length" :modes="data.modes as any" />
             <table v-else class="stat-table">
               <tbody>
                 <tr v-if="data.damage != null">
@@ -97,7 +113,9 @@
                 </tr>
                 <tr v-if="data.min_range != null || data.max_range != null">
                   <td class="stat-label">Range</td>
-                  <td class="stat-value">{{ data.min_range ?? 0 }}–{{ data.max_range ?? '?' }} m</td>
+                  <td class="stat-value">
+                    {{ data.min_range ?? 0 }}–{{ data.max_range ?? '?' }} m
+                  </td>
                 </tr>
                 <tr v-if="data.shots_when_fired != null && data.shots_when_fired > 1">
                   <td class="stat-label">Shots/Volley</td>
@@ -129,7 +147,8 @@
                 :key="m.variant_id"
                 :to="`/mechs/${m.prefab_base}?variant=${m.variant_id}`"
                 class="used-by-link"
-              >{{ m.ui_name }} {{ m.variant_name }}</RouterLink>
+                >{{ m.ui_name }} {{ m.variant_name }}</RouterLink
+              >
             </div>
           </section>
 
@@ -145,7 +164,8 @@
                 :key="v.variant_id"
                 :to="`/${v.unit_type === 'vtol' ? 'vtols' : 'vehicles'}/${v.prefab_base}?variant=${v.variant_id}`"
                 class="used-by-link"
-              >{{ v.ui_name }} {{ v.variant_name }}</RouterLink>
+                >{{ v.ui_name }} {{ v.variant_name }}</RouterLink
+              >
             </div>
           </section>
         </main>
@@ -222,23 +242,25 @@ const gearId = computed(() => route.params.gearId as string)
 const { data, isLoading, isError } = useGearDetail(gearId)
 
 const hideBlacklisted = import.meta.env.VITE_HIDE_BLACKLISTED === 'true'
-const isClassified = computed(() =>
-  hideBlacklisted && !!data.value?.component_tags.includes('BLACKLISTED')
+const isClassified = computed(
+  () => hideBlacklisted && !!data.value?.component_tags.includes('BLACKLISTED'),
 )
 
 // Infer browse mode from current URL prefix
 const browsePath = computed(() => {
   if (route.path.startsWith('/weapons')) return '/weapons'
-  if (route.path.startsWith('/quirks'))  return '/quirks'
+  if (route.path.startsWith('/quirks')) return '/quirks'
   return '/equipment'
 })
 const browseLabel = computed(() => {
   if (route.path.startsWith('/weapons')) return 'Weapons'
-  if (route.path.startsWith('/quirks'))  return 'Quirks'
+  if (route.path.startsWith('/quirks')) return 'Quirks'
   return 'Equipment'
 })
 
-const qualifier = computed(() => data.value ? gearQualifier(data.value.id, data.value.ui_name) : null)
+const qualifier = computed(() =>
+  data.value ? gearQualifier(data.value.id, data.value.ui_name) : null,
+)
 
 const mechsOpen = ref(false)
 const vehiclesOpen = ref(false)
@@ -247,7 +269,10 @@ const captureTarget = ref<HTMLElement | null>(null)
 const { isExporting, exportError, exportAsImage } = useExportImage()
 function handleExport() {
   if (!captureTarget.value || !data.value) return
-  const slug = data.value.ui_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  const slug = data.value.ui_name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
   exportAsImage(captureTarget.value, `${slug}.png`)
 }
 
@@ -261,7 +286,9 @@ const componentTypeLabel = computed(() => {
     AmmunitionBox: 'Ammo',
     JumpJet: 'Jump Jet',
   }
-  return data.value.component_type ? (labels[data.value.component_type] ?? data.value.component_type) : null
+  return data.value.component_type
+    ? (labels[data.value.component_type] ?? data.value.component_type)
+    : null
 })
 
 const componentTypeBadgeKey = computed(() => {
@@ -269,7 +296,6 @@ const componentTypeBadgeKey = computed(() => {
   if (data.value.id.startsWith('Quirk_')) return 'Quirk'
   return data.value.component_type ?? ''
 })
-
 </script>
 
 <style scoped>
@@ -290,21 +316,43 @@ const componentTypeBadgeKey = computed(() => {
   border-radius: 4px;
   animation: pulse 1.5s ease-in-out infinite;
 }
-.skeleton-title { height: 32px; width: 40%; }
-.skeleton-line  { height: 16px; width: 80%; }
-.skeleton-line.short { width: 50%; }
+.skeleton-title {
+  height: 32px;
+  width: 40%;
+}
+.skeleton-line {
+  height: 16px;
+  width: 80%;
+}
+.skeleton-line.short {
+  width: 50%;
+}
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .not-found {
   padding: 48px;
   text-align: center;
 }
-.not-found-msg { color: var(--text-muted); font-size: 16px; }
-.back-link { color: var(--accent-blue); text-decoration: none; font-size: 14px; }
-.back-link:hover { text-decoration: underline; }
+.not-found-msg {
+  color: var(--text-muted);
+  font-size: 16px;
+}
+.back-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-size: 14px;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
 
 .classified-page {
   max-width: 700px;
@@ -361,11 +409,17 @@ const componentTypeBadgeKey = computed(() => {
   color: var(--accent-blue);
   text-decoration: none;
 }
-.classified-link:hover { text-decoration: underline; }
+.classified-link:hover {
+  text-decoration: underline;
+}
 
 @media (max-width: 600px) {
-  .classified-body { flex-direction: column; }
-  .classified-img { width: 100%; }
+  .classified-body {
+    flex-direction: column;
+  }
+  .classified-img {
+    width: 100%;
+  }
 }
 
 .gear-layout {
@@ -374,7 +428,10 @@ const componentTypeBadgeKey = computed(() => {
   align-items: flex-start;
 }
 
-.main-col { flex: 1; min-width: 0; }
+.main-col {
+  flex: 1;
+  min-width: 0;
+}
 
 .side-col {
   width: 260px;
@@ -383,17 +440,28 @@ const componentTypeBadgeKey = computed(() => {
   top: calc(var(--nav-height) + 16px);
 }
 
-.page-header { margin-bottom: 24px; }
+.page-header {
+  margin-bottom: 24px;
+}
 
 .breadcrumb {
   font-size: 12px;
   color: var(--text-muted);
   margin-bottom: 8px;
 }
-.bc-link { color: var(--accent-blue); text-decoration: none; }
-.bc-link:hover { text-decoration: underline; }
-.bc-sep { color: var(--text-muted); }
-.bc-id { color: var(--text-muted); }
+.bc-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+.bc-link:hover {
+  text-decoration: underline;
+}
+.bc-sep {
+  color: var(--text-muted);
+}
+.bc-id {
+  color: var(--text-muted);
+}
 
 .export-btn {
   background: none;
@@ -406,8 +474,14 @@ const componentTypeBadgeKey = computed(() => {
   font-family: inherit;
   margin-top: 8px;
 }
-.export-btn:hover:not(:disabled) { background: var(--accent-blue); color: var(--bg-card); }
-.export-btn:disabled { opacity: 0.6; cursor: default; }
+.export-btn:hover:not(:disabled) {
+  background: var(--accent-blue);
+  color: var(--bg-card);
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 .export-error {
   font-size: 12px;
@@ -444,18 +518,51 @@ const componentTypeBadgeKey = computed(() => {
   letter-spacing: 0.3px;
 }
 
-.ct-badge[data-ct="Upgrade"]       { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
-.ct-badge[data-ct="Weapon"]        { background: rgba(255, 80,  80,  0.15); color: #ff5555; }
-.ct-badge[data-ct="HeatSink"]      { background: rgba(255, 140, 0,   0.15); color: #ff8c00; }
-.ct-badge[data-ct="AmmunitionBox"] { background: rgba(80,  200, 120, 0.15); color: #50c878; }
-.ct-badge[data-ct="JumpJet"]       { background: rgba(180, 100, 255, 0.15); color: #b464ff; }
-.ct-badge[data-ct="Quirk"]         { background: rgba(210, 153, 34,  0.15); color: #d29922; }
+.ct-badge[data-ct='Upgrade'] {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+}
+.ct-badge[data-ct='Weapon'] {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff5555;
+}
+.ct-badge[data-ct='HeatSink'] {
+  background: rgba(255, 140, 0, 0.15);
+  color: #ff8c00;
+}
+.ct-badge[data-ct='AmmunitionBox'] {
+  background: rgba(80, 200, 120, 0.15);
+  color: #50c878;
+}
+.ct-badge[data-ct='JumpJet'] {
+  background: rgba(180, 100, 255, 0.15);
+  color: #b464ff;
+}
+.ct-badge[data-ct='Quirk'] {
+  background: rgba(210, 153, 34, 0.15);
+  color: #d29922;
+}
 
-.wcat-badge[data-wcat="Ballistic"] { background: rgba(200, 160, 60, 0.15); color: #c8a03c; }
-.wcat-badge[data-wcat="Energy"]    { background: rgba(80,  200, 255, 0.15); color: #50c8ff; }
-.wcat-badge[data-wcat="Missile"]   { background: rgba(80,  200, 120, 0.15); color: #50c878; }
-.wcat-badge[data-wcat="Melee"]     { background: rgba(255, 80,  80,  0.15); color: #ff5555; }
-.wcat-badge[data-wcat="Support"]   { background: rgba(180, 100, 255, 0.15); color: #b464ff; }
+.wcat-badge[data-wcat='Ballistic'] {
+  background: rgba(200, 160, 60, 0.15);
+  color: #c8a03c;
+}
+.wcat-badge[data-wcat='Energy'] {
+  background: rgba(80, 200, 255, 0.15);
+  color: #50c8ff;
+}
+.wcat-badge[data-wcat='Missile'] {
+  background: rgba(80, 200, 120, 0.15);
+  color: #50c878;
+}
+.wcat-badge[data-wcat='Melee'] {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff5555;
+}
+.wcat-badge[data-wcat='Support'] {
+  background: rgba(180, 100, 255, 0.15);
+  color: #b464ff;
+}
 
 .content-section {
   margin-bottom: 28px;
@@ -468,7 +575,9 @@ const componentTypeBadgeKey = computed(() => {
   align-items: center;
   gap: 6px;
 }
-.section-title.collapsible:hover { color: var(--accent-blue); }
+.section-title.collapsible:hover {
+  color: var(--accent-blue);
+}
 .collapse-chevron {
   font-size: 14px;
   color: var(--text-muted);
@@ -477,7 +586,9 @@ const componentTypeBadgeKey = computed(() => {
   line-height: 1;
   margin-left: auto;
 }
-.collapse-chevron.open { transform: rotate(90deg); }
+.collapse-chevron.open {
+  transform: rotate(90deg);
+}
 
 .section-title {
   font-size: 16px;
@@ -565,7 +676,9 @@ const componentTypeBadgeKey = computed(() => {
   border: 1px solid rgba(88, 166, 255, 0.2);
   border-radius: 3px;
   padding: 3px 8px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -609,11 +722,20 @@ const componentTypeBadgeKey = computed(() => {
   padding: 6px 12px;
 }
 
-.ib-yes { color: #50c878; }
-.ib-no  { color: var(--text-muted); }
+.ib-yes {
+  color: #50c878;
+}
+.ib-no {
+  color: var(--text-muted);
+}
 
 @media (max-width: 700px) {
-  .gear-layout { flex-direction: column; }
-  .side-col { width: 100%; position: static; }
+  .gear-layout {
+    flex-direction: column;
+  }
+  .side-col {
+    width: 100%;
+    position: static;
+  }
 }
 </style>

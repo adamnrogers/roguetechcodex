@@ -51,7 +51,10 @@ interface InfoBoxProps {
 defineProps<InfoBoxProps>()
 
 function formatBV(bv: number): string {
-  return (bv / 1000).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  return (bv / 1000).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
 }
 </script>
 
@@ -102,10 +105,22 @@ function formatBV(bv: number): string {
   letter-spacing: 0.3px;
 }
 
-.wc-badge[data-wc="LIGHT"]   { background: var(--badge-light-bg);   color: var(--badge-light-fg); }
-.wc-badge[data-wc="MEDIUM"]  { background: var(--badge-medium-bg);  color: var(--badge-medium-fg); }
-.wc-badge[data-wc="HEAVY"]   { background: var(--badge-heavy-bg);   color: var(--badge-heavy-fg); }
-.wc-badge[data-wc="ASSAULT"] { background: var(--badge-assault-bg); color: var(--badge-assault-fg); }
+.wc-badge[data-wc='LIGHT'] {
+  background: var(--badge-light-bg);
+  color: var(--badge-light-fg);
+}
+.wc-badge[data-wc='MEDIUM'] {
+  background: var(--badge-medium-bg);
+  color: var(--badge-medium-fg);
+}
+.wc-badge[data-wc='HEAVY'] {
+  background: var(--badge-heavy-bg);
+  color: var(--badge-heavy-fg);
+}
+.wc-badge[data-wc='ASSAULT'] {
+  background: var(--badge-assault-bg);
+  color: var(--badge-assault-fg);
+}
 
 .unique-badge {
   font-size: 10px;

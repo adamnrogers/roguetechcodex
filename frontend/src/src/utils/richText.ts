@@ -3,13 +3,13 @@
 // Colours not present in this map are stripped (tag removed, text preserved).
 const COLOUR_MAP: Record<string, string | 'inherit'> = {
   // Reds
-  'FF0000': '#c47a7a',
-  'FF4040': '#c47a7a',
-  'D0021B': '#c47a7a',
-  'CC1C12': '#c47a7a',
-  'E11919': '#c47a7a',
-  'E62E00': '#c47a7a',
-  'FF0066': '#c47a7a',
+  FF0000: '#c47a7a',
+  FF4040: '#c47a7a',
+  D0021B: '#c47a7a',
+  CC1C12: '#c47a7a',
+  E11919: '#c47a7a',
+  E62E00: '#c47a7a',
+  FF0066: '#c47a7a',
   // Blues
   '0000FF': '#58a6ff',
   '4040FF': '#58a6ff',
@@ -25,17 +25,17 @@ const COLOUR_MAP: Record<string, string | 'inherit'> = {
   '15DF37': '#3fb950',
   '2AAD3B': '#3fb950',
   // Yellows / Gold / Orange
-  'FFFF00': '#e3b341',
-  'FFD700': '#e3b341',
-  'FFA500': '#e3b341',
-  'FF8000': '#e3b341',
-  'FFCC00': '#e3b341',
-  'FFBA01': '#e3b341',
-  'FFEF00': '#e3b341',
-  'F79232': '#e3b341',
-  'F5B247': '#e3b341',
+  FFFF00: '#e3b341',
+  FFD700: '#e3b341',
+  FFA500: '#e3b341',
+  FF8000: '#e3b341',
+  FFCC00: '#e3b341',
+  FFBA01: '#e3b341',
+  FFEF00: '#e3b341',
+  F79232: '#e3b341',
+  F5B247: '#e3b341',
   // Whites
-  'FFFFFF': 'inherit',
+  FFFFFF: 'inherit',
 }
 
 // Replaces Unity RTF <color=#RRGGBB[AA]>…</color> tags in an already HTML-escaped string.
@@ -78,7 +78,8 @@ function applyColourTags(escaped: string): string {
 // Mod lore text ("Details") bakes in a "Quirk: <name>" callout line. The quirk's actual
 // mechanics (and its affinity, if any) are already surfaced in the Affinity/Component
 // Layout sections, so this line is redundant in the description and is stripped here.
-const QUIRK_CALLOUT_RE = /\n*<b>\s*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\s*<\/b>\n*|\n*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\n*/gi
+const QUIRK_CALLOUT_RE =
+  /\n*<b>\s*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\s*<\/b>\n*|\n*<color=#[0-9A-Fa-f]{6,8}>\s*Quirk:[^<]*<\/color>\n*/gi
 
 export function stripQuirkCallout(raw: string): string {
   return raw.replace(QUIRK_CALLOUT_RE, '\n\n')
@@ -87,9 +88,13 @@ export function stripQuirkCallout(raw: string): string {
 export function renderRichText(raw: string | null | undefined): string {
   if (!raw) return ''
   const escaped = stripQuirkCallout(raw)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // escape first
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;') // escape first
   return applyColourTags(escaped)
-    .replace(/&lt;b&gt;/g, '<strong>').replace(/&lt;\/b&gt;/g, '</strong>')
-    .replace(/&lt;i&gt;/g, '<em>').replace(/&lt;\/i&gt;/g, '</em>')
+    .replace(/&lt;b&gt;/g, '<strong>')
+    .replace(/&lt;\/b&gt;/g, '</strong>')
+    .replace(/&lt;i&gt;/g, '<em>')
+    .replace(/&lt;\/i&gt;/g, '</em>')
     .replace(/\n/g, '<br>')
 }

@@ -4,7 +4,11 @@
       <h3 class="filter-title">Biome</h3>
       <div class="checkbox-list">
         <label v-for="b in BIOME_OPTIONS" :key="b.value" class="checkbox-label">
-          <input type="checkbox" :checked="biomes.includes(b.value)" @change="toggle('biomes', b.value)" />
+          <input
+            type="checkbox"
+            :checked="biomes.includes(b.value)"
+            @change="toggle('biomes', b.value)"
+          />
           {{ b.label }}
         </label>
       </div>
@@ -14,15 +18,39 @@
       <h3 class="filter-title">Difficulty</h3>
       <div class="range-inputs">
         <input
-          type="number" class="range-input" placeholder="Min" min="-2" max="20" step="1"
+          type="number"
+          class="range-input"
+          placeholder="Min"
+          min="-2"
+          max="20"
+          step="1"
           :value="minDifficulty ?? ''"
-          @change="emit('update:minDifficulty', ($event.target as HTMLInputElement).value ? parseInt(($event.target as HTMLInputElement).value) : null)"
+          @change="
+            emit(
+              'update:minDifficulty',
+              ($event.target as HTMLInputElement).value
+                ? parseInt(($event.target as HTMLInputElement).value)
+                : null,
+            )
+          "
         />
         <span class="range-sep">–</span>
         <input
-          type="number" class="range-input" placeholder="Max" min="-2" max="20" step="1"
+          type="number"
+          class="range-input"
+          placeholder="Max"
+          min="-2"
+          max="20"
+          step="1"
           :value="maxDifficulty ?? ''"
-          @change="emit('update:maxDifficulty', ($event.target as HTMLInputElement).value ? parseInt(($event.target as HTMLInputElement).value) : null)"
+          @change="
+            emit(
+              'update:maxDifficulty',
+              ($event.target as HTMLInputElement).value
+                ? parseInt(($event.target as HTMLInputElement).value)
+                : null,
+            )
+          "
         />
       </div>
     </div>
@@ -31,7 +59,11 @@
       <h3 class="filter-title">Population</h3>
       <div class="checkbox-list">
         <label v-for="p in POPULATION_OPTIONS" :key="p.value" class="checkbox-label">
-          <input type="checkbox" :checked="population.includes(p.value)" @change="toggle('population', p.value)" />
+          <input
+            type="checkbox"
+            :checked="population.includes(p.value)"
+            @change="toggle('population', p.value)"
+          />
           {{ p.label }}
         </label>
       </div>
@@ -46,7 +78,11 @@
         </div>
         <div v-if="expandedGroups[group.groupId]" class="tag-options">
           <label v-for="opt in group.options" :key="opt.value" class="checkbox-label">
-            <input type="checkbox" :checked="tags.includes(opt.value)" @change="toggle('tags', opt.value)" />
+            <input
+              type="checkbox"
+              :checked="tags.includes(opt.value)"
+              @change="toggle('tags', opt.value)"
+            />
             {{ opt.label }}
           </label>
         </div>
@@ -70,60 +106,109 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:biomes':        [value: string[]]
-  'update:population':    [value: string[]]
-  'update:tags':          [value: string[]]
+  'update:biomes': [value: string[]]
+  'update:population': [value: string[]]
+  'update:tags': [value: string[]]
   'update:minDifficulty': [value: number | null]
   'update:maxDifficulty': [value: number | null]
 }>()
 
-interface Option { value: string; label: string }
+interface Option {
+  value: string
+  label: string
+}
 
 const BIOME_OPTIONS: Option[] = [
-  'arctic', 'badlandsParched', 'desertParched', 'highlandsFall', 'highlandsSpring',
-  'jungleTropical', 'lowlandsCoastal', 'lowlandsFall', 'lowlandsSpring', 'lunar',
-  'lunarVacuum', 'martian', 'martianVacuum', 'polarFrozen', 'tundraFrozen', 'urbanHighTech',
-].map(v => ({ value: v, label: humanizeTag(v) }))
+  'arctic',
+  'badlandsParched',
+  'desertParched',
+  'highlandsFall',
+  'highlandsSpring',
+  'jungleTropical',
+  'lowlandsCoastal',
+  'lowlandsFall',
+  'lowlandsSpring',
+  'lunar',
+  'lunarVacuum',
+  'martian',
+  'martianVacuum',
+  'polarFrozen',
+  'tundraFrozen',
+  'urbanHighTech',
+].map((v) => ({ value: v, label: humanizeTag(v) }))
 
 const POPULATION_OPTIONS: Option[] = [
-  { value: 'none',   label: 'None' },
-  { value: 'small',  label: 'Small' },
+  { value: 'none', label: 'None' },
+  { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
-  { value: 'large',  label: 'Large' },
+  { value: 'large', label: 'Large' },
 ]
 
-interface TagGroup { groupId: string; label: string; options: Option[] }
+interface TagGroup {
+  groupId: string
+  label: string
+  options: Option[]
+}
 
 function tagOptions(prefix: string, values: string[]): Option[] {
-  return values.map(v => ({ value: `${prefix}${v}`, label: humanizeTag(v) }))
+  return values.map((v) => ({ value: `${prefix}${v}`, label: humanizeTag(v) }))
 }
 
 const TAG_GROUPS: TagGroup[] = [
   {
-    groupId: 'climate', label: 'Climate',
+    groupId: 'climate',
+    label: 'Climate',
     options: tagOptions('planet_climate_', [
-      'arctic', 'arid', 'desert', 'ice', 'lunar', 'mars', 'rocky', 'terran', 'tropical', 'water',
+      'arctic',
+      'arid',
+      'desert',
+      'ice',
+      'lunar',
+      'mars',
+      'rocky',
+      'terran',
+      'tropical',
+      'water',
     ]),
   },
   {
-    groupId: 'industry', label: 'Industry',
+    groupId: 'industry',
+    label: 'Industry',
     options: tagOptions('planet_industry_', [
-      'agriculture', 'aquaculture', 'chemicals', 'electronics', 'manufacturing',
-      'mining', 'poor', 'recreation', 'research', 'rich', 'superheavy',
+      'agriculture',
+      'aquaculture',
+      'chemicals',
+      'electronics',
+      'manufacturing',
+      'mining',
+      'poor',
+      'recreation',
+      'research',
+      'rich',
+      'superheavy',
     ]),
   },
   {
-    groupId: 'civ', label: 'Civilization',
+    groupId: 'civ',
+    label: 'Civilization',
     options: tagOptions('planet_civ_', ['innersphere', 'periphery', 'primitive']),
   },
   {
-    groupId: 'feature', label: 'Feature',
+    groupId: 'feature',
+    label: 'Feature',
     options: tagOptions('planet_feature_', [
-      'asteroids', 'comet', 'gasgiant', 'moon01', 'moon02', 'moon03', 'rings',
+      'asteroids',
+      'comet',
+      'gasgiant',
+      'moon01',
+      'moon02',
+      'moon03',
+      'rings',
     ]),
   },
   {
-    groupId: 'size', label: 'Size',
+    groupId: 'size',
+    label: 'Size',
     options: tagOptions('planet_size_', ['large', 'medium', 'small']),
   },
 ]
@@ -136,16 +221,17 @@ function toggleGroupExpand(groupId: string) {
 
 function toggle(field: 'biomes' | 'population' | 'tags', value: string) {
   const current = props[field]
-  const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+  const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
   emit(`update:${field}` as any, next)
 }
 
-const hasActiveFilters = computed(() =>
-  props.biomes.length > 0 ||
-  props.population.length > 0 ||
-  props.tags.length > 0 ||
-  props.minDifficulty !== null ||
-  props.maxDifficulty !== null
+const hasActiveFilters = computed(
+  () =>
+    props.biomes.length > 0 ||
+    props.population.length > 0 ||
+    props.tags.length > 0 ||
+    props.minDifficulty !== null ||
+    props.maxDifficulty !== null,
 )
 
 function clearAll() {
@@ -196,7 +282,7 @@ function clearAll() {
   user-select: none;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   accent-color: var(--accent-blue);
   cursor: pointer;
 }
@@ -218,12 +304,21 @@ function clearAll() {
   outline: none;
   box-sizing: border-box;
 }
-.range-input:focus { border-color: var(--accent-blue); }
-.range-input::placeholder { color: var(--text-muted); }
+.range-input:focus {
+  border-color: var(--accent-blue);
+}
+.range-input::placeholder {
+  color: var(--text-muted);
+}
 
-.range-sep { font-size: 12px; color: var(--text-muted); }
+.range-sep {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 
-.tag-group { margin-bottom: 4px; }
+.tag-group {
+  margin-bottom: 4px;
+}
 
 .tag-group-header {
   display: flex;
@@ -245,7 +340,9 @@ function clearAll() {
   transition: transform 0.15s;
   line-height: 1;
 }
-.tag-chevron.open { transform: rotate(90deg); }
+.tag-chevron.open {
+  transform: rotate(90deg);
+}
 
 .tag-options {
   margin-left: 4px;
@@ -262,5 +359,7 @@ function clearAll() {
   color: var(--text-muted);
   text-decoration: none;
 }
-.clear-all:hover { color: var(--accent-orange); }
+.clear-all:hover {
+  color: var(--accent-orange);
+}
 </style>

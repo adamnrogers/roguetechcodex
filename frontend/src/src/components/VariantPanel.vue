@@ -4,8 +4,12 @@
     <div class="variant-header" @click="open = !open">
       <span class="variant-name">{{ variant.variant_name || variant.id }}</span>
       <div class="variant-tags">
-        <span v-for="tag in variant.era_tags" :key="'era-' + tag" class="tag tag-era">{{ humanizeTag(tag) }}</span>
-        <span v-for="tag in canonicalFactionTags" :key="'fac-' + tag" class="tag tag-faction">{{ tag }}</span>
+        <span v-for="tag in variant.era_tags" :key="'era-' + tag" class="tag tag-era">{{
+          humanizeTag(tag)
+        }}</span>
+        <span v-for="tag in canonicalFactionTags" :key="'fac-' + tag" class="tag tag-faction">{{
+          tag
+        }}</span>
       </div>
       <span class="chevron" :class="{ open }">&#x25BE;</span>
     </div>
@@ -31,7 +35,11 @@
         </thead>
         <tbody>
           <template v-for="group in groupedInventory" :key="group.location">
-            <tr v-for="(item, i) in group.items" :key="item.component_def_id + '-' + i" :class="{ 'row-alt': i % 2 === 1 }">
+            <tr
+              v-for="(item, i) in group.items"
+              :key="item.component_def_id + '-' + i"
+              :class="{ 'row-alt': i % 2 === 1 }"
+            >
               <td class="col-loc">{{ i === 0 ? group.location : '' }}</td>
               <td class="col-comp">{{ formatComponentName(item.component_def_id) }}</td>
               <td class="col-type">
@@ -60,8 +68,14 @@ const props = defineProps<{
 const open = ref(props.defaultOpen)
 
 const LOCATION_ORDER = [
-  'CenterTorso', 'LeftTorso', 'RightTorso', 'Head',
-  'LeftArm', 'RightArm', 'LeftLeg', 'RightLeg',
+  'CenterTorso',
+  'LeftTorso',
+  'RightTorso',
+  'Head',
+  'LeftArm',
+  'RightArm',
+  'LeftLeg',
+  'RightLeg',
 ]
 
 function locationIndex(loc: string): number {
@@ -70,7 +84,9 @@ function locationIndex(loc: string): number {
 }
 
 const sortedLocations = computed(() =>
-  [...props.variant.locations].sort((a, b) => locationIndex(a.location) - locationIndex(b.location))
+  [...props.variant.locations].sort(
+    (a, b) => locationIndex(a.location) - locationIndex(b.location),
+  ),
 )
 
 const canonicalFactionTags = computed(() => {
@@ -282,10 +298,28 @@ function formatComponentName(id: string): string {
   border-radius: 4px;
 }
 
-.type-badge[data-ctype="Weapon"]    { background: rgba(88,166,255,0.2);   color: #58a6ff; }
-.type-badge[data-ctype="Ammo"]      { background: rgba(240,136,62,0.2);   color: #f0883e; }
-.type-badge[data-ctype="Engine"]    { background: rgba(139,150,163,0.2);  color: #8b96a3; }
-.type-badge[data-ctype="Heat Sink"] { background: rgba(56,189,193,0.2);   color: #38bdc1; }
-.type-badge[data-ctype="Jump Jet"]  { background: rgba(180,130,255,0.2);  color: #b482ff; }
-.type-badge[data-ctype="Equipment"] { background: rgba(139,150,163,0.12); color: #8b96a3; }
+.type-badge[data-ctype='Weapon'] {
+  background: rgba(88, 166, 255, 0.2);
+  color: #58a6ff;
+}
+.type-badge[data-ctype='Ammo'] {
+  background: rgba(240, 136, 62, 0.2);
+  color: #f0883e;
+}
+.type-badge[data-ctype='Engine'] {
+  background: rgba(139, 150, 163, 0.2);
+  color: #8b96a3;
+}
+.type-badge[data-ctype='Heat Sink'] {
+  background: rgba(56, 189, 193, 0.2);
+  color: #38bdc1;
+}
+.type-badge[data-ctype='Jump Jet'] {
+  background: rgba(180, 130, 255, 0.2);
+  color: #b482ff;
+}
+.type-badge[data-ctype='Equipment'] {
+  background: rgba(139, 150, 163, 0.12);
+  color: #8b96a3;
+}
 </style>

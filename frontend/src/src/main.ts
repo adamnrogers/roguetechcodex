@@ -35,7 +35,7 @@ const router = createRouter({
     { path: '/star-systems', component: StarSystemBrowsePage },
     { path: '/star-systems/:systemId', component: StarSystemPage },
     { path: '/rto-pilots', component: RtoPilotsPage },
-  ]
+  ],
 })
 
 const app = createApp(App)

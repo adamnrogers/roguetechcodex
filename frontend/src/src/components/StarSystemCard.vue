@@ -10,7 +10,9 @@
       </div>
       <div class="ss-biomes">
         <span v-for="b in visibleBiomes" :key="b" class="biome-chip">{{ humanizeTag(b) }}</span>
-        <span v-if="overflowCount > 0" class="biome-chip biome-chip--overflow">+{{ overflowCount }}</span>
+        <span v-if="overflowCount > 0" class="biome-chip biome-chip--overflow"
+          >+{{ overflowCount }}</span
+        >
       </div>
     </div>
   </RouterLink>
@@ -50,7 +52,10 @@ const overflowCount = computed(() => Math.max(0, props.biomes.length - MAX_VISIB
   border-radius: var(--card-radius);
   padding: 14px;
   box-shadow: var(--card-shadow);
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -88,11 +93,23 @@ const overflowCount = computed(() => Math.max(0, props.biomes.length - MAX_VISIB
   letter-spacing: 0.3px;
 }
 
-.diff-badge[data-band="low"]  { background: rgba(63,  185, 80,  0.15); color: #3fb950; }
-.diff-badge[data-band="mid"]  { background: rgba(210, 153, 34,  0.15); color: #d29922; }
-.diff-badge[data-band="high"] { background: rgba(255, 80,  80,  0.15); color: #ff5555; }
+.diff-badge[data-band='low'] {
+  background: rgba(63, 185, 80, 0.15);
+  color: #3fb950;
+}
+.diff-badge[data-band='mid'] {
+  background: rgba(210, 153, 34, 0.15);
+  color: #d29922;
+}
+.diff-badge[data-band='high'] {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff5555;
+}
 
-.pop-badge { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+.pop-badge {
+  background: rgba(88, 166, 255, 0.15);
+  color: #58a6ff;
+}
 
 .ss-biomes {
   display: flex;
@@ -114,7 +131,9 @@ const overflowCount = computed(() => Math.max(0, props.biomes.length - MAX_VISIB
   font-style: italic;
 }
 
-.ss-card-link--list { height: auto; }
+.ss-card-link--list {
+  height: auto;
+}
 .ss-card--list {
   padding: 6px 14px;
   height: auto;
@@ -122,7 +141,16 @@ const overflowCount = computed(() => Math.max(0, props.biomes.length - MAX_VISIB
   align-items: center;
   gap: 10px;
 }
-.ss-card--list .ss-name { flex: 1; min-width: 0; font-size: 13px; }
-.ss-card--list .ss-badges { flex-shrink: 0; }
-.ss-card--list .ss-biomes { flex-shrink: 0; margin-top: 0; }
+.ss-card--list .ss-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.ss-card--list .ss-badges {
+  flex-shrink: 0;
+}
+.ss-card--list .ss-biomes {
+  flex-shrink: 0;
+  margin-top: 0;
+}
 </style>
