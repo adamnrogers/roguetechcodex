@@ -41,7 +41,7 @@
         <span class="tag-filter-label">Filtered by quirk:</span>
         <span class="tag-filter-chip">
           {{ filters.tag }}
-          <button class="tag-filter-clear" @click="clearTag" title="Remove filter">×</button>
+          <button class="tag-filter-clear" title="Remove filter" @click="clearTag">×</button>
         </span>
       </div>
       <SortBar

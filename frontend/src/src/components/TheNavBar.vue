@@ -28,10 +28,10 @@
     <div class="nav-right">
       <div class="search-wrapper">
         <input
+          v-model="rawQuery"
           class="search-input"
           type="text"
           placeholder="Search wiki..."
-          v-model="rawQuery"
           @keydown.enter="handleSearchEnter"
           @keydown.escape="closeSearch"
         />
@@ -44,8 +44,8 @@
       </select>
       <button
         class="theme-toggle"
-        @click="$emit('toggleTheme')"
         :title="theme === 'v1' ? 'Switch to Dark mode' : 'Switch to Light mode'"
+        @click="$emit('toggleTheme')"
       >
         {{ theme === 'v1' ? '☀' : '☾' }}
       </button>

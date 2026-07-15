@@ -38,7 +38,7 @@
     </div>
 
     <template v-else>
-      <div class="gear-layout" ref="captureTarget">
+      <div ref="captureTarget" class="gear-layout">
         <main class="main-col">
           <header class="page-header">
             <nav class="breadcrumb">

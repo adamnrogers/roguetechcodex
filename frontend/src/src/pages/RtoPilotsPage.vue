@@ -2,10 +2,10 @@
   <div class="rto-page">
     <h1 class="rto-title">RTO Pilots</h1>
     <input
+      v-model="query"
       class="rto-search"
       type="text"
       placeholder="Search by callsign or name..."
-      v-model="query"
     />
     <div v-if="isError" class="error-msg">
       Failed to load data. Please check your connection and try again.

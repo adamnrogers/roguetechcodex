@@ -1,5 +1,5 @@
 <template>
-  <div class="search-dropdown" ref="dropdownRef">
+  <div ref="dropdownRef" class="search-dropdown">
     <template v-if="hasResults">
       <div v-if="data.chassis.length" class="result-group">
         <div class="group-label">Mechs &amp; Vehicles</div>

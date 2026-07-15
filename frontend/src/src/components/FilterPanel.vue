@@ -95,16 +95,16 @@
           <span class="hp-amt-col">
             <button
               class="hp-step"
-              @click="stepCount(row.key, -1)"
               :disabled="hardpoints[row.key].count === 0"
+              @click="stepCount(row.key, -1)"
             >
               −
             </button>
             <span class="hp-count">{{ hardpoints[row.key].count }}</span>
             <button
               class="hp-step"
-              @click="stepCount(row.key, 1)"
               :disabled="hardpoints[row.key].count >= 20"
+              @click="stepCount(row.key, 1)"
             >
               +
             </button>

@@ -15,7 +15,7 @@
 
     <!-- ── Content ─────────────────────────────────────────── -->
     <template v-else>
-      <div class="chassis-layout" ref="captureTarget">
+      <div ref="captureTarget" class="chassis-layout">
         <!-- ════════════════════════════════════════════════
              LEFT COLUMN
              ════════════════════════════════════════════════ -->

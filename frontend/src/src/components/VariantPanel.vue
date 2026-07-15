@@ -25,7 +25,7 @@
       </div>
 
       <!-- Inventory table -->
-      <table class="inv-table" v-if="groupedInventory.length">
+      <table v-if="groupedInventory.length" class="inv-table">
         <thead>
           <tr>
             <th>Location</th>
